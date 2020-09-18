@@ -2,13 +2,15 @@ package me.flashyreese.mods.commandaliases;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+
+import static com.mojang.brigadier.builder.RequiredArgumentBuilder.argument;
 
 public class CommandAliasesParser {
 
@@ -67,7 +69,7 @@ public class CommandAliasesParser {
         this.argumentMap.put("uuid", UuidArgumentType.uuid());
     }
 
-    public String parse(CommandContext<ServerCommandSource> context, String subCmd) {
+    public String parse(CommandContext<ServerCommandSource> context, String cmd, String subCmd) {
         String newCmd = subCmd;
         try {
             String playerName = context.getSource().getPlayer().getEntityName();
@@ -75,6 +77,86 @@ public class CommandAliasesParser {
         } catch (CommandSyntaxException e) {
             e.printStackTrace();
         }
+
+        for (Map.Entry<String, String> entry : getInputMap(cmd, context.getInput()).entrySet()){
+            if (subCmd.contains(entry.getKey())){
+                newCmd = newCmd.replaceAll(entry.getKey(), entry.getValue());
+            }
+        }
+
         return newCmd;
+    }
+
+    public LiteralArgumentBuilder<ServerCommandSource> parseCommandName(String command) {
+        if (command.contains(" ")) {
+            return LiteralArgumentBuilder.literal(command.split(" ")[0]);
+        }
+        return LiteralArgumentBuilder.literal(command);
+    }
+
+    private List<String> getArgumentsFromString(String cmd) {
+        List<String> args = new ArrayList<>();
+        if (!(cmd.contains("{") && cmd.contains("}")))
+            return args;
+        boolean log = false;
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < cmd.length(); i++) {
+            if (cmd.charAt(i) == '{') {
+                log = true;
+                stringBuilder.append(cmd.charAt(i));
+            } else if (cmd.charAt(i) == '}') {
+                log = false;
+                stringBuilder.append(cmd.charAt(i));
+                args.add(stringBuilder.toString());
+                stringBuilder = new StringBuilder();
+            } else if (log) {
+                stringBuilder.append(cmd.charAt(i));
+            }
+        }
+        return args;
+    }
+
+    public Map<String, String> getInputMap(String cmd, String input) {
+        input = input.substring(1);
+        input = input.substring(input.indexOf(" ") + 1);
+        Map<String, String> map = new HashMap<>();
+        List<String> args = getArgumentsFromString(cmd);
+        List<String> inputArgs = Arrays.asList(input.split(" "));
+        if (args.size() != inputArgs.size()) {
+            System.out.println("well rip more regex");
+            return map;
+        }
+        for (int i = 0; i < args.size(); i++) {
+            String arg = args.get(i);
+            String inputArg = inputArgs.get(i);
+            arg = "{" + arg.split("#")[1].split("}")[0] + "}";
+            map.put(arg, inputArg);
+        }
+        return map;
+    }
+
+    public String formatCommand(Map<String, String> map, String cmd) {
+        String command = cmd;
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            if (command.contains(entry.getKey())) {
+                command = command.replaceAll(entry.getKey(), entry.getValue());
+            }
+        }
+        return command;
+    }
+
+    public LiteralArgumentBuilder<ServerCommandSource> buildCommand(String command) {
+        LiteralArgumentBuilder<ServerCommandSource> commandName = parseCommandName(command);
+        List<String> args = getArgumentsFromString(command);
+        for (String arg : args) {
+            if (arg.startsWith("{arg::")) {
+                String argType = arg.split("\\{arg::")[1].split("#")[0];
+                String variable = arg.split("#")[1].split("}")[0];
+                if (argumentMap.containsKey(argType)) {
+                    commandName = commandName.then(argument(variable, argumentMap.get(argType)));
+                }
+            }
+        }
+        return commandName;
     }
 }

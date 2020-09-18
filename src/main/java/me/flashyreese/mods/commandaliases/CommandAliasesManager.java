@@ -2,19 +2,16 @@ package me.flashyreese.mods.commandaliases;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.mojang.brigadier.Command;
-import com.mojang.brigadier.arguments.StringArgumentType;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
-import net.minecraft.command.argument.ColorArgumentType;
 import net.minecraft.text.LiteralText;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static net.minecraft.server.command.CommandManager.*;
 
 public class CommandAliasesManager {
 
@@ -31,11 +28,10 @@ public class CommandAliasesManager {
         this.commands.addAll(loadCommandAliases(new File("commandaliases.json")));
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             for (CommandAlias cmd : this.commands) {
-                dispatcher.register(literal(cmd.getCommand()).executes(context -> {
+                dispatcher.register(commandAliasesParser.buildCommand(cmd.getCommand()).executes(context -> {
                     int execute = 0;
                     for (CommandAlias subCmd : cmd.getExecution()) {
-                        String subCommand = commandAliasesParser.parse(context, subCmd.getCommand());
-                        System.out.println(context.getInput());
+                        String subCommand = commandAliasesParser.parse(context, cmd.getCommand(), subCmd.getCommand());
                         if (subCmd.getType() == CommandType.CLIENT) {
                             execute = dispatcher.execute(subCommand, context.getSource());
                         } else if (subCmd.getType() == CommandType.SERVER) {
