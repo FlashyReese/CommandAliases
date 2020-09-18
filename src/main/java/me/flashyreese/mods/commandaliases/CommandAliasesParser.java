@@ -144,7 +144,7 @@ public class CommandAliasesParser {
     public ArgumentBuilder<ServerCommandSource, ?> parseArguments(String command) {
         List<String> args = getArgumentsFromString(command);
         ArgumentBuilder<ServerCommandSource, ?> arguments = null;
-        args.sort(Collections.reverseOrder());
+        Collections.reverse(args);
         for (String arg : args) {
             if (arg.startsWith("{arg::")) {
                 String argType = arg.split("\\{arg::")[1].split("#")[0];
