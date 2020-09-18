@@ -23,6 +23,21 @@ dependencies {
 	// You may need to force-disable transitiveness on them.
 }
 
+if (project.use_third_party_mods) {
+	repositories {
+		maven { url = "https://jitpack.io" }
+	}
+
+	dependencies {
+		// DataBreaker applies a number of patches to eliminate the loading of data fixers
+		// This greatly reduces the amount of time needed to start the game, but is generally unsafe in production
+		modRuntime ("com.github.SuperCoder7979:databreaker:${project.databreaker_version}") {
+			exclude module: "fabric-loader"
+			transitive = false
+		}
+	}
+}
+
 processResources {
 	inputs.property "version", project.version
 

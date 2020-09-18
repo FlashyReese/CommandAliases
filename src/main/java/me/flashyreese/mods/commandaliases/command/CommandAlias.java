@@ -2,10 +2,10 @@ package me.flashyreese.mods.commandaliases.command;
 
 import java.util.List;
 
-public class Command {
+public class CommandAlias {
     private String command;
     private CommandType type;
-    private List<Command> execution;
+    private List<CommandAlias> execution;
     private String message;
 
     public String getCommand() {
@@ -16,7 +16,7 @@ public class Command {
         return type;
     }
 
-    public List<Command> getExecution() {
+    public List<CommandAlias> getExecution() {
         return execution;
     }
 
