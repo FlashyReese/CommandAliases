@@ -1,10 +1,9 @@
 package me.flashyreese.mods.commandaliases;
 
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import net.minecraft.server.command.CommandManager;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.*;
@@ -12,7 +11,8 @@ import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.*;
 
-import static com.mojang.brigadier.builder.RequiredArgumentBuilder.argument;
+import static net.minecraft.server.command.CommandManager.argument;
+import static net.minecraft.server.command.CommandManager.literal;
 
 public class CommandAliasesParser {
 
@@ -69,6 +69,13 @@ public class CommandAliasesParser {
         this.argumentMap.put("dimension", DimensionArgumentType.dimension());
         this.argumentMap.put("time", TimeArgumentType.time());
         this.argumentMap.put("uuid", UuidArgumentType.uuid());
+
+        this.argumentMap.put("brigadier:bool", BoolArgumentType.bool());
+        this.argumentMap.put("brigadier:float", FloatArgumentType.floatArg());
+        this.argumentMap.put("brigadier:double", DoubleArgumentType.doubleArg());
+        this.argumentMap.put("brigadier:integer", IntegerArgumentType.integer());
+        this.argumentMap.put("brigadier:long", LongArgumentType.longArg());
+        this.argumentMap.put("brigadier:string", StringArgumentType.string());
     }
 
     public String parse(CommandContext<ServerCommandSource> context, String cmd, String subCmd) {
@@ -83,13 +90,6 @@ public class CommandAliasesParser {
         newCmd = formatCommand(getInputMap(cmd, context.getInput()), newCmd);
 
         return newCmd;
-    }
-
-    public LiteralArgumentBuilder<ServerCommandSource> parseCommandName(String command) {
-        if (command.contains(" ")) {
-            return LiteralArgumentBuilder.literal(command.split(" ")[0]);
-        }
-        return LiteralArgumentBuilder.literal(command);
     }
 
     private List<String> getArgumentsFromString(String cmd) {
@@ -143,9 +143,14 @@ public class CommandAliasesParser {
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> buildCommand(String command) {
-        LiteralArgumentBuilder<ServerCommandSource> commandName = parseCommandName(command);
+        LiteralArgumentBuilder<ServerCommandSource> commandName;
+        if (command.contains(" ")) {
+            commandName = CommandManager.literal(command.split(" ")[0]);
+        }else{
+            commandName = literal(command);
+        }
         List<String> args = getArgumentsFromString(command);
-        RequiredArgumentBuilder<?, ?> arguments = null;
+        ArgumentBuilder<ServerCommandSource, ?> arguments = null;
         args.sort(Collections.reverseOrder());
         for (String arg : args) {
             if (arg.startsWith("{arg::")) {
@@ -153,7 +158,7 @@ public class CommandAliasesParser {
                 String variable = arg.split("#")[1].split("}")[0];
                 if (argumentMap.containsKey(argType)) {
                     if (arguments != null){
-                        arguments = argument(variable, argumentMap.get(argType)).then((ArgumentBuilder<Object, ?>) arguments);
+                        arguments = argument(variable, argumentMap.get(argType)).then(arguments);
                     }else{
                         arguments = argument(variable, argumentMap.get(argType));
                     }
@@ -161,7 +166,7 @@ public class CommandAliasesParser {
             }
         }
         if (arguments != null){
-            commandName.then((ArgumentBuilder<ServerCommandSource, ?>) arguments);
+            commandName.then(arguments);
         }
         return commandName;
     }
