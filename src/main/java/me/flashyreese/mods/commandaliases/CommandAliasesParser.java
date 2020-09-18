@@ -136,7 +136,7 @@ public class CommandAliasesParser {
         String command = cmd;
         for (Map.Entry<String, String> entry : map.entrySet()) {
             if (command.contains(entry.getKey())) {
-                command = command.replaceAll(entry.getKey(), entry.getValue());
+                command = command.replaceAll("\\{" + entry.getKey().substring(1), entry.getValue());
             }
         }
         return command;
