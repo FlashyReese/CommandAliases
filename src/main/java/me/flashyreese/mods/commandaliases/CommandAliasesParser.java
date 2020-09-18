@@ -142,13 +142,14 @@ public class CommandAliasesParser {
         return command;
     }
 
-    public LiteralArgumentBuilder<ServerCommandSource> buildCommand(String command) {
-        LiteralArgumentBuilder<ServerCommandSource> commandName;
+    LiteralArgumentBuilder<ServerCommandSource> parseCommand(String command){
         if (command.contains(" ")) {
-            commandName = CommandManager.literal(command.split(" ")[0]);
-        }else{
-            commandName = literal(command);
+            return CommandManager.literal(command.split(" ")[0]);
         }
+        return CommandManager.literal(command);
+    }
+
+    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(String command) {
         List<String> args = getArgumentsFromString(command);
         ArgumentBuilder<ServerCommandSource, ?> arguments = null;
         args.sort(Collections.reverseOrder());
@@ -165,9 +166,6 @@ public class CommandAliasesParser {
                 }
             }
         }
-        if (arguments != null){
-            commandName.then(arguments);
-        }
-        return commandName;
+        return arguments;
     }
 }
