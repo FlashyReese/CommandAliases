@@ -44,13 +44,14 @@ public class CommandAliasesManager {
                 dispatcher.register(command);
             }
         });
+
+        CommandAliasesMod.getLogger().info("Registered all your commands :P, you can now single command nuke!");
     }
 
     public int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         int execute = 0;
         for (CommandAlias subCmd : cmd.getExecution()) {
             String subCommand = commandAliasesParser.parse(context, cmd.getCommand(), subCmd.getCommand());
-            System.out.println(subCommand);
             if (subCmd.getType() == CommandType.CLIENT) {
                 execute = dispatcher.execute(subCommand, context.getSource());
             } else if (subCmd.getType() == CommandType.SERVER) {

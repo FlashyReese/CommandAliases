@@ -11,14 +11,12 @@ import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.*;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
-
 public class CommandAliasesParser {
 
     private Map<String, ArgumentType<?>> argumentMap = new HashMap<>();
 
     public CommandAliasesParser() {
+        //fixme: Currently all strings need regex
         this.argumentMap.put("word", StringArgumentType.word());
         this.argumentMap.put("string", StringArgumentType.string());
         this.argumentMap.put("greedy_string", StringArgumentType.greedyString());
@@ -70,6 +68,7 @@ public class CommandAliasesParser {
         this.argumentMap.put("time", TimeArgumentType.time());
         this.argumentMap.put("uuid", UuidArgumentType.uuid());
 
+        //Fixme: Ranges for all except boolean and string
         this.argumentMap.put("brigadier:bool", BoolArgumentType.bool());
         this.argumentMap.put("brigadier:float", FloatArgumentType.floatArg());
         this.argumentMap.put("brigadier:double", DoubleArgumentType.doubleArg());
@@ -87,7 +86,7 @@ public class CommandAliasesParser {
             e.printStackTrace();
         }
 
-        newCmd = formatCommand(getInputMap(cmd, context.getInput()), newCmd);
+        newCmd = formatCommand(getInputMap(cmd, context), newCmd);
 
         return newCmd;
     }
@@ -114,20 +113,13 @@ public class CommandAliasesParser {
         return args;
     }
 
-    public Map<String, String> getInputMap(String cmd, String input) {
-        input = input.substring(input.indexOf(" ") + 1);
+    public Map<String, String> getInputMap(String cmd, CommandContext<ServerCommandSource> context) {
         Map<String, String> map = new HashMap<>();
         List<String> args = getArgumentsFromString(cmd);
-        List<String> inputArgs = Arrays.asList(input.split(" "));
-        if (args.size() != inputArgs.size()) {
-            System.out.println("well rip more regex");
-            return map;
-        }
-        for (int i = 0; i < args.size(); i++) {
-            String arg = args.get(i);
-            String inputArg = inputArgs.get(i);
-            arg = "{" + arg.split("#")[1].split("}")[0] + "}";
-            map.put(arg, inputArg);
+        for (String arg: args){
+            String line = arg.split("#")[1].split("}")[0];
+            String newArg = "{" + line + "}";
+            map.put(newArg, context.getArgument(line, String.class));
         }
         return map;
     }
@@ -159,9 +151,9 @@ public class CommandAliasesParser {
                 String variable = arg.split("#")[1].split("}")[0];
                 if (argumentMap.containsKey(argType)) {
                     if (arguments != null){
-                        arguments = argument(variable, argumentMap.get(argType)).then(arguments);
+                        arguments = CommandManager.argument(variable, argumentMap.get(argType)).then(arguments);
                     }else{
-                        arguments = argument(variable, argumentMap.get(argType));
+                        arguments = CommandManager.argument(variable, argumentMap.get(argType));
                     }
                 }
             }
