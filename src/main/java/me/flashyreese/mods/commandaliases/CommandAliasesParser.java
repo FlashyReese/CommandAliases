@@ -2,7 +2,9 @@ package me.flashyreese.mods.commandaliases;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.*;
@@ -78,11 +80,7 @@ public class CommandAliasesParser {
             e.printStackTrace();
         }
 
-        for (Map.Entry<String, String> entry : getInputMap(cmd, context.getInput()).entrySet()){
-            if (subCmd.contains(entry.getKey())){
-                newCmd = newCmd.replaceAll(entry.getKey(), entry.getValue());
-            }
-        }
+        newCmd = formatCommand(getInputMap(cmd, context.getInput()), newCmd);
 
         return newCmd;
     }
@@ -117,7 +115,6 @@ public class CommandAliasesParser {
     }
 
     public Map<String, String> getInputMap(String cmd, String input) {
-        input = input.substring(1);
         input = input.substring(input.indexOf(" ") + 1);
         Map<String, String> map = new HashMap<>();
         List<String> args = getArgumentsFromString(cmd);
@@ -148,14 +145,23 @@ public class CommandAliasesParser {
     public LiteralArgumentBuilder<ServerCommandSource> buildCommand(String command) {
         LiteralArgumentBuilder<ServerCommandSource> commandName = parseCommandName(command);
         List<String> args = getArgumentsFromString(command);
+        RequiredArgumentBuilder<?, ?> arguments = null;
+        args.sort(Collections.reverseOrder());
         for (String arg : args) {
             if (arg.startsWith("{arg::")) {
                 String argType = arg.split("\\{arg::")[1].split("#")[0];
                 String variable = arg.split("#")[1].split("}")[0];
                 if (argumentMap.containsKey(argType)) {
-                    commandName = commandName.then(argument(variable, argumentMap.get(argType)));
+                    if (arguments != null){
+                        arguments = argument(variable, argumentMap.get(argType)).then((ArgumentBuilder<Object, ?>) arguments);
+                    }else{
+                        arguments = argument(variable, argumentMap.get(argType));
+                    }
                 }
             }
+        }
+        if (arguments != null){
+            commandName.then((ArgumentBuilder<ServerCommandSource, ?>) arguments);
         }
         return commandName;
     }
