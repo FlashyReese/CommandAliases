@@ -12,6 +12,60 @@ Alternate short commands for complex commands
 This mod allows you to rebind multiple commands into a single command, this also implies commands that may require 
 vanilla operator permissions.
 
+## Commands
+
+#### How to make a command?
+Command Aliases File will be located in `config/commandaliases.json`.
+
+Here is an example with comments.
+```json
+[
+	{
+		"command": "tools",
+		"_command": "Create a new command /tools",
+		"execution": [
+			{
+				"command": "give {this::SELF} minecraft:wooden_sword 1",
+				"_command": "{this::SELF} rebinds to the player who executes the /tools",
+				"type": "SERVER",
+				"_type": "CLIENT will execute the command client sided, if you don't have OP permissions, the command won't give executed. SERVER will execute the command as the SERVER"
+			},
+			{
+				"command": "give {this::SELF} minecraft:wooden_pickaxe 1",
+				"type": "SERVER"
+			},
+			{
+				"command": "give {this::SELF} minecraft:wooden_axe 1",
+				"type": "SERVER"
+			},
+			{
+				"command": "give {this::SELF} minecraft:wooden_shovel 1",
+				"type": "SERVER"
+			}
+		],
+		"message": "Here are some free wooden tools!",
+		"_message": "Optional Message that will be sent to the user"
+	},
+	{
+		"command": "sidebar {arg::objective#objective}",
+		"_command": "Creates /sidebar, required parameters are bound within {argument::argumentType#variableName}. This also creates the command with tab completion",
+		"execution": [
+			{
+				"command": "scoreboard objectives setdisplay sidebar {objective}",
+				"_command": "Our variableName is objective, any input in the place of {objective}",
+				"type": "SERVER"
+			}
+		]
+	}
+]
+```
+
+Argument types can be found [here](https://minecraft.gamepedia.com/Argument_types) and [here](src/main/java/me/flashyreese/mods/commandaliases/arguments/ArgumentTypeManager.java). There are some arguments that are currently [unavailable](doc/BROKEN.md).
+
+#### Running into issues?
+Here are some [current issues](doc/BROKEN.md) with Command Aliases
+
+
 ## Building from source
 
 #### Prerequisites
