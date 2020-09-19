@@ -118,13 +118,22 @@ public class CommandAliasesParser {
     }
 
     public Map<String, String> getInputMap(String cmd, CommandContext<ServerCommandSource> context) {
+        String input = context.getInput();
+        input = input.substring(input.indexOf(" ") + 1);
         Map<String, String> map = new HashMap<>();
         List<String> args = getArgumentsFromString(cmd);
-        for (String arg: args){
-            String line = arg.split("#")[1].split("}")[0];
-            String newArg = "{" + line + "}";
-            map.put(newArg, context.getArgument(line, String.class));//Fixme: This needs a patch time to pass Optional BiFunction into a map
+        List<String> inputArgs = Arrays.asList(input.split(" "));
+        if (args.size() != inputArgs.size()) {
+            CommandAliasesMod.getLogger().info("well time to actual regex or find a suitable replacement");
+            return map;
         }
+        for (int i = 0; i < args.size(); i++) {
+            String arg = args.get(i);
+            String inputArg = inputArgs.get(i);
+            arg = "{" + arg.split("#")[1].split("}")[0] + "}";
+            map.put(arg, inputArg);
+        }
+
         return map;
     }
 
@@ -145,7 +154,7 @@ public class CommandAliasesParser {
         return CommandManager.literal(command);
     }
 
-    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher) {//fixme: yeet executes in here instead of outside
+    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher) {
         List<String> args = getArgumentsFromString(cmd.getCommand());
         ArgumentBuilder<ServerCommandSource, ?> arguments = null;
         Collections.reverse(args);
