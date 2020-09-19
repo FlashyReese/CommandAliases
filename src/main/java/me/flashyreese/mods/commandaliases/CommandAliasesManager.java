@@ -35,36 +35,17 @@ public class CommandAliasesManager {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             for (CommandAlias cmd : this.commands) {
                 LiteralArgumentBuilder<ServerCommandSource> command = commandAliasesParser.parseCommand(cmd.getCommand());
-                ArgumentBuilder<ServerCommandSource, ?> arguments = commandAliasesParser.parseArguments(cmd.getCommand());
+                ArgumentBuilder<ServerCommandSource, ?> arguments = commandAliasesParser.parseArguments(cmd, dispatcher);
                 if (arguments != null){
-                    command = command.then(arguments.executes(context -> executeCommandAliases(cmd, dispatcher, context)));
+                    command = command.then(arguments);
                 }else{
-                    command = command.executes(context -> executeCommandAliases(cmd, dispatcher, context));
+                    command = command.executes(context -> commandAliasesParser.executeCommandAliases(cmd, dispatcher, context));
                 }
                 dispatcher.register(command);
             }
         });
 
         CommandAliasesMod.getLogger().info("Registered all your commands :P, you can now single command nuke!");
-    }
-
-    public int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
-        int execute = 0;
-        for (CommandAlias subCmd : cmd.getExecution()) {
-            String subCommand = commandAliasesParser.parse(context, cmd.getCommand(), subCmd.getCommand());
-            if (subCmd.getType() == CommandType.CLIENT) {
-                execute = dispatcher.execute(subCommand, context.getSource());
-            } else if (subCmd.getType() == CommandType.SERVER) {
-                execute = dispatcher.execute(subCommand, context.getSource().getMinecraftServer().getCommandSource());
-            }
-            if (subCmd.getMessage() != null) {
-                context.getSource().sendFeedback(new LiteralText(subCmd.getMessage()), true);
-            }
-        }
-        if (cmd.getMessage() != null) {
-            context.getSource().sendFeedback(new LiteralText(cmd.getMessage()), true);
-        }
-        return execute;
     }
 
 

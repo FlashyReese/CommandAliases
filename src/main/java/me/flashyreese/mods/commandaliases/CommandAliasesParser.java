@@ -1,13 +1,17 @@
 package me.flashyreese.mods.commandaliases;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.command.CommandType;
 import net.minecraft.server.command.CommandManager;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.LiteralText;
 
 import java.util.*;
 
@@ -119,7 +123,7 @@ public class CommandAliasesParser {
         for (String arg: args){
             String line = arg.split("#")[1].split("}")[0];
             String newArg = "{" + line + "}";
-            map.put(newArg, context.getArgument(line, String.class));
+            map.put(newArg, context.getArgument(line, String.class));//Fixme: This needs a patch time to pass Optional BiFunction into a map
         }
         return map;
     }
@@ -141,8 +145,8 @@ public class CommandAliasesParser {
         return CommandManager.literal(command);
     }
 
-    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(String command) {
-        List<String> args = getArgumentsFromString(command);
+    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher) {//fixme: yeet executes in here instead of outside
+        List<String> args = getArgumentsFromString(cmd.getCommand());
         ArgumentBuilder<ServerCommandSource, ?> arguments = null;
         Collections.reverse(args);
         for (String arg : args) {
@@ -153,11 +157,30 @@ public class CommandAliasesParser {
                     if (arguments != null){
                         arguments = CommandManager.argument(variable, argumentMap.get(argType)).then(arguments);
                     }else{
-                        arguments = CommandManager.argument(variable, argumentMap.get(argType));
+                        arguments = CommandManager.argument(variable, argumentMap.get(argType)).executes(context ->  executeCommandAliases(cmd, dispatcher, context));
                     }
                 }
             }
         }
         return arguments;
+    }
+
+    public int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+        int execute = 0;
+        for (CommandAlias subCmd : cmd.getExecution()) {
+            String subCommand = parse(context, cmd.getCommand(), subCmd.getCommand());
+            if (subCmd.getType() == CommandType.CLIENT) {
+                execute = dispatcher.execute(subCommand, context.getSource());
+            } else if (subCmd.getType() == CommandType.SERVER) {
+                execute = dispatcher.execute(subCommand, context.getSource().getMinecraftServer().getCommandSource());
+            }
+            if (subCmd.getMessage() != null) {
+                context.getSource().sendFeedback(new LiteralText(subCmd.getMessage()), true);
+            }
+        }
+        if (cmd.getMessage() != null) {
+            context.getSource().sendFeedback(new LiteralText(cmd.getMessage()), true);
+        }
+        return execute;
     }
 }
