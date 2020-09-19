@@ -28,7 +28,7 @@ Here is an example with comments.
 				"command": "give {this::SELF} minecraft:wooden_sword 1",
 				"_command": "{this::SELF} rebinds to the player who executes the /tools",
 				"type": "SERVER",
-				"_type": "CLIENT will execute the command client sided, if you don't have OP permissions, the command won't give executed. SERVER will execute the command as the SERVER"
+				"_type": "CLIENT will execute the command client sided, if you don't have OP permissions, the command give won't be executed. SERVER will execute the command as the SERVER"
 			},
 			{
 				"command": "give {this::SELF} minecraft:wooden_pickaxe 1",
