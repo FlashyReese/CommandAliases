@@ -31,7 +31,7 @@ public class CommandAliasesManager {
     }
 
     private void registerCommands() {
-        this.commands.addAll(loadCommandAliases(new File("commandaliases.json")));
+        this.commands.addAll(loadCommandAliases(new File("config/commandaliases.json")));
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             for (CommandAlias cmd : this.commands) {
                 LiteralArgumentBuilder<ServerCommandSource> command = commandAliasesParser.parseCommand(cmd.getCommand());
