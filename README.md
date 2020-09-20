@@ -43,7 +43,7 @@ Here is an example with comments.
 				"type": "SERVER"
 			}
 		],
-		"message": "Here are some free wooden tools!",
+		"message": "Here are some free wooden tools, {this::SELF}!",
 		"_message": "Optional Message that will be sent to the user"
 	},
 	{
@@ -55,7 +55,8 @@ Here is an example with comments.
 				"_command": "Our variableName is objective, any input in the place of {objective}",
 				"type": "SERVER"
 			}
-		]
+		],
+		"message": "Objective {objective} set for {this::SELF}!"
 	}
 ]
 ```
