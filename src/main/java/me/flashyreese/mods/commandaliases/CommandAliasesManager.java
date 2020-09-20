@@ -2,11 +2,15 @@ package me.flashyreese.mods.commandaliases;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.mojang.brigadier.builder.ArgumentBuilder;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.Command;
+import com.mojang.brigadier.CommandDispatcher;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.util.CommandRemoval;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.LiteralText;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -19,28 +23,57 @@ public class CommandAliasesManager {
     private CommandAliasesParser commandAliasesParser = new CommandAliasesParser();
     private final Gson gson = new Gson();
     private List<CommandAlias> commands = new ArrayList<>();
+    private List<String> loadedCommands = new ArrayList<>();
 
     public CommandAliasesManager() {
-        registerCommands();
+        registerCommandAliasesCommands();
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
+            registerCommands(false, dispatcher, dedicated);
+        });
     }
 
-    private void registerCommands() {
+    private void registerCommands(boolean unregisterLoaded, CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
+        this.commands.clear();
         this.commands.addAll(loadCommandAliases(new File("config/commandaliases.json")));
 
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-            for (CommandAlias cmd : this.commands) {
-                LiteralArgumentBuilder<ServerCommandSource> command = commandAliasesParser.parseCommand(cmd.getCommand());
-                ArgumentBuilder<ServerCommandSource, ?> arguments = commandAliasesParser.parseArguments(cmd, dispatcher);
-                if (arguments != null) {
-                    command = command.then(arguments);
-                } else {
-                    command = command.executes(context -> commandAliasesParser.executeCommandAliases(cmd, dispatcher, context));
-                }
-                dispatcher.register(command);
-            }
-        });
+        if (unregisterLoaded) {
+            this.loadedCommands.clear();
+        }
 
-        CommandAliasesMod.getLogger().info("Registered all your commands :P, you can now single command nuke!");
+        for (CommandAlias cmd : this.commands) {
+            if (cmd.getCommand().contains(" ")) {
+                this.loadedCommands.add(cmd.getCommand().split(" ")[0]);
+            } else {
+                this.loadedCommands.add(cmd.getCommand());
+            }
+            dispatcher.register(commandAliasesParser.buildCommand(cmd, dispatcher));
+        }
+
+        if (!unregisterLoaded)
+            CommandAliasesMod.getLogger().info("Registered all your commands :P, you can now single command nuke!");
+        else
+            CommandAliasesMod.getLogger().info("Reloaded all your commands :P, you can now single command nuke!");
+    }
+
+    private void registerCommandAliasesCommands() {
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
+            dispatcher.register(CommandManager.literal("commandAliases").requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(4))
+                    .then(CommandManager.literal("reload").executes(context -> {
+                        context.getSource().sendFeedback(new LiteralText("Reloading all Command Aliases!"), true);
+                        for (String cmd : this.loadedCommands) {
+                            CommandRemoval.removeCommand(dispatcher.getRoot(), cmd);
+                        }
+                        registerCommands(true, dispatcher, dedicated);
+
+                        //Update Command Tree
+                        for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
+                            context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
+                        }
+
+                        context.getSource().sendFeedback(new LiteralText("Reloaded all Command Aliases!"), true);
+                        return Command.SINGLE_SUCCESS;
+                    })));
+        });
     }
 
 

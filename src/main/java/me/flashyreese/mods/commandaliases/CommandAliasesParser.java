@@ -22,21 +22,21 @@ public class CommandAliasesParser {
         this.argumentTypeManager = new ArgumentTypeManager();
     }
 
-    public String parse(CommandContext<ServerCommandSource> context, String cmd, String subCmd) throws CommandSyntaxException {
-        String newCmd = subCmd;
+    public String formatText(CommandContext<ServerCommandSource> context, String cmd, String text) {
+        String newCmd = text;
         try {
             String playerName = context.getSource().getPlayer().getEntityName();
-            newCmd = subCmd.replaceAll("\\{this::SELF}", playerName);
+            newCmd = text.replaceAll("\\{this::SELF}", playerName);//Fixme: write this better
         } catch (CommandSyntaxException e) {
             e.printStackTrace();
         }
 
-        newCmd = formatCommand(getInputMap(cmd, context), newCmd);
+        newCmd = formatTextWithArgumentMap(getRequiredArgumentInputMap(cmd, context), newCmd);
 
         return newCmd;
     }
 
-    private List<String> getArgumentsFromString(String cmd) {
+    private List<String> getRequiredArgumentsFromString(String cmd) { //Todo: Pattern match
         List<String> args = new ArrayList<>();
         if (!(cmd.contains("{") && cmd.contains("}")))
             return args;
@@ -58,21 +58,20 @@ public class CommandAliasesParser {
         return args;
     }
 
-    public Map<String, String> getInputMap(String cmd, CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+    public Map<String, String> getRequiredArgumentInputMap(String cmd, CommandContext<ServerCommandSource> context) {
         Map<String, String> map = new HashMap<>();
-        List<String> args = getArgumentsFromString(cmd);
+        List<String> args = getRequiredArgumentsFromString(cmd);
         for (String arg : args) {
             String line = arg.split("#")[1].split("}")[0];
             String newArg = "{" + line + "}";
             String argType = arg.split("\\{arg::")[1].split("#")[0];
             String value = argumentTypeManager.getArgumentMap().get(argType).getBiFunction().apply(context, line);
-            System.out.printf("%s :: %s%n", newArg, value);
-            map.put(newArg, value);//Fixme: This needs a patch time to pass Optional BiFunction into a map
+            map.put(newArg, value);
         }
         return map;
     }
 
-    public String formatCommand(Map<String, String> map, String cmd) {
+    public String formatTextWithArgumentMap(Map<String, String> map, String cmd) {
         String command = cmd;
         for (Map.Entry<String, String> entry : map.entrySet()) {
             if (command.contains(entry.getKey())) {
@@ -82,15 +81,17 @@ public class CommandAliasesParser {
         return command;
     }
 
-    LiteralArgumentBuilder<ServerCommandSource> parseCommand(String command) {
-        if (command.contains(" ")) {
-            return CommandManager.literal(command.split(" ")[0]);
+    LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command) { //Fixme: {arg} spacing instead of " "
+        LiteralArgumentBuilder<ServerCommandSource> commandBuilder = CommandManager.literal(command.getCommand());
+        if (command.getCommand().contains(" ")) {
+            commandBuilder = CommandManager.literal(command.getCommand().split(" ")[0]);
         }
-        return CommandManager.literal(command);
+        //commandBuilder = commandBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(command.getPermissionLevel()));
+        return commandBuilder;
     }
 
-    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher) {
-        List<String> args = getArgumentsFromString(cmd.getCommand());
+    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher) { // Todo: Optional Arguments
+        List<String> args = getRequiredArgumentsFromString(cmd.getCommand());
         ArgumentBuilder<ServerCommandSource, ?> arguments = null;
         Collections.reverse(args);
         for (String arg : args) {
@@ -112,19 +113,37 @@ public class CommandAliasesParser {
     public int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         int execute = 0;
         for (CommandAlias subCmd : cmd.getExecution()) {
-            String subCommand = parse(context, cmd.getCommand(), subCmd.getCommand());
+            String subCommand = formatText(context, cmd.getCommand(), subCmd.getCommand());
             if (subCmd.getType() == CommandType.CLIENT) {
                 execute = dispatcher.execute(subCommand, context.getSource());
             } else if (subCmd.getType() == CommandType.SERVER) {
                 execute = dispatcher.execute(subCommand, context.getSource().getMinecraftServer().getCommandSource());
             }
             if (subCmd.getMessage() != null) {
-                context.getSource().sendFeedback(new LiteralText(subCmd.getMessage()), true);
+                String message = formatText(context, cmd.getCommand(), subCmd.getMessage());
+                context.getSource().sendFeedback(new LiteralText(message), true);
+            }
+            if (subCmd.getSleep() != null){
+                String formattedTime = subCmd.getSleep();
+                int time = Integer.parseInt(formattedTime);
+                //Todo: Sleep
             }
         }
         if (cmd.getMessage() != null) {
-            context.getSource().sendFeedback(new LiteralText(cmd.getMessage()), true);
+            String message = formatText(context, cmd.getCommand(), cmd.getMessage());
+            context.getSource().sendFeedback(new LiteralText(message), true);
         }
         return execute;
+    }
+
+    public LiteralArgumentBuilder<ServerCommandSource> buildCommand(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher){
+        LiteralArgumentBuilder<ServerCommandSource> command = parseCommand(cmd);
+        ArgumentBuilder<ServerCommandSource, ?> arguments = parseArguments(cmd, dispatcher);
+        if (arguments != null) {
+            command = command.then(arguments);
+        } else {
+            command = command.executes(context -> executeCommandAliases(cmd, dispatcher, context));
+        }
+        return command;
     }
 }
