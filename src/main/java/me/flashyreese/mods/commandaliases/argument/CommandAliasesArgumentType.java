@@ -1,4 +1,4 @@
-package me.flashyreese.mods.commandaliases.arguments;
+package me.flashyreese.mods.commandaliases.argument;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;

@@ -7,11 +7,11 @@ import org.apache.logging.log4j.Logger;
 public class CommandAliasesMod implements ModInitializer {
     private static Logger LOGGER;
 
-    private CommandAliasesManager commandManager;
+    private CommandAliasesLoader commandManager;
 
     @Override
     public void onInitialize() {
-        commandManager = new CommandAliasesManager();
+        commandManager = new CommandAliasesLoader();
     }
 
     public static Logger getLogger() {
