@@ -20,8 +20,6 @@ import java.util.List;
 
 public class CommandAliasesLoader {
 
-
-    private final CommandAliasesParser commandAliasesParser = new CommandAliasesParser();
     private final Gson gson = new Gson();
     private final List<CommandAlias> commands = new ArrayList<>();
     private final List<String> loadedCommands = new ArrayList<>();
@@ -47,7 +45,7 @@ public class CommandAliasesLoader {
             } else {
                 this.loadedCommands.add(cmd.getCommand());
             }
-            dispatcher.register(commandAliasesParser.buildCommand(cmd, dispatcher));
+            dispatcher.register(new CommandAliasesBuilder(cmd).buildCommand(dispatcher));
         }
 
         if (!unregisterLoaded)

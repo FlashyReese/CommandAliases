@@ -1,4 +1,4 @@
-package me.flashyreese.mods.commandaliases.argument;
+package me.flashyreese.mods.commandaliases.classtool.argument;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -11,7 +11,7 @@ public class CommandAliasesArgumentType {
     private ArgumentType<?> argumentType;
     private BiFunction<CommandContext<ServerCommandSource>, String, String> biFunction;
 
-    public CommandAliasesArgumentType(ArgumentType<?> argumentType, BiFunction<CommandContext<ServerCommandSource>, String, String> biFunction){
+    public CommandAliasesArgumentType(ArgumentType<?> argumentType, BiFunction<CommandContext<ServerCommandSource>, String, String> biFunction) {
         this.argumentType = argumentType;
         this.biFunction = biFunction;
     }

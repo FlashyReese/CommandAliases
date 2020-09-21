@@ -8,11 +8,11 @@ public class FormattingTypeMap {
 
     private final Map<String, Function<String, String>> formatTypeMap = new HashMap<>();
 
-    public FormattingTypeMap(){
+    public FormattingTypeMap() {
         registerFormatTypes();
     }
 
-    private void registerFormatTypes(){
+    private void registerFormatTypes() {
         this.formatTypeMap.put("jsonString", this::escape);
         this.formatTypeMap.put("toLower", String::toLowerCase);
         this.formatTypeMap.put("toUpper", String::toUpperCase);

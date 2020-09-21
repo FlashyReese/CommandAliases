@@ -5,7 +5,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import me.flashyreese.mods.commandaliases.argument.ArgumentTypeManager;
+import me.flashyreese.mods.commandaliases.classtool.argument.ArgumentTypeManager;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import net.minecraft.server.command.CommandManager;
@@ -14,6 +14,9 @@ import net.minecraft.text.LiteralText;
 
 import java.util.*;
 
+/**
+ * @Deprecated Use me.flashyreese.mods.commandaliases.CommandAliasesBuilder
+ */
 public class CommandAliasesParser {
 
     private final ArgumentTypeManager argumentTypeManager;
@@ -28,7 +31,7 @@ public class CommandAliasesParser {
         String newCmd = text;
         try {
             String playerName = context.getSource().getPlayer().getEntityName();
-            newCmd = text.replace("{this::SELF}", playerName);//Fixme: write this better
+            newCmd = text.replace("{this::SELF}", playerName);
         } catch (CommandSyntaxException e) {
             e.printStackTrace();
         }
@@ -38,7 +41,7 @@ public class CommandAliasesParser {
         return newCmd;
     }
 
-    private List<String> getArgumentsFromString(String cmd) { //Todo: Pattern match
+    private List<String> getArgumentsFromString(String cmd) {
         List<String> args = new ArrayList<>();
         if (!(cmd.contains("{") && cmd.contains("}")))
             return args;
@@ -65,7 +68,7 @@ public class CommandAliasesParser {
         return args;
     }
 
-    public Map<String, String> getRequiredArgumentInputMap(String cmd, CommandContext<ServerCommandSource> context) { //Fixme: change for optional arguments
+    public Map<String, String> getRequiredArgumentInputMap(String cmd, CommandContext<ServerCommandSource> context) {
         Map<String, String> map = new HashMap<>();
 
         this.getArgumentsFromString(cmd).forEach(arg -> {
@@ -81,12 +84,12 @@ public class CommandAliasesParser {
             String argType = arg.split("\\{arg::")[1].split("#")[0];
             String value;
             if (optionalFormatting == null) {
-                value = argumentTypeManager.getArgumentMap().get(argType).getBiFunction().apply(context, line);
+                value = argumentTypeManager.getValue(argType).getBiFunction().apply(context, line);
             } else {
                 if (formattingTypeMap.getFormatTypeMap().containsKey(optionalFormatting)) {
-                    value = formattingTypeMap.getFormatTypeMap().get(optionalFormatting).apply(argumentTypeManager.getArgumentMap().get(argType).getBiFunction().apply(context, line));
+                    value = formattingTypeMap.getFormatTypeMap().get(optionalFormatting).apply(argumentTypeManager.getValue(argType).getBiFunction().apply(context, line));
                 } else {
-                    value = argumentTypeManager.getArgumentMap().get(argType).getBiFunction().apply(context, line);
+                    value = argumentTypeManager.getValue(argType).getBiFunction().apply(context, line);
                     CommandAliasesMod.getLogger().error("Invalid formatting type: {}", arg);
                 }
             }
@@ -129,7 +132,7 @@ public class CommandAliasesParser {
         return command;
     }
 
-    LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command) { //Fixme: {arg} spacing instead of " "
+    LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command) {
         LiteralArgumentBuilder<ServerCommandSource> commandBuilder = CommandManager.literal(command.getCommand());
         if (command.getCommand().contains(" ")) {
             commandBuilder = CommandManager.literal(command.getCommand().split(" ")[0]);
@@ -138,7 +141,7 @@ public class CommandAliasesParser {
         return commandBuilder;
     }
 
-    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher) { // Todo: Optional Arguments
+    public ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher) {
         List<String> args = this.getArgumentsFromString(cmd.getCommand());
         ArgumentBuilder<ServerCommandSource, ?> arguments = null;
         Collections.reverse(args);
@@ -151,11 +154,11 @@ public class CommandAliasesParser {
                 } else {
                     variable = variable.split("}")[0];
                 }
-                if (argumentTypeManager.getArgumentMap().containsKey(argType)) {
+                if (argumentTypeManager.contains(argType)) {
                     if (arguments != null) {
-                        arguments = CommandManager.argument(variable, argumentTypeManager.getArgumentMap().get(argType).getArgumentType()).then(arguments);
+                        arguments = CommandManager.argument(variable, argumentTypeManager.getValue(argType).getArgumentType()).then(arguments);
                     } else {
-                        arguments = CommandManager.argument(variable, argumentTypeManager.getArgumentMap().get(argType).getArgumentType()).executes(context -> executeCommandAliases(cmd, dispatcher, context));
+                        arguments = CommandManager.argument(variable, argumentTypeManager.getValue(argType).getArgumentType()).executes(context -> executeCommandAliases(cmd, dispatcher, context));
                     }
                 }
             }
@@ -164,6 +167,7 @@ public class CommandAliasesParser {
     }
 
     public int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+
         int execute = 0;
         for (CommandAlias subCmd : cmd.getExecution()) {
             String subCommand = formatText(context, cmd.getCommand(), subCmd.getCommand());
@@ -179,7 +183,6 @@ public class CommandAliasesParser {
             if (subCmd.getSleep() != null) {
                 String formattedTime = subCmd.getSleep();
                 int time = Integer.parseInt(formattedTime);
-                //Todo: Sleep
             }
         }
         if (cmd.getMessage() != null) {

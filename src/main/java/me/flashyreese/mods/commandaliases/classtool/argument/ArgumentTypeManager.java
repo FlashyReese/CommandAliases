@@ -1,7 +1,8 @@
-package me.flashyreese.mods.commandaliases.argument;
+package me.flashyreese.mods.commandaliases.classtool.argument;
 
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import net.minecraft.command.argument.*;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
@@ -18,7 +19,7 @@ import java.util.Map;
  * See https://minecraft.gamepedia.com/Argument_types
  * There is probably a vanilla way to do this but I can't figure it out
  */
-public class ArgumentTypeManager {
+public class ArgumentTypeManager implements ClassTool<CommandAliasesArgumentType> {
 
     private final Map<String, CommandAliasesArgumentType> argumentMap = new HashMap<>();
 
@@ -226,7 +227,18 @@ public class ArgumentTypeManager {
         this.argumentMap.put("brigadier:string", new CommandAliasesArgumentType(StringArgumentType.string(), (commandContext, name) -> String.valueOf(StringArgumentType.getString(commandContext, name))));
     }
 
-    public Map<String, CommandAliasesArgumentType> getArgumentMap() {
-        return argumentMap;
+    @Override
+    public String getName() {
+        return "arg";
+    }
+
+    @Override
+    public boolean contains(String key) {
+        return this.argumentMap.containsKey(key);
+    }
+
+    @Override
+    public CommandAliasesArgumentType getValue(String key) {
+        return this.argumentMap.get(key);
     }
 }
