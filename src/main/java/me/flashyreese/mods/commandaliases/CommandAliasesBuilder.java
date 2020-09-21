@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
  */
 public class CommandAliasesBuilder {
 
-    private static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::)?(?<method>\\w+)?#?(?<variableName>\\w+)?@?(?<formattingType>\\w+)?}");
+    private static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::)?(?<method>[\\w:]+)?#?(?<variableName>\\w+)?@?(?<formattingType>\\w+)?}");
 
     private final CommandAlias command;
     private final List<CommandAliasesHolder> commandAliasesHolders = new ArrayList<>();
