@@ -23,24 +23,18 @@ public class CommandAliasesBuilder {
 
     private static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::)?(?<method>\\w+)?#?(?<variableName>\\w+)?@?(?<formattingType>\\w+)?}");
 
-    private CommandAlias command;
-    private List<String> holders = new ArrayList<>();
-    private List<CommandAliasesHolder> commandAliasesHolders = new ArrayList<>();
+    private final CommandAlias command;
+    private final List<CommandAliasesHolder> commandAliasesHolders = new ArrayList<>();
 
-    private Map<String, ClassTool<?>> classToolMap = new HashMap<>();
-    //private ArgumentTypeManager argumentTypeManager;
-    //private MinecraftClassTool minecraftClassTool;
-    private FormattingTypeMap formattingTypeMap;
+    private final Map<String, ClassTool<?>> classToolMap = new HashMap<>();
+    private final FormattingTypeMap formattingTypeMap;
 
     public CommandAliasesBuilder(CommandAlias command) {
         this.command = command;
-        this.holders.addAll(this.findHolders(command.getCommand()));
-        this.commandAliasesHolders.addAll(this.buildHolders(this.holders));
+        this.commandAliasesHolders.addAll(this.buildHolders(this.findHolders(command.getCommand())));
 
         this.classToolMap.put("arg", new ArgumentTypeManager());
         this.classToolMap.put("this", new MinecraftClassTool());
-        //this.argumentTypeManager = new ArgumentTypeManager();
-        //this.minecraftClassTool = new MinecraftClassTool();
         this.formattingTypeMap = new FormattingTypeMap();
     }
 
@@ -55,7 +49,7 @@ public class CommandAliasesBuilder {
 
     private List<CommandAliasesHolder> buildHolders(List<String> holders) {
         List<CommandAliasesHolder> commandAliasesHolders = new ArrayList<>();
-        holders.stream().forEach(holder -> {
+        holders.forEach(holder -> {
             commandAliasesHolders.add(new CommandAliasesHolder(holder));
         });
         return commandAliasesHolders;
@@ -66,29 +60,6 @@ public class CommandAliasesBuilder {
         Map<String, String> inputMap = new HashMap<>();
 
         for (CommandAliasesHolder holder : this.commandAliasesHolders) {
-            /*String key = "{" + holder.getVariableName() + "}";
-            String value = null;
-
-            if (holder.getClassTool().equals(this.minecraftClassTool.getName())){
-                if (this.minecraftClassTool.contains(holder.getMethod())){
-                    value = this.minecraftClassTool.getValue(holder.getMethod()).apply(context);
-                }
-            } else if (holder.getClassTool().equals(this.argumentTypeManager.getName())){
-                if (this.argumentTypeManager.contains(holder.getMethod())){
-                    value = this.argumentTypeManager.getValue(holder.getMethod()).getBiFunction().apply(context, holder.getVariableName());
-                }
-            }
-            if (holder.getFormattingType() != null){
-                if (this.formattingTypeMap.getFormatTypeMap().containsKey(holder.getFormattingType())){
-                    inputMap.put(key, this.formattingTypeMap.getFormatTypeMap().get(holder.getFormattingType()).apply(value));
-                }else{
-                    CommandAliasesMod.getLogger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
-                    inputMap.put(key, value);
-                }
-            }else{
-                inputMap.put(key, value);
-            }*/
-
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 if (this.classToolMap.get(holder.getClassTool()).contains(holder.getMethod())) {
                     String key = "{" + holder.getVariableName() + "}";
@@ -99,7 +70,6 @@ public class CommandAliasesBuilder {
                     if (tool instanceof CommandAliasesArgumentType) {
                         value = ((CommandAliasesArgumentType) tool).getBiFunction().apply(context, holder.getVariableName());
                     }
-
 
                     if (holder.getFormattingType() != null) {
                         if (this.formattingTypeMap.getFormatTypeMap().containsKey(holder.getFormattingType())) {
@@ -198,10 +168,29 @@ public class CommandAliasesBuilder {
         return command;
     }
 
-    private LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command) { //Fixme: {arg} spacing instead of " "
-        LiteralArgumentBuilder<ServerCommandSource> commandBuilder = CommandManager.literal(command.getCommand());
-        if (command.getCommand().contains(" ")) {
-            commandBuilder = CommandManager.literal(command.getCommand().split(" ")[0]);
+    private LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command) {
+        LiteralArgumentBuilder<ServerCommandSource> commandBuilder = null;
+        List<String> holders = this.findHolders(command.getCommand());
+        String newCommand = command.getCommand();
+
+        for (String holder: holders){
+            newCommand = newCommand.replace(holder, "");
+        }
+        newCommand = newCommand.trim();
+
+        if (newCommand.contains(" ")){
+            List<String> literals = Arrays.asList(newCommand.split(" "));
+            Collections.reverse(literals);
+            for (String literal: literals){
+                if (commandBuilder != null){
+                    commandBuilder = CommandManager.literal(literal).then(commandBuilder);
+                }else{
+                    commandBuilder = CommandManager.literal(literal);
+                }
+            }
+
+        }else{
+            commandBuilder = CommandManager.literal(newCommand);
         }
         //commandBuilder = commandBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(command.getPermissionLevel()));
         return commandBuilder;
