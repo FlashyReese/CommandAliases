@@ -1,3 +1,12 @@
+/*
+ * Copyright © 2020 FlashyReese
+ *
+ * This file is part of CommandAliases.
+ *
+ * Licensed under the MIT license. For more information,
+ * see the LICENSE file.
+ */
+
 package me.flashyreese.mods.commandaliases.classtool.argument;
 
 import com.mojang.brigadier.arguments.ArgumentType;

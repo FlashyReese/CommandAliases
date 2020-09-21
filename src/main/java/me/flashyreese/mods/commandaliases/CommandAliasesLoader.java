@@ -1,3 +1,12 @@
+/*
+ * Copyright © 2020 FlashyReese
+ *
+ * This file is part of CommandAliases.
+ *
+ * Licensed under the MIT license. For more information,
+ * see the LICENSE file.
+ */
+
 package me.flashyreese.mods.commandaliases;
 
 import com.google.gson.Gson;
@@ -18,6 +27,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the custom command aliases loader.
+ *
+ * @author FlashyReese
+ * @version 0.1.3
+ * @since 0.0.9
+ */
 public class CommandAliasesLoader {
 
     private final Gson gson = new Gson();
@@ -25,12 +41,19 @@ public class CommandAliasesLoader {
     private final List<String> loadedCommands = new ArrayList<>();
 
     public CommandAliasesLoader() {
-        registerCommandAliasesCommands();
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
+            registerCommandAliasesCommands(dispatcher, dedicated);
             registerCommands(false, dispatcher, dedicated);
         });
     }
 
+    /**
+     * Registers all Command Aliases' custom commands. You can re-register them if you enable @param unregisterLoaded
+     *
+     * @param unregisterLoaded If method should unload loaded commands
+     * @param dispatcher The CommandDispatcher
+     * @param dedicated Is Dedicated Server
+     */
     private void registerCommands(boolean unregisterLoaded, CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
         this.commands.clear();
         this.commands.addAll(loadCommandAliases(new File("config/commandaliases.json")));
@@ -54,54 +77,63 @@ public class CommandAliasesLoader {
             CommandAliasesMod.getLogger().info("Reloaded all your commands :P, you can now single command nuke!");
     }
 
-    private void registerCommandAliasesCommands() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-            dispatcher.register(CommandManager.literal("commandAliases").requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(4))
-                    .then(CommandManager.literal("reload")
-                            .executes(context -> {
-                                        context.getSource().sendFeedback(new LiteralText("Reloading all Command Aliases!"), true);
-                                        for (String cmd : this.loadedCommands) {
-                                            CommandRemoval.removeCommand(dispatcher.getRoot(), cmd);
-                                        }
-                                        registerCommands(true, dispatcher, dedicated);
-
-                                        //Update Command Tree
-                                        for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                                            context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
-                                        }
-
-                                        context.getSource().sendFeedback(new LiteralText("Reloaded all Command Aliases!"), true);
-                                        return Command.SINGLE_SUCCESS;
+    /**
+     * Registers all Command Aliases' commands
+     *
+     * @param dispatcher The CommandDispatcher
+     * @param dedicated Is Dedicated Server
+     */
+    private void registerCommandAliasesCommands(CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
+        dispatcher.register(CommandManager.literal("commandAliases").requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(4))
+                .then(CommandManager.literal("reload")
+                        .executes(context -> {
+                                    context.getSource().sendFeedback(new LiteralText("Reloading all Command Aliases!"), true);
+                                    for (String cmd : this.loadedCommands) {
+                                        CommandRemoval.removeCommand(dispatcher.getRoot(), cmd);
                                     }
-                            )
-                    ).then(CommandManager.literal("add")
-                            .then(CommandManager.argument("json", StringArgumentType.greedyString())
-                                    .executes(context -> {
-                                                String json = StringArgumentType.getString(context, "json");
-                                                context.getSource().sendFeedback(new LiteralText(json), true);
-                                                return Command.SINGLE_SUCCESS;
-                                            }
-                                    )
-                            )
-                    ).then(CommandManager.literal("unload")
-                            .executes(context -> {
-                                        context.getSource().sendFeedback(new LiteralText("Unloading all Command Aliases!"), true);
-                                        for (String cmd : this.loadedCommands) {
-                                            CommandRemoval.removeCommand(dispatcher.getRoot(), cmd);
-                                        }
-                                        for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                                            context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
-                                        }
-                                        context.getSource().sendFeedback(new LiteralText("Unloaded all Command Aliases!"), true);
-                                        return Command.SINGLE_SUCCESS;
+                                    registerCommands(true, dispatcher, dedicated);
+
+                                    //Update Command Tree
+                                    for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
+                                        context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
                                     }
-                            )
-                    )
-            );
-        });
+
+                                    context.getSource().sendFeedback(new LiteralText("Reloaded all Command Aliases!"), true);
+                                    return Command.SINGLE_SUCCESS;
+                                }
+                        )
+                ).then(CommandManager.literal("load")
+                        .then(CommandManager.argument("json", StringArgumentType.greedyString())
+                                .executes(context -> {
+                                            String json = StringArgumentType.getString(context, "json");
+                                            context.getSource().sendFeedback(new LiteralText(json), true);
+                                            return Command.SINGLE_SUCCESS;
+                                        }
+                                )
+                        )
+                ).then(CommandManager.literal("unload")
+                        .executes(context -> {
+                                    context.getSource().sendFeedback(new LiteralText("Unloading all Command Aliases!"), true);
+                                    for (String cmd : this.loadedCommands) {
+                                        CommandRemoval.removeCommand(dispatcher.getRoot(), cmd);
+                                    }
+                                    for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
+                                        context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
+                                    }
+                                    context.getSource().sendFeedback(new LiteralText("Unloaded all Command Aliases!"), true);
+                                    return Command.SINGLE_SUCCESS;
+                                }
+                        )
+                )
+        );
     }
 
-
+    /**
+     * Reads JSON file and serializes them to a List of CommandAliases
+     *
+     * @param file JSON file path
+     * @return List of CommandAliases
+     */
     private List<CommandAlias> loadCommandAliases(File file) {
         List<CommandAlias> commandAliases = new ArrayList<>();
 

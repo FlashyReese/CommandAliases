@@ -1,9 +1,21 @@
+/*
+ * Copyright © 2020 FlashyReese
+ *
+ * This file is part of CommandAliases.
+ *
+ * Licensed under the MIT license. For more information,
+ * see the LICENSE file.
+ */
+
 package me.flashyreese.mods.commandaliases.classtool.argument;
 
 import com.mojang.brigadier.arguments.*;
+import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import me.flashyreese.mods.commandaliases.CommandAliasesBuilder;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import net.minecraft.command.argument.*;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ColumnPos;
@@ -15,6 +27,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * Represents the Argument Type Manager Class Tool
+ *
+ * @author FlashyReese
+ * @version 0.1.3
+ * @since 0.0.9
+ *
  * This ArgumentTypeManager maps ArgumentTypes to String.
  * See https://minecraft.gamepedia.com/Argument_types
  * There is probably a vanilla way to do this but I can't figure it out
@@ -240,5 +258,10 @@ public class ArgumentTypeManager implements ClassTool<CommandAliasesArgumentType
     @Override
     public CommandAliasesArgumentType getValue(String key) {
         return this.argumentMap.get(key);
+    }
+
+    @Override
+    public String getValue(CommandContext<ServerCommandSource> context, CommandAliasesBuilder.CommandAliasesHolder holder) {
+        return this.getValue(holder.getMethod()).getBiFunction().apply(context, holder.getVariableName());
     }
 }

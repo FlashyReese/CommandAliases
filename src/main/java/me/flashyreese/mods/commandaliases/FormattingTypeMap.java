@@ -1,9 +1,27 @@
+/*
+ * Copyright © 2020 FlashyReese
+ *
+ * This file is part of CommandAliases.
+ *
+ * Licensed under the MIT license. For more information,
+ * see the LICENSE file.
+ */
+
 package me.flashyreese.mods.commandaliases;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * Represents the String Formatting Type
+ * <p>
+ * Used to convert String to a certain state.
+ *
+ * @author FlashyReese
+ * @version 0.1.3
+ * @since 0.1.2
+ */
 public class FormattingTypeMap {
 
     private final Map<String, Function<String, String>> formatTypeMap = new HashMap<>();

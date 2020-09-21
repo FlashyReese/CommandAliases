@@ -1,3 +1,12 @@
+/*
+ * Copyright © 2020 vacla
+ *
+ * This file is part of Watson.
+ *
+ * Licensed under the MIT license. For more information,
+ * see the LICENSE file.
+ */
+
 package me.flashyreese.mods.commandaliases.util;
 
 import com.mojang.brigadier.tree.ArgumentCommandNode;
@@ -9,9 +18,13 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
- * Copy of https://github.com/vacla/Watson/blob/fabric_1.16.2/src/main/java/eu/minemania/watson/chat/command/CommandRemoval.java
+ * Represents the CommandRemoval Util
+ * <p>
+ * Removes root commands from during runtime.
  *
  * @author vacla
+ * @version 0.1.3
+ * @since 0.1.1
  */
 public class CommandRemoval {
     private static final Field CHILDREN, LITERALS, ARGUMENTS;
