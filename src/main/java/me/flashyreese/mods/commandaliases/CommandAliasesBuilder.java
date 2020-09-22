@@ -192,17 +192,10 @@ public class CommandAliasesBuilder {
     }
 
     public LiteralArgumentBuilder<ServerCommandSource> buildCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
-        LiteralArgumentBuilder<ServerCommandSource> command = parseCommand(this.command);
-        ArgumentBuilder<ServerCommandSource, ?> arguments = parseArguments(this.command, dispatcher);
-        if (arguments != null) {
-            command = command.then(arguments);
-        } else {
-            command = command.executes(context -> executeCommandAliases(this.command, dispatcher, context));
-        }
-        return command;
+        return parseCommand(this.command, dispatcher);
     }
 
-    private LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command) {
+    private LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command, CommandDispatcher<ServerCommandSource> dispatcher) {
         LiteralArgumentBuilder<ServerCommandSource> commandBuilder = null;
         List<String> holders = this.findHolders(command.getCommand());
         String newCommand = command.getCommand();
@@ -212,21 +205,44 @@ public class CommandAliasesBuilder {
         }
         newCommand = newCommand.trim();
 
-        if (newCommand.contains(" ")) {
+        if (newCommand.contains(" ") && holders.size() == 0) {
             List<String> literals = Arrays.asList(newCommand.split(" "));
             Collections.reverse(literals);
             for (String literal : literals) {
                 if (commandBuilder != null) {
                     commandBuilder = CommandManager.literal(literal).then(commandBuilder);
                 } else {
-                    commandBuilder = CommandManager.literal(literal);
+                    commandBuilder = CommandManager.literal(literal).executes(context -> executeCommandAliases(command, dispatcher, context));
+                }
+            }
+        } else if (newCommand.contains(" ") && holders.size() != 0) {
+            ArgumentBuilder<ServerCommandSource, ?> arguments = parseArguments(command, dispatcher);
+            List<String> literals = Arrays.asList(newCommand.split(" "));
+            Collections.reverse(literals);
+            for (String literal : literals) {
+                if (commandBuilder != null) {
+                    commandBuilder = CommandManager.literal(literal).then(commandBuilder);
+                } else {
+                    if (arguments != null) {
+                        commandBuilder = CommandManager.literal(literal).then(arguments);
+                    } else {
+                        commandBuilder = CommandManager.literal(literal).executes(context -> executeCommandAliases(command, dispatcher, context));
+                    }
                 }
             }
 
-        } else {
-            commandBuilder = CommandManager.literal(newCommand);
+        } else if (!newCommand.contains(" ") && holders.size() == 0) {
+            commandBuilder = CommandManager.literal(newCommand).executes(context -> executeCommandAliases(command, dispatcher, context));
+            ;
+        } else if (!newCommand.contains(" ") && holders.size() != 0) {
+            ArgumentBuilder<ServerCommandSource, ?> arguments = parseArguments(command, dispatcher);
+            if (arguments != null) {
+                commandBuilder = CommandManager.literal(newCommand).then(arguments);
+            } else {
+                commandBuilder = CommandManager.literal(newCommand).executes(context -> executeCommandAliases(command, dispatcher, context));
+            }
         }
-        //commandBuilder = commandBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(command.getPermissionLevel()));
+        commandBuilder = commandBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(command.getPermissionLevel()));
         return commandBuilder;
     }
 
