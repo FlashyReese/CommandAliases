@@ -39,7 +39,8 @@ import java.util.regex.Pattern;
  */
 public class CommandAliasesBuilder {
 
-    private static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::)?(?<method>[\\w:]+)?#?(?<variableName>\\w+)?@?(?<formattingType>\\w+)?}");
+    private static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?}");
+    private static final Pattern OPTIONAL_COMMAND_ALIAS_HOLDER = Pattern.compile("\\[(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?]");
 
     private final CommandAlias command;
     private final List<CommandAliasesHolder> commandAliasesHolders = new ArrayList<>();
@@ -157,7 +158,7 @@ public class CommandAliasesBuilder {
     }
 
 
-    private int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context){
+    private int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) {
         AtomicInteger execute = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
@@ -278,27 +279,37 @@ public class CommandAliasesBuilder {
         private String variableName;
         private String formattingType;
 
+        private boolean required;
+
         public CommandAliasesHolder(String holder) {
             this.holder = holder;
             this.findVariables();
         }
 
         private void findVariables() {
-            Matcher matcher = CommandAliasesBuilder.REQUIRED_COMMAND_ALIAS_HOLDER.matcher(this.holder);
-            if (matcher.matches()) {
-                String classTool = matcher.group("classTool");
-                String method = matcher.group("method");
-                String variableName = matcher.group("variableName");
-                String formattingType = matcher.group("formattingType");
+            Matcher requiredMatcher = CommandAliasesBuilder.REQUIRED_COMMAND_ALIAS_HOLDER.matcher(this.holder);
+            Matcher optionalMatcher = CommandAliasesBuilder.OPTIONAL_COMMAND_ALIAS_HOLDER.matcher(this.holder);
+            if (requiredMatcher.matches()) {
+                String classTool = requiredMatcher.group("classTool");
+                String method = requiredMatcher.group("method");
+                String variableName = requiredMatcher.group("variableName");
+                String formattingType = requiredMatcher.group("formattingType");
 
-                this.updateVariables(classTool, method, variableName, formattingType);
+                this.updateVariables(classTool, method, variableName, formattingType, true);
                 //System.out.println(String.format("Command: %s ClassTool: %s Method: %s VariableName: %s FormattingType: %s", this.holder, this.classTool, this.method, this.variableName, this.formattingType));
+            } else if (optionalMatcher.matches()) {
+                String classTool = optionalMatcher.group("classTool");
+                String method = optionalMatcher.group("method");
+                String variableName = optionalMatcher.group("variableName");
+                String formattingType = optionalMatcher.group("formattingType");
+
+                this.updateVariables(classTool, method, variableName, formattingType, false);
             } else {
                 CommandAliasesMod.getLogger().error("Invalid Command Aliases Holder: {}", this.holder);
             }
         }
 
-        private void updateVariables(String classTool, String method, String variableName, String formattingType) {
+        private void updateVariables(String classTool, String method, String variableName, String formattingType, boolean required) {
             String cT = classTool;
             String vN = variableName;
 
@@ -311,6 +322,7 @@ public class CommandAliasesBuilder {
             this.method = method;
             this.variableName = vN;
             this.formattingType = formattingType;
+            this.required = required;
         }
 
         public String toString() {
@@ -335,6 +347,10 @@ public class CommandAliasesBuilder {
 
         public String getFormattingType() {
             return this.formattingType;
+        }
+
+        public boolean isRequired() {
+            return required;
         }
     }
 }
