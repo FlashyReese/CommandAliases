@@ -157,7 +157,7 @@ public class CommandAliasesBuilder {
     }
 
 
-    private int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
+    private int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context){
         AtomicInteger execute = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
@@ -179,7 +179,8 @@ public class CommandAliasesBuilder {
                     }
                 }
             } catch (CommandSyntaxException | InterruptedException e) {
-                e.printStackTrace();
+                String output = e.getLocalizedMessage();
+                context.getSource().sendFeedback(new LiteralText(output), true);
             }
             if (cmd.getMessage() != null) {
                 String message = formatSubCommandOrMessage(context, cmd.getMessage());
