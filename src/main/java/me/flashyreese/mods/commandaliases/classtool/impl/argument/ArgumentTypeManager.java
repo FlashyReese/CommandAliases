@@ -7,7 +7,7 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases.classtool.argument;
+package me.flashyreese.mods.commandaliases.classtool.impl.argument;
 
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.context.CommandContext;

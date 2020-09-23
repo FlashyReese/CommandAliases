@@ -7,11 +7,12 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases.classtool;
+package me.flashyreese.mods.commandaliases.classtool.exec;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.flashyreese.mods.commandaliases.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.HashMap;
