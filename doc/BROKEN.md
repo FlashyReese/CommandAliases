@@ -4,6 +4,7 @@
 - All arguments are required, you can't create optional argument yet.
 - Permissions are broken, will improve json format soon.
 - Do not add multiple command aliases with the same alias.
+- NBT arguments are not properly pass
 
 ## Argument Types
 - `entities`
