@@ -35,6 +35,10 @@ if (project.use_third_party_mods) {
 			exclude module: "fabric-loader"
 			transitive = false
 		}
+
+		modRuntime ("com.github.jellysquid3:sodium-fabric:${project.sodium_version}")
+		modRuntime ("com.github.jellysquid3:lithium-fabric:${project.lithium_version}")
+		modRuntime ("com.github.jellysquid3:phosphor-fabric:${project.phosphor_version}")
 	}
 }
 
