@@ -28,6 +28,9 @@ public class CommandAlias {
     private String sleep;
     private String message;
 
+    private boolean reassignOnly;
+    private String reassignOriginal;
+
     public String getCommand() {
         return command;
     }
@@ -50,5 +53,13 @@ public class CommandAlias {
 
     public String getMessage() {
         return message;
+    }
+
+    public boolean isReassignOnly() {
+        return reassignOnly;
+    }
+
+    public String getReassignOriginal() {
+        return reassignOriginal;
     }
 }

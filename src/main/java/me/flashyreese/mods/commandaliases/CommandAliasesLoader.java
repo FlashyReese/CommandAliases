@@ -14,8 +14,8 @@ import com.google.gson.reflect.TypeToken;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
-import me.flashyreese.mods.commandaliases.util.CommandRemoval;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -23,6 +23,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
 
 import java.io.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +56,7 @@ public class CommandAliasesLoader {
      * @param dispatcher The CommandDispatcher
      * @param dedicated Is Dedicated Server
      */
-    private void registerCommands(boolean unregisterLoaded, CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
+    private void registerCommands(boolean unregisterLoaded, CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated){
         this.commands.clear();
         this.commands.addAll(loadCommandAliases(new File("config/commandaliases.json")));
 
@@ -63,6 +65,36 @@ public class CommandAliasesLoader {
         }
 
         for (CommandAlias cmd : this.commands) {
+            if (cmd.getReassignOriginal() != null){
+                CommandNode<ServerCommandSource> commandNode = dispatcher.getRoot().getChildren().stream().filter(node ->
+                        node.getName().equals(cmd.getCommand())).findFirst().orElse(null);
+
+                CommandNode<ServerCommandSource> commandReassignNode = dispatcher.getRoot().getChildren().stream().filter(node -> node.getName().equals(cmd.getReassignOriginal())).findFirst().orElse(null);
+
+                if (commandNode != null && commandReassignNode == null){
+                    dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(cmd.getCommand()));
+
+                    try{
+                        Field f = commandNode.getClass().getDeclaredField("literal");
+                        f.setAccessible(true);
+                        Field modifiers = Field.class.getDeclaredField("modifiers");
+                        modifiers.setAccessible(true);
+                        modifiers.setInt(f, f.getModifiers() & ~Modifier.FINAL);
+                        f.set(commandNode, cmd.getReassignOriginal());
+                    }catch (NoSuchFieldException | IllegalAccessException e){
+                        e.printStackTrace();
+                        CommandAliasesMod.getLogger().error("Skipping \"{}\", couldn't modify command literal", cmd.getCommand());
+                        continue;
+                    }
+
+                    dispatcher.getRoot().addChild(commandNode);
+                    CommandAliasesMod.getLogger().info("Command \"{}\" has been reassigned to \"{}\"", cmd.getCommand(), cmd.getReassignOriginal());
+                    if (cmd.isReassignOnly()){
+                        continue;
+                    }
+                }
+
+            }
             if (cmd.getCommand().contains(" ")) {
                 this.loadedCommands.add(cmd.getCommand().split(" ")[0]);
             } else {
@@ -89,7 +121,7 @@ public class CommandAliasesLoader {
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Reloading all Command Aliases!"), true);
                                     for (String cmd : this.loadedCommands) {
-                                        CommandRemoval.removeCommand(dispatcher.getRoot(), cmd);
+                                        dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(cmd));
                                     }
                                     registerCommands(true, dispatcher, dedicated);
 
@@ -115,7 +147,7 @@ public class CommandAliasesLoader {
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Unloading all Command Aliases!"), true);
                                     for (String cmd : this.loadedCommands) {
-                                        CommandRemoval.removeCommand(dispatcher.getRoot(), cmd);
+                                        dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(cmd));
                                     }
                                     for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
                                         context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);

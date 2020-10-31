@@ -167,21 +167,25 @@ public class CommandAliasesBuilder {
         AtomicInteger execute = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
-                for (CommandAlias subCmd : cmd.getExecution()) {
-                    String subCommand = formatSubCommandOrMessage(context, subCmd.getCommand());
-                    if (subCmd.getType() == CommandType.CLIENT) {
-                        execute.set(dispatcher.execute(subCommand, context.getSource()));
-                    } else if (subCmd.getType() == CommandType.SERVER) {
-                        execute.set(dispatcher.execute(subCommand, context.getSource().getMinecraftServer().getCommandSource()));
-                    }
-                    if (subCmd.getMessage() != null) {
-                        String message = formatSubCommandOrMessage(context, subCmd.getMessage());
-                        context.getSource().sendFeedback(new LiteralText(message), true);
-                    }
-                    if (subCmd.getSleep() != null) {
-                        String formattedTime = subCmd.getSleep();
-                        int time = Integer.parseInt(formattedTime);
-                        Thread.sleep(time);
+                if (cmd.getExecution() != null){
+                    for (CommandAlias subCmd : cmd.getExecution()) {
+                        if (subCmd.getCommand() != null){
+                            String subCommand = formatSubCommandOrMessage(context, subCmd.getCommand());
+                            if (subCmd.getType() == CommandType.CLIENT) {
+                                execute.set(dispatcher.execute(subCommand, context.getSource()));
+                            } else if (subCmd.getType() == CommandType.SERVER) {
+                                execute.set(dispatcher.execute(subCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                            }
+                        }
+                        if (subCmd.getMessage() != null) {
+                            String message = formatSubCommandOrMessage(context, subCmd.getMessage());
+                            context.getSource().sendFeedback(new LiteralText(message), true);
+                        }
+                        if (subCmd.getSleep() != null) {
+                            String formattedTime = subCmd.getSleep();
+                            int time = Integer.parseInt(formattedTime);
+                            Thread.sleep(time);
+                        }
                     }
                 }
             } catch (CommandSyntaxException | InterruptedException e) {
