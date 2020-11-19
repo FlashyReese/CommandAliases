@@ -12,22 +12,16 @@
     "homepage": "https://github.com/FlashyReese",
     "sources": "https://github.com/FlashyReese/CommandAliases"
   },
-
   "license": "MIT",
   "icon": "assets/commandaliases/icon.png",
-
   "environment": "*",
   "entrypoints": {
     "main": [
       "me.flashyreese.mods.commandaliases.CommandAliasesMod"
     ]
   },
-  "mixins": [
-    "commandaliases.mixins.json"
-  ],
-
   "depends": {
-    "fabricloader": ">=0.7.4",
+    "fabricloader": ">=0.10.6",
     "fabric": "*",
     "minecraft": "1.16.x"
   }

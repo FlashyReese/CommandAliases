@@ -44,8 +44,8 @@ public class CommandAliasesLoader {
 
     public CommandAliasesLoader() {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-            registerCommandAliasesCommands(dispatcher, dedicated);
-            registerCommands(false, dispatcher, dedicated);
+            this.registerCommandAliasesCommands(dispatcher, dedicated);
+            this.registerCommands(false, dispatcher, dedicated);
         });
     }
 
@@ -117,6 +117,10 @@ public class CommandAliasesLoader {
      */
     private void registerCommandAliasesCommands(CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
         dispatcher.register(CommandManager.literal("commandAliases").requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(4))
+                .executes(context -> {
+                    context.getSource().sendFeedback(new LiteralText("Working?"), true);
+                    return Command.SINGLE_SUCCESS;
+                })
                 .then(CommandManager.literal("reload")
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Reloading all Command Aliases!"), true);
