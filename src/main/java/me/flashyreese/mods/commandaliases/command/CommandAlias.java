@@ -17,12 +17,11 @@ import java.util.List;
  * JSON Serialization Template
  *
  * @author FlashyReese
- * @version 0.1.3
+ * @version 0.2.0
  * @since 0.0.9
  */
 public class CommandAlias {
     private String command;
-    private int permissionLevel;
     private CommandType type;
     private List<CommandAlias> execution;
     private String sleep;
@@ -33,10 +32,6 @@ public class CommandAlias {
 
     public String getCommand() {
         return command;
-    }
-
-    public int getPermissionLevel() {
-        return permissionLevel;
     }
 
     public CommandType getType() {

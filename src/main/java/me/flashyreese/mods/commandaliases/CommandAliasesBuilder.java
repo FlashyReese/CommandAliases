@@ -15,6 +15,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
+import me.flashyreese.mods.commandaliases.classtool.FormattingTypeMap;
 import me.flashyreese.mods.commandaliases.classtool.exec.MinecraftClassTool;
 import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
@@ -34,12 +35,10 @@ import java.util.regex.Pattern;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.1.3
- * @since 0.1.4
+ * @version 0.2.0
+ * @since 0.1.3
  */
 public class CommandAliasesBuilder {
-
-    //Fixme: Look ahead or Look behind pain for regex could simply make this a single pattern but it should be safer with current method without breaking anything. :')
     private static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?}");
     private static final Pattern OPTIONAL_COMMAND_ALIAS_HOLDER = Pattern.compile("\\[(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?]");
 
@@ -84,9 +83,7 @@ public class CommandAliasesBuilder {
      */
     private List<CommandAliasesHolder> buildHolders(List<String> holders, boolean required) {
         List<CommandAliasesHolder> commandAliasesHolders = new ArrayList<>();
-        holders.forEach(holder -> {
-            commandAliasesHolders.add(new CommandAliasesHolder(holder, required));
-        });
+        holders.forEach(holder -> commandAliasesHolders.add(new CommandAliasesHolder(holder, required)));
         return commandAliasesHolders;
     }
 
@@ -117,7 +114,7 @@ public class CommandAliasesBuilder {
                     String value;
                     try {
                         value = this.classToolMap.get(holder.getClassTool()).getValue(context, holder);
-                    }catch (Exception e){
+                    } catch (Exception e) {
                         value = null;
                     }
 
@@ -158,11 +155,11 @@ public class CommandAliasesBuilder {
      * @return Executable Command
      */
     private String formatExecutionCommandOrMessage(CommandContext<ServerCommandSource> context, String text) {
+        //Bind Input Map to execution commands
         Map<String, String> requiredInputMap = this.getHolderInputMap(context, true);
         Map<String, String> optionalInputMap = this.getHolderInputMap(context, false);
         String formattedText = text;
-
-        for (Map.Entry<String, String> entry : requiredInputMap.entrySet()) {//Fixme: Hardcoding
+        for (Map.Entry<String, String> entry : requiredInputMap.entrySet()) {
             String format = String.format("{%s}", entry.getKey());
             if (formattedText.contains(format)) {
                 formattedText = formattedText.replace(format, entry.getValue());
@@ -175,10 +172,10 @@ public class CommandAliasesBuilder {
             }
         }
 
-        //SubCommand Formatting
+        //Execution Formatting/Binding
         Map<String, String> newInputMap = new HashMap<>();
-        List<CommandAliasesHolder> textHolders = this.getCommandAliasesHolders(command.getCommand(), true);
-        textHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), false));
+        List<CommandAliasesHolder> textHolders = this.getCommandAliasesHolders(this.command.getCommand(), true);
+        textHolders.addAll(this.getCommandAliasesHolders(this.command.getCommand(), false));
         for (CommandAliasesHolder holder : textHolders) {
             String value = null;
 
@@ -190,7 +187,7 @@ public class CommandAliasesBuilder {
                 if (this.classToolMap.get(holder.getClassTool()).contains(holder.getMethod())) {
                     try {
                         value = this.classToolMap.get(holder.getClassTool()).getValue(context, holder);
-                    }catch (Exception ignored){
+                    } catch (Exception ignored) {
 
                     }
                 } else {
@@ -202,7 +199,6 @@ public class CommandAliasesBuilder {
                 CommandAliasesMod.getLogger().warn("Unable to find a value for \"{}\", skipping", holder.getHolder());
                 continue;
             }
-
 
             if (holder.getFormattingType() != null) {
                 if (this.formattingTypeMap.getFormatTypeMap().containsKey(holder.getFormattingType())) {
@@ -270,7 +266,7 @@ public class CommandAliasesBuilder {
                 context.getSource().sendFeedback(new LiteralText(output), true);
             }
             if (cmd.getMessage() != null) {
-                String message = formatExecutionCommandOrMessage(context, cmd.getMessage());
+                String message = this.formatExecutionCommandOrMessage(context, cmd.getMessage());
                 context.getSource().sendFeedback(new LiteralText(message), true);
             }
         });
@@ -296,7 +292,7 @@ public class CommandAliasesBuilder {
      * @param dispatcher CommandDispatcher
      * @return Command
      */
-    private LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command, CommandDispatcher<ServerCommandSource> dispatcher) { //Todo: Optional Building is borked AF
+    private LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command, CommandDispatcher<ServerCommandSource> dispatcher) {
         LiteralArgumentBuilder<ServerCommandSource> commandBuilder = null;
 
         List<String> allHolders = this.locateHolders(command.getCommand(), true);
@@ -309,8 +305,8 @@ public class CommandAliasesBuilder {
         }
         newCommand = newCommand.trim();
 
-        //If no holders are found and command contains spaces, parse json literals
-        if (newCommand.contains(" ") && allHolders.size() == 0) {
+
+        if (newCommand.contains(" ") && allHolders.size() == 0) { //If no holders are found and command contains spaces, parse json literals
             List<String> literals = Arrays.asList(newCommand.split(" "));
             Collections.reverse(literals);
             for (String literal : literals) {
@@ -335,10 +331,10 @@ public class CommandAliasesBuilder {
                     }
                 }
             }
-        } else if (!newCommand.contains(" ") && allHolders.size() == 0) {// No holders no spaces just a command rename with extra steps
+        } else if (!newCommand.contains(" ") && allHolders.size() == 0) { // No holders no spaces just a command rename with extra steps
             commandBuilder = CommandManager.literal(newCommand).executes(context -> this.executeCommandAliases(command, dispatcher, context));
-        } else if (!newCommand.contains(" ") && allHolders.size() != 0) {// Holders no spaces, parse city
-            ArgumentBuilder<ServerCommandSource, ?> arguments = this.parseArguments(command, dispatcher);//parsearguments does most of the work although optional arguments might need to come through here
+        } else if (!newCommand.contains(" ") && allHolders.size() != 0) { // Holders no spaces, parse city
+            ArgumentBuilder<ServerCommandSource, ?> arguments = this.parseArguments(command, dispatcher); //parsearguments does most of the work although optional arguments might need to come through here
             if (arguments != null) {
                 commandBuilder = CommandManager.literal(newCommand).then(arguments);
             } else {
@@ -356,9 +352,8 @@ public class CommandAliasesBuilder {
      * @return ArgumentBuilder
      */
     private ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias commandAlias, CommandDispatcher<ServerCommandSource> dispatcher) {
-        // Todo: Optional Arguments
-        // Check for optional arguments then build
-        List<CommandAliasesHolder> commandOptionalHolders = this.getCommandAliasesHolders(command.getCommand(), false);
+        //Check for optional arguments then build
+        List<CommandAliasesHolder> commandOptionalHolders = this.getCommandAliasesHolders(this.command.getCommand(), false);
         ArgumentBuilder<ServerCommandSource, ?> optionalArguments = null;
         Collections.reverse(commandOptionalHolders);
         for (CommandAliasesHolder holder : commandOptionalHolders) {
@@ -375,16 +370,16 @@ public class CommandAliasesBuilder {
                 }
             }
         }
-
-        List<CommandAliasesHolder> commandRequiredHolders = this.getCommandAliasesHolders(command.getCommand(), true); //Converts all string holders in command to CAHolder Objects
-        ArgumentBuilder<ServerCommandSource, ?> requiredArguments = null; // Instantiate null ArgumentBuilder
-        Collections.reverse(commandRequiredHolders); // Invert commandHolders since command building requires to be built from bottom to top
-        for (CommandAliasesHolder holder : commandRequiredHolders) { //Build Required Arguments
+        //Build Required Arguments
+        List<CommandAliasesHolder> commandRequiredHolders = this.getCommandAliasesHolders(this.command.getCommand(), true);
+        ArgumentBuilder<ServerCommandSource, ?> requiredArguments = null;
+        Collections.reverse(commandRequiredHolders);
+        for (CommandAliasesHolder holder : commandRequiredHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
                 if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
                     if (tool.contains(holder.getMethod())) {
-                        if (requiredArguments != null) { //If first argument start building
+                        if (requiredArguments != null) {
                             requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).then(requiredArguments);
                         } else {
                             if (optionalArguments != null) {
@@ -469,10 +464,6 @@ public class CommandAliasesBuilder {
 
         public String getFormattingType() {
             return this.formattingType;
-        }
-
-        public boolean isRequired() {
-            return required;
         }
     }
 }

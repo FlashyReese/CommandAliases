@@ -32,7 +32,7 @@ import java.util.Map;
  * @author FlashyReese
  * @version 0.1.3
  * @since 0.0.9
- *
+ * <p>
  * This ArgumentTypeManager maps ArgumentTypes to String.
  * See https://minecraft.gamepedia.com/Argument_types
  * There is probably a vanilla way to do this but I can't figure it out

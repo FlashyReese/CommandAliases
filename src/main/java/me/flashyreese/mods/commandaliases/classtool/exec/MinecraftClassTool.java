@@ -25,12 +25,12 @@ import java.util.function.Function;
  * Maps custom values to hashmap
  *
  * @author FlashyReese
- * @version 0.1.3
+ * @version 0.2.0
  * @since 0.1.3
  */
 public class MinecraftClassTool implements ClassTool<Function<CommandContext<ServerCommandSource>, String>> {
 
-    private Map<String, Function<CommandContext<ServerCommandSource>, String>> minecraftMap = new HashMap<>();
+    private final Map<String, Function<CommandContext<ServerCommandSource>, String>> minecraftMap = new HashMap<>();
 
     public MinecraftClassTool() {
         this.registerClassTools();
