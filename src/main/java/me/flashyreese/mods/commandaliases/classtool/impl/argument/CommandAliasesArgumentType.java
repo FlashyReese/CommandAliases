@@ -15,10 +15,17 @@ import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.function.BiFunction;
 
+/**
+ * Represents the Command Aliases Argument Type
+ *
+ * @author FlashyReese
+ * @version 0.2.0
+ * @since 0.0.9
+ */
 public class CommandAliasesArgumentType {
 
-    private ArgumentType<?> argumentType;
-    private BiFunction<CommandContext<ServerCommandSource>, String, String> biFunction;
+    private final ArgumentType<?> argumentType;
+    private final BiFunction<CommandContext<ServerCommandSource>, String, String> biFunction;
 
     public CommandAliasesArgumentType(ArgumentType<?> argumentType, BiFunction<CommandContext<ServerCommandSource>, String, String> biFunction) {
         this.argumentType = argumentType;

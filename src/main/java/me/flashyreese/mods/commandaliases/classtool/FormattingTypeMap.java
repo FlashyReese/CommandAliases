@@ -7,7 +7,7 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases;
+package me.flashyreese.mods.commandaliases.classtool;
 
 import java.util.HashMap;
 import java.util.Map;
