@@ -122,8 +122,8 @@ public class CommandAliasesLoader {
         dispatcher.register(CommandManager.literal("commandaliases").requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(4))
                 .executes(context -> {
                     Optional<ModContainer> modContainerOptional = FabricLoader.getInstance().getModContainer("commandaliases");
-                    modContainerOptional.ifPresent(modContainer -> context.getSource().sendFeedback(new LiteralText("Running Command Aliases (commandaliases)")
-                            .formatted(Formatting.GOLD)
+                    modContainerOptional.ifPresent(modContainer -> context.getSource().sendFeedback(new LiteralText("Running Command Aliases")
+                            .formatted(Formatting.YELLOW)
                             .append(new LiteralText(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED)), false));
 
                     return Command.SINGLE_SUCCESS;
