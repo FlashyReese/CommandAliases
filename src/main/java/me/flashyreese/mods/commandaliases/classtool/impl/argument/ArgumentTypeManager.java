@@ -12,7 +12,7 @@ package me.flashyreese.mods.commandaliases.classtool.impl.argument;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import me.flashyreese.mods.commandaliases.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;

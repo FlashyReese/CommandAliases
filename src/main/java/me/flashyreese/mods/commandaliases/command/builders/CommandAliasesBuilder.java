@@ -7,13 +7,14 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases;
+package me.flashyreese.mods.commandaliases.command.builders;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import me.flashyreese.mods.commandaliases.classtool.FormattingTypeMap;
 import me.flashyreese.mods.commandaliases.classtool.exec.MinecraftClassTool;

@@ -17,18 +17,22 @@ import java.util.List;
  * JSON Serialization Template
  *
  * @author FlashyReese
- * @version 0.2.0
+ * @version 0.3.0
  * @since 0.0.9
  */
 public class CommandAlias {
+    private CommandMode commandMode;
     private String command;
     private CommandType type;
     private List<CommandAlias> execution;
     private String sleep;
     private String message;
+    private String reassignTo;
+    private String redirectTo;
 
-    private boolean reassignOnly;
-    private String reassignOriginal;
+    public CommandMode getCommandMode() {
+        return commandMode;
+    }
 
     public String getCommand() {
         return command;
@@ -50,11 +54,11 @@ public class CommandAlias {
         return message;
     }
 
-    public boolean isReassignOnly() {
-        return reassignOnly;
+    public String getReassignTo() {
+        return reassignTo;
     }
 
-    public String getReassignOriginal() {
-        return reassignOriginal;
+    public String getRedirectTo() {
+        return redirectTo;
     }
 }

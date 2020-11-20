@@ -10,7 +10,7 @@
 package me.flashyreese.mods.commandaliases.classtool;
 
 import com.mojang.brigadier.context.CommandContext;
-import me.flashyreese.mods.commandaliases.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
 import net.minecraft.server.command.ServerCommandSource;
 
 /**
