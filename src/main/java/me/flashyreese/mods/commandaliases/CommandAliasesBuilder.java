@@ -355,14 +355,13 @@ public class CommandAliasesBuilder {
         //Check for optional arguments then build
         List<CommandAliasesHolder> commandOptionalHolders = this.getCommandAliasesHolders(this.command.getCommand(), false);
         ArgumentBuilder<ServerCommandSource, ?> optionalArguments = null;
-        Collections.reverse(commandOptionalHolders);
         for (CommandAliasesHolder holder : commandOptionalHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
                 if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
                     if (tool.contains(holder.getMethod())) {
                         if (optionalArguments != null) { //If first argument start building
-                            optionalArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).then(optionalArguments);
+                            optionalArguments = optionalArguments.then(CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)));
                         } else {
                             optionalArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
                         }
