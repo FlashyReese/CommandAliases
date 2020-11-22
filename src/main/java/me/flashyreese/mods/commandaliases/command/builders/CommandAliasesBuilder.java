@@ -175,8 +175,8 @@ public class CommandAliasesBuilder {
 
         //Execution Formatting/Binding
         Map<String, String> newInputMap = new HashMap<>();
-        List<CommandAliasesHolder> textHolders = this.getCommandAliasesHolders(this.command.getCommand(), true);
-        textHolders.addAll(this.getCommandAliasesHolders(this.command.getCommand(), false));
+        List<CommandAliasesHolder> textHolders = this.getCommandAliasesHolders(formattedText, true);
+        textHolders.addAll(this.getCommandAliasesHolders(formattedText, false));
         for (CommandAliasesHolder holder : textHolders) {
             String value = null;
 
