@@ -256,7 +256,7 @@ public class CommandAliasesBuilder {
                             context.getSource().sendFeedback(new LiteralText(message), true);
                         }
                         if (subCommandAlias.getSleep() != null) {
-                            String formattedTime = subCommandAlias.getSleep();
+                            String formattedTime = this.formatExecutionCommandOrMessage(context, subCommandAlias.getSleep());
                             int time = Integer.parseInt(formattedTime);
                             Thread.sleep(time);
                         }
