@@ -155,7 +155,7 @@ public class CommandAliasesBuilder {
      * @param text    Execution Command or Message
      * @return Executable Command
      */
-    private String formatExecutionCommandOrMessage(CommandContext<ServerCommandSource> context, String text) {
+    private String formatExecutionCommandOrMessage(CommandContext<ServerCommandSource> context, String text, boolean ignoreOptionalRemoval) {
         //Bind Input Map to execution commands
         Map<String, String> requiredInputMap = this.getHolderInputMap(context, true);
         Map<String, String> optionalInputMap = this.getHolderInputMap(context, false);
@@ -218,12 +218,15 @@ public class CommandAliasesBuilder {
             }
         }
         //Check for missing optional arguments and remove
-        List<String> missingOptionalHolders = this.locateHolders(formattedText, false);
-        if (missingOptionalHolders.size() != 0) {
-            for (String holder : missingOptionalHolders) {
-                formattedText = formattedText.replace(holder, "");
+        if (!ignoreOptionalRemoval){
+            List<String> missingOptionalHolders = this.locateHolders(formattedText, false);
+            if (missingOptionalHolders.size() != 0) {
+                for (String holder : missingOptionalHolders) {
+                    formattedText = formattedText.replace(holder, "");
+                }
             }
         }
+
         formattedText = formattedText.trim();
 
         return formattedText;
@@ -244,7 +247,7 @@ public class CommandAliasesBuilder {
                 if (cmd.getExecution() != null) {
                     for (CommandAlias subCommandAlias : cmd.getExecution()) {
                         if (subCommandAlias.getCommand() != null) {
-                            String executionCommand = this.formatExecutionCommandOrMessage(context, subCommandAlias.getCommand());
+                            String executionCommand = this.formatExecutionCommandOrMessage(context, subCommandAlias.getCommand(), subCommandAlias.isIgnoreOptionalRemoval());
                             if (subCommandAlias.getType() == CommandType.CLIENT) {
                                 execute.set(dispatcher.execute(executionCommand, context.getSource()));
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
@@ -252,11 +255,11 @@ public class CommandAliasesBuilder {
                             }
                         }
                         if (subCommandAlias.getMessage() != null) {
-                            String message = this.formatExecutionCommandOrMessage(context, subCommandAlias.getMessage());
+                            String message = this.formatExecutionCommandOrMessage(context, subCommandAlias.getMessage(), subCommandAlias.isIgnoreOptionalRemoval());
                             context.getSource().sendFeedback(new LiteralText(message), true);
                         }
                         if (subCommandAlias.getSleep() != null) {
-                            String formattedTime = this.formatExecutionCommandOrMessage(context, subCommandAlias.getSleep());
+                            String formattedTime = this.formatExecutionCommandOrMessage(context, subCommandAlias.getSleep(), false);
                             int time = Integer.parseInt(formattedTime);
                             Thread.sleep(time);
                         }
@@ -267,7 +270,7 @@ public class CommandAliasesBuilder {
                 context.getSource().sendFeedback(new LiteralText(output), true);
             }
             if (cmd.getMessage() != null) {
-                String message = this.formatExecutionCommandOrMessage(context, cmd.getMessage());
+                String message = this.formatExecutionCommandOrMessage(context, cmd.getMessage(), false);
                 context.getSource().sendFeedback(new LiteralText(message), true);
             }
         });

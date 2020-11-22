@@ -29,6 +29,7 @@ public class CommandAlias {
     private String message;
     private String reassignTo;
     private String redirectTo;
+    private boolean ignoreOptionalRemoval;
 
     public CommandMode getCommandMode() {
         return commandMode;
@@ -60,5 +61,9 @@ public class CommandAlias {
 
     public String getRedirectTo() {
         return redirectTo;
+    }
+
+    public boolean isIgnoreOptionalRemoval() {
+        return ignoreOptionalRemoval;
     }
 }
