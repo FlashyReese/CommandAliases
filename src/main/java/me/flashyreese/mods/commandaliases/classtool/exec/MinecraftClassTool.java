@@ -17,6 +17,7 @@ import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -45,6 +46,9 @@ public class MinecraftClassTool implements ClassTool<Function<CommandContext<Ser
             }
             return null;
         });
+        this.minecraftMap.put("TIME", (context) -> String.valueOf(context.getSource().getWorld().getTime()));
+        this.minecraftMap.put("RANDOM_ALIVE_PLAYER", (context) -> Objects.requireNonNull(context.getSource().getWorld().getRandomAlivePlayer()).getEntityName());
+        this.minecraftMap.put("BLOCK_ENTITIES_SIZE", (context) -> String.valueOf(context.getSource().getWorld().blockEntities.size()));
     }
 
     public Map<String, Function<CommandContext<ServerCommandSource>, String>> getMinecraftMap() {
