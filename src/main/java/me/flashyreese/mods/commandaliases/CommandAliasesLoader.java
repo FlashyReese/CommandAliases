@@ -16,8 +16,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.command.CommandAliasParent;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builders.CommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandReassignBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandRedirectBuilder;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
@@ -53,6 +55,7 @@ public class CommandAliasesLoader {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             this.registerCommandAliasesCommands(dispatcher, dedicated);
             this.registerCommands(dispatcher, dedicated);
+            this.loadCustomCommands(new File("config/commandaliases-customcommands.json")).forEach(parent -> dispatcher.register(new CommandBuilder(parent).buildCommand(dispatcher)));
         });
     }
 
@@ -64,7 +67,7 @@ public class CommandAliasesLoader {
      */
     private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
         this.commands.clear();
-        this.commands.addAll(loadCommandAliases(new File("config/commandaliases.json")));
+        this.commands.addAll(this.loadCommandAliases(new File("config/commandaliases.json")));
 
         for (CommandAlias cmd : this.commands) {
             if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
@@ -120,7 +123,16 @@ public class CommandAliasesLoader {
                                     context.getSource().sendFeedback(new LiteralText("Reloaded all Command Aliases!"), true);
                                     return Command.SINGLE_SUCCESS;
                                 }
-                        )
+                        )/*.then(CommandManager.literal("hell").executes(context -> {
+                            System.out.println("hell success");
+                            return Command.SINGLE_SUCCESS;
+                        })).then(CommandManager.argument("state", BoolArgumentType.bool()).executes(context -> {
+                            System.out.println("Boolean: " + BoolArgumentType.getBool(context, "state"));
+                            return Command.SINGLE_SUCCESS;
+                        }).then(CommandManager.argument("number", IntegerArgumentType.integer()).executes(context -> {
+                            System.out.println("Boolean: " + BoolArgumentType.getBool(context, "state") + " Number: " + IntegerArgumentType.getInteger(context, "number"));
+                            return Command.SINGLE_SUCCESS;
+                        })))*/
                 )
                 .then(CommandManager.literal("load")
                         .executes(context -> {
@@ -217,5 +229,34 @@ public class CommandAliasesLoader {
         }
 
         return commandAliases;
+    }
+
+    /**
+     * Reads JSON file and serializes them to a List of Custom Commands
+     *
+     * @param file JSON file path
+     * @return List of CommandAliases
+     */
+    private List<CommandAliasParent> loadCustomCommands(File file) {
+        List<CommandAliasParent> commandAliasParents = new ArrayList<>();
+
+        if (file.exists()) {
+            try (FileReader reader = new FileReader(file)) {
+                commandAliasParents = gson.fromJson(reader, new TypeToken<List<CommandAliasParent>>() {
+                }.getType());
+            } catch (IOException e) {
+                throw new RuntimeException("Could not parse CommandAliases Custom Commands File", e);
+            }
+        } else {
+            try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
+                String json = gson.toJson(new ArrayList<>());
+                writer.write(json);
+                writer.flush();
+            } catch (IOException e) {
+                throw new RuntimeException("Could not write CommandAliases Custom Commands File", e);
+            }
+        }
+
+        return commandAliasParents;
     }
 }
