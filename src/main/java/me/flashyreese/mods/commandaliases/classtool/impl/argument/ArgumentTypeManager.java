@@ -12,8 +12,9 @@ package me.flashyreese.mods.commandaliases.classtool.impl.argument;
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
+import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.Identifier;
@@ -23,7 +24,6 @@ import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.registry.Registry;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -39,7 +39,7 @@ import java.util.Map;
  */
 public class ArgumentTypeManager implements ClassTool<CommandAliasesArgumentType> {
 
-    private final Map<String, CommandAliasesArgumentType> argumentMap = new HashMap<>();
+    private final Map<String, CommandAliasesArgumentType> argumentMap = new Object2ObjectOpenHashMap<>();
 
     public ArgumentTypeManager() {
         registerArgumentTypes();

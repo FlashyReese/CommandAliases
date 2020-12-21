@@ -6,6 +6,7 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
 import me.flashyreese.mods.commandaliases.command.CommandAliasAction;
@@ -16,7 +17,6 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -44,12 +44,12 @@ public class CommandBuilder {
         if (this.commandAliasParent.isOptional()) {
             argumentBuilder = argumentBuilder.executes(context -> {
                 //Execution action here
-                return this.executeAction(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new HashMap<>());
+                return this.executeAction(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new Object2ObjectOpenHashMap<>());
             });
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
             for (CommandAliasChild child : this.commandAliasParent.getChildren()) {
-                ArgumentBuilder<ServerCommandSource, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new HashMap<>());
+                ArgumentBuilder<ServerCommandSource, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new Object2ObjectOpenHashMap<>());
                 if (subArgumentBuilder != null) {
                     argumentBuilder = argumentBuilder.then(subArgumentBuilder);
                 }
@@ -85,7 +85,7 @@ public class CommandBuilder {
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
                 for (CommandAliasChild subChild : child.getChildren()) {
-                    ArgumentBuilder<ServerCommandSource, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new HashMap<>(input));
+                    ArgumentBuilder<ServerCommandSource, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new Object2ObjectOpenHashMap<>(input));
                     argumentBuilder = argumentBuilder.then(subArgumentBuilder);
                 }
             }
@@ -144,14 +144,28 @@ public class CommandBuilder {
         return executeState.get();
     }
 
-    private String formatString(CommandContext<ServerCommandSource> context, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> currentInputMap, String string){
+    private String formatString(CommandContext<ServerCommandSource> context, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> currentInputMap, String string) {
+        Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
+        currentInputMap.forEach((key, value) -> resolvedInputMap.put(key, value.apply(context, key)));
         //Functions fixme: more hardcoding
-        string = string.replace("$getExecutorName()", context.getSource().getName());
+        string = string.replace("$executor_name()", context.getSource().getName());
         //Input Map
-        for (Map.Entry<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> entry : currentInputMap.entrySet()){
-            string = string.replace(String.format("$getField(%s)", entry.getKey()), entry.getValue().apply(context, entry.getKey()));//fixme: A bit of hardcoding here
+        for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
+            string = string.replace(String.format("{{%s}}", entry.getKey()), entry.getValue());
+            string = string.replace(String.format("{{%s@toJsonString}}", entry.getKey()), escape(entry.getValue()));
         }
         return string;
     }
 
+    private String escape(String raw) {
+        String escaped = raw;
+        escaped = escaped.replace("\\", "\\\\");
+        escaped = escaped.replace("\"", "\\\"");
+        escaped = escaped.replace("\b", "\\b");
+        escaped = escaped.replace("\f", "\\f");
+        escaped = escaped.replace("\n", "\\n");
+        escaped = escaped.replace("\r", "\\r");
+        escaped = escaped.replace("\t", "\\t");
+        return escaped;
+    }
 }

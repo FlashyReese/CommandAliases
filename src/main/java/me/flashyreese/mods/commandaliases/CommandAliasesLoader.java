@@ -15,6 +15,8 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandAliasParent;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
@@ -35,7 +37,9 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Represents the custom command aliases loader.
@@ -47,9 +51,9 @@ import java.util.*;
 public class CommandAliasesLoader {
 
     private final Gson gson = new Gson();
-    private final List<CommandAlias> commands = new ArrayList<>();
-    private final List<String> loadedCommands = new ArrayList<>();
-    private final Map<String, String> reassignCommandList = new HashMap<>();
+    private final List<CommandAlias> commands = new ObjectArrayList<>();
+    private final List<String> loadedCommands = new ObjectArrayList<>();
+    private final Map<String, String> reassignCommandList = new Object2ObjectOpenHashMap<>();
 
     public CommandAliasesLoader() {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
@@ -123,16 +127,7 @@ public class CommandAliasesLoader {
                                     context.getSource().sendFeedback(new LiteralText("Reloaded all Command Aliases!"), true);
                                     return Command.SINGLE_SUCCESS;
                                 }
-                        )/*.then(CommandManager.literal("hell").executes(context -> {
-                            System.out.println("hell success");
-                            return Command.SINGLE_SUCCESS;
-                        })).then(CommandManager.argument("state", BoolArgumentType.bool()).executes(context -> {
-                            System.out.println("Boolean: " + BoolArgumentType.getBool(context, "state"));
-                            return Command.SINGLE_SUCCESS;
-                        }).then(CommandManager.argument("number", IntegerArgumentType.integer()).executes(context -> {
-                            System.out.println("Boolean: " + BoolArgumentType.getBool(context, "state") + " Number: " + IntegerArgumentType.getInteger(context, "number"));
-                            return Command.SINGLE_SUCCESS;
-                        })))*/
+                        )
                 )
                 .then(CommandManager.literal("load")
                         .executes(context -> {
@@ -209,7 +204,7 @@ public class CommandAliasesLoader {
      * @return List of CommandAliases
      */
     private List<CommandAlias> loadCommandAliases(File file) {
-        List<CommandAlias> commandAliases = new ArrayList<>();
+        List<CommandAlias> commandAliases = new ObjectArrayList<>();
 
         if (file.exists()) {
             try (FileReader reader = new FileReader(file)) {
@@ -220,7 +215,7 @@ public class CommandAliasesLoader {
             }
         } else {
             try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
-                String json = gson.toJson(new ArrayList<>());
+                String json = gson.toJson(new ObjectArrayList<>());
                 writer.write(json);
                 writer.flush();
             } catch (IOException e) {
@@ -238,7 +233,7 @@ public class CommandAliasesLoader {
      * @return List of CommandAliases
      */
     private List<CommandAliasParent> loadCustomCommands(File file) {
-        List<CommandAliasParent> commandAliasParents = new ArrayList<>();
+        List<CommandAliasParent> commandAliasParents = new ObjectArrayList<>();
 
         if (file.exists()) {
             try (FileReader reader = new FileReader(file)) {
@@ -249,7 +244,7 @@ public class CommandAliasesLoader {
             }
         } else {
             try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
-                String json = gson.toJson(new ArrayList<>());
+                String json = gson.toJson(new ObjectArrayList<>());
                 writer.write(json);
                 writer.flush();
             } catch (IOException e) {
