@@ -11,11 +11,11 @@ package me.flashyreese.mods.commandaliases.classtool.exec;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
+import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
 import net.minecraft.server.command.ServerCommandSource;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -30,7 +30,7 @@ import java.util.function.Function;
  */
 public class MinecraftClassTool implements ClassTool<Function<CommandContext<ServerCommandSource>, String>> {
 
-    private final Map<String, Function<CommandContext<ServerCommandSource>, String>> minecraftMap = new HashMap<>();
+    private final Map<String, Function<CommandContext<ServerCommandSource>, String>> minecraftMap = new Object2ObjectOpenHashMap<>();
 
     public MinecraftClassTool() {
         this.registerClassTools();

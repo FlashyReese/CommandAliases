@@ -17,12 +17,13 @@ import java.util.List;
  * JSON Serialization Template
  *
  * @author FlashyReese
- * @version 0.3.0
+ * @version 0.4.0
  * @since 0.0.9
  */
 public class CommandAlias {
     private CommandMode commandMode;
     private String command;
+    private CommandParent customCommand;
     private CommandType type;
     private List<CommandAlias> execution;
     private String sleep;
@@ -37,6 +38,10 @@ public class CommandAlias {
 
     public String getCommand() {
         return command;
+    }
+
+    public CommandParent getCustomCommand() {
+        return customCommand;
     }
 
     public CommandType getType() {

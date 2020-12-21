@@ -15,9 +15,12 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builders.CommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandReassignBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandRedirectBuilder;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
@@ -33,21 +36,23 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Represents the custom command aliases loader.
  *
  * @author FlashyReese
- * @version 0.3.0
+ * @version 0.4.0
  * @since 0.0.9
  */
 public class CommandAliasesLoader {
 
     private final Gson gson = new Gson();
-    private final List<CommandAlias> commands = new ArrayList<>();
-    private final List<String> loadedCommands = new ArrayList<>();
-    private final Map<String, String> reassignCommandList = new HashMap<>();
+    private final List<CommandAlias> commands = new ObjectArrayList<>();
+    private final List<String> loadedCommands = new ObjectArrayList<>();
+    private final Map<String, String> reassignCommandMap = new Object2ObjectOpenHashMap<>();
 
     public CommandAliasesLoader() {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
@@ -64,15 +69,18 @@ public class CommandAliasesLoader {
      */
     private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
         this.commands.clear();
-        this.commands.addAll(loadCommandAliases(new File("config/commandaliases.json")));
+        this.commands.addAll(this.loadCommandAliases(new File("config/commandaliases.json")));
 
         for (CommandAlias cmd : this.commands) {
             if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
                 dispatcher.register(new CommandAliasesBuilder(cmd).buildCommand(dispatcher));
-            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN
-                    || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
+                dispatcher.register(new CommandBuilder(cmd.getCustomCommand()).buildCommand(dispatcher));
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM
+                    || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT
+                    || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                 LiteralArgumentBuilder<ServerCommandSource> command = cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG ?
-                        new CommandRedirectBuilder(cmd).buildCommand(dispatcher) : new CommandReassignBuilder(cmd).buildCommand(dispatcher, this.reassignCommandList);
+                        new CommandRedirectBuilder(cmd).buildCommand(dispatcher) : new CommandReassignBuilder(cmd).buildCommand(dispatcher, this.reassignCommandMap);
                 if (command == null) {
                     continue;
                 } else {
@@ -80,10 +88,14 @@ public class CommandAliasesLoader {
                 }
             }
 
-            if (cmd.getCommand().contains(" ")) {
-                this.loadedCommands.add(cmd.getCommand().split(" ")[0]);
+            if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
+                this.loadedCommands.add(cmd.getCustomCommand().getParent());
             } else {
-                this.loadedCommands.add(cmd.getCommand());
+                if (cmd.getCommand().contains(" ")) {
+                    this.loadedCommands.add(cmd.getCommand().split(" ")[0]);
+                } else {
+                    this.loadedCommands.add(cmd.getCommand());
+                }
             }
         }
 
@@ -160,7 +172,7 @@ public class CommandAliasesLoader {
         for (String cmd : this.loadedCommands) {
             dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(cmd));
         }
-        for (Map.Entry<String, String> entry : this.reassignCommandList.entrySet()) {
+        for (Map.Entry<String, String> entry : this.reassignCommandMap.entrySet()) {
             CommandNode<ServerCommandSource> commandNode = dispatcher.getRoot().getChildren().stream().filter(node ->
                     node.getName().equals(entry.getValue())).findFirst().orElse(null);
 
@@ -185,7 +197,7 @@ public class CommandAliasesLoader {
             }
         }
 
-        this.reassignCommandList.clear();
+        this.reassignCommandMap.clear();
         this.loadedCommands.clear();
     }
 
@@ -197,7 +209,7 @@ public class CommandAliasesLoader {
      * @return List of CommandAliases
      */
     private List<CommandAlias> loadCommandAliases(File file) {
-        List<CommandAlias> commandAliases = new ArrayList<>();
+        List<CommandAlias> commandAliases = new ObjectArrayList<>();
 
         if (file.exists()) {
             try (FileReader reader = new FileReader(file)) {
@@ -208,7 +220,7 @@ public class CommandAliasesLoader {
             }
         } else {
             try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
-                String json = gson.toJson(new ArrayList<>());
+                String json = gson.toJson(new ObjectArrayList<>());
                 writer.write(json);
                 writer.flush();
             } catch (IOException e) {
