@@ -27,7 +27,7 @@ import java.util.Map;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.3.0
+ * @version 0.4.0
  * @since 0.3.0
  */
 public class CommandReassignBuilder {
@@ -40,18 +40,20 @@ public class CommandReassignBuilder {
     /**
      * Builds a command for command registry
      *
-     * @param dispatcher          CommandDispatcher
-     * @param reassignCommandList
+     * @param dispatcher         CommandDispatcher
+     * @param reassignCommandMap The map of reassigned commands
      * @return Command
      */
-    public LiteralArgumentBuilder<ServerCommandSource> buildCommand(CommandDispatcher<ServerCommandSource> dispatcher, Map<String, String> reassignCommandList) {
+    public LiteralArgumentBuilder<ServerCommandSource> buildCommand(CommandDispatcher<ServerCommandSource> dispatcher, Map<String, String> reassignCommandMap) {
         if (!this.reassignCommand(this.command, dispatcher)) {
             return null;
         }
         String original = this.command.getCommand().contains(" ") ? this.command.getCommand().split(" ")[0] : this.command.getCommand();
-        reassignCommandList.put(original, this.command.getReassignTo());
+        reassignCommandMap.put(original, this.command.getReassignTo());
         if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS) {
             return new CommandAliasesBuilder(this.command).buildCommand(dispatcher);
+        } else if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
+            return new CommandBuilder(this.command.getCustomCommand()).buildCommand(dispatcher);
         }
         return null;
     }
@@ -59,7 +61,7 @@ public class CommandReassignBuilder {
     /**
      * Try to reassign a command name to another command name.
      *
-     * @param cmd Command Alias
+     * @param cmd        Command Alias
      * @param dispatcher CommandDispatcher
      * @return If {@code true} then it was successful, else if {@code false} failed.
      */

@@ -1,3 +1,12 @@
+/*
+ * Copyright © 2020 FlashyReese
+ *
+ * This file is part of CommandAliases.
+ *
+ * Licensed under the MIT license. For more information,
+ * see the LICENSE file.
+ */
+
 package me.flashyreese.mods.commandaliases.command.builders;
 
 import com.mojang.brigadier.Command;
@@ -9,9 +18,9 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
-import me.flashyreese.mods.commandaliases.command.CommandAliasAction;
-import me.flashyreese.mods.commandaliases.command.CommandAliasChild;
-import me.flashyreese.mods.commandaliases.command.CommandAliasParent;
+import me.flashyreese.mods.commandaliases.command.CommandAction;
+import me.flashyreese.mods.commandaliases.command.CommandChild;
+import me.flashyreese.mods.commandaliases.command.CommandParent;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -22,19 +31,40 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 
+/**
+ * Represents the Command Builder
+ * <p>
+ * Used to build a LiteralArgumentBuilder
+ *
+ * @author FlashyReese
+ * @version 0.4.0
+ * @since 0.4.0
+ */
 public class CommandBuilder {
-    private final CommandAliasParent commandAliasParent;
+    private final CommandParent commandAliasParent;
 
     private final ArgumentTypeManager argumentTypeManager = new ArgumentTypeManager();
 
-    public CommandBuilder(CommandAliasParent commandAliasParent) {
+    public CommandBuilder(CommandParent commandAliasParent) {
         this.commandAliasParent = commandAliasParent;
     }
 
+    /**
+     * Builds Command for Dispatcher to register.
+     *
+     * @param dispatcher The command dispatcher
+     * @return ArgumentBuilder
+     */
     public LiteralArgumentBuilder<ServerCommandSource> buildCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
         return this.buildCommandParent(dispatcher);
     }
 
+    /**
+     * Builds parent ArgumentBuilder
+     *
+     * @param dispatcher The command dispatcher
+     * @return ArgumentBuilder
+     */
     private LiteralArgumentBuilder<ServerCommandSource> buildCommandParent(CommandDispatcher<ServerCommandSource> dispatcher) {
         LiteralArgumentBuilder<ServerCommandSource> argumentBuilder = CommandManager.literal(this.commandAliasParent.getParent());
         if (this.commandAliasParent.getPermission() < 0 && this.commandAliasParent.getPermission() >= 4) {
@@ -48,7 +78,7 @@ public class CommandBuilder {
             });
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
-            for (CommandAliasChild child : this.commandAliasParent.getChildren()) {
+            for (CommandChild child : this.commandAliasParent.getChildren()) {
                 ArgumentBuilder<ServerCommandSource, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new Object2ObjectOpenHashMap<>());
                 if (subArgumentBuilder != null) {
                     argumentBuilder = argumentBuilder.then(subArgumentBuilder);
@@ -58,7 +88,15 @@ public class CommandBuilder {
         return argumentBuilder;
     }
 
-    private ArgumentBuilder<ServerCommandSource, ?> buildCommandChild(CommandAliasChild child, CommandDispatcher<ServerCommandSource> dispatcher, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> input) {
+    /**
+     * Builds child commands and determine if optional or not.
+     *
+     * @param child      CommandChild
+     * @param dispatcher The command dispatcher
+     * @param input      User input map
+     * @return ArgumentBuilder
+     */
+    private ArgumentBuilder<ServerCommandSource, ?> buildCommandChild(CommandChild child, CommandDispatcher<ServerCommandSource> dispatcher, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> input) {
         ArgumentBuilder<ServerCommandSource, ?> argumentBuilder = null;
         if (child.getType().equals("literal")) {
             argumentBuilder = CommandManager.literal(child.getChild());
@@ -84,7 +122,7 @@ public class CommandBuilder {
             }
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
-                for (CommandAliasChild subChild : child.getChildren()) {
+                for (CommandChild subChild : child.getChildren()) {
                     ArgumentBuilder<ServerCommandSource, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new Object2ObjectOpenHashMap<>(input));
                     argumentBuilder = argumentBuilder.then(subArgumentBuilder);
                 }
@@ -93,7 +131,17 @@ public class CommandBuilder {
         return argumentBuilder;
     }
 
-    private int executeAction(List<CommandAliasAction> actions, String message, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> currentInputMap) {
+    /**
+     * Executes command action
+     *
+     * @param actions         List of command actions
+     * @param message         Message
+     * @param dispatcher      The command dispatcher
+     * @param context         The command context
+     * @param currentInputMap User input map with functions
+     * @return Command execution state
+     */
+    private int executeAction(List<CommandAction> actions, String message, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> currentInputMap) {
         if ((actions == null || actions.isEmpty()) && (message != null || !message.isEmpty())) {
             String formatString = this.formatString(context, currentInputMap, message);
             context.getSource().sendFeedback(new LiteralText(formatString), true);
@@ -108,12 +156,21 @@ public class CommandBuilder {
         }
     }
 
-    private int executeCommand(List<CommandAliasAction> actions, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> currentInputMap) {
+    /**
+     * Executes command in command action
+     *
+     * @param actions         List of command actions
+     * @param dispatcher      The command dispatcher
+     * @param context         The command context
+     * @param currentInputMap User input map with functions
+     * @return Command execution state
+     */
+    private int executeCommand(List<CommandAction> actions, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> currentInputMap) {
         AtomicInteger executeState = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
                 if (actions != null) {
-                    for (CommandAliasAction action : actions) {
+                    for (CommandAction action : actions) {
                         if (action.getCommand() != null) {
                             String actionCommand = this.formatString(context, currentInputMap, action.getCommand());
                             if (action.getCommandType() == CommandType.CLIENT) {
@@ -144,6 +201,14 @@ public class CommandBuilder {
         return executeState.get();
     }
 
+    /**
+     * Method to format string(command or messages) with user input map.
+     *
+     * @param context         The command context
+     * @param currentInputMap User input map with functions
+     * @param string          Input string
+     * @return Formatted string
+     */
     private String formatString(CommandContext<ServerCommandSource> context, Map<String, BiFunction<CommandContext<ServerCommandSource>, String, String>> currentInputMap, String string) {
         Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
         currentInputMap.forEach((key, value) -> resolvedInputMap.put(key, value.apply(context, key)));

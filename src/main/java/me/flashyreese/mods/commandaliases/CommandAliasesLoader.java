@@ -18,7 +18,6 @@ import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
-import me.flashyreese.mods.commandaliases.command.CommandAliasParent;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandBuilder;
@@ -45,7 +44,7 @@ import java.util.Optional;
  * Represents the custom command aliases loader.
  *
  * @author FlashyReese
- * @version 0.3.0
+ * @version 0.4.0
  * @since 0.0.9
  */
 public class CommandAliasesLoader {
@@ -53,13 +52,12 @@ public class CommandAliasesLoader {
     private final Gson gson = new Gson();
     private final List<CommandAlias> commands = new ObjectArrayList<>();
     private final List<String> loadedCommands = new ObjectArrayList<>();
-    private final Map<String, String> reassignCommandList = new Object2ObjectOpenHashMap<>();
+    private final Map<String, String> reassignCommandMap = new Object2ObjectOpenHashMap<>();
 
     public CommandAliasesLoader() {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             this.registerCommandAliasesCommands(dispatcher, dedicated);
             this.registerCommands(dispatcher, dedicated);
-            this.loadCustomCommands(new File("config/commandaliases-customcommands.json")).forEach(parent -> dispatcher.register(new CommandBuilder(parent).buildCommand(dispatcher)));
         });
     }
 
@@ -76,10 +74,13 @@ public class CommandAliasesLoader {
         for (CommandAlias cmd : this.commands) {
             if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
                 dispatcher.register(new CommandAliasesBuilder(cmd).buildCommand(dispatcher));
-            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN
-                    || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
+                dispatcher.register(new CommandBuilder(cmd.getCustomCommand()).buildCommand(dispatcher));
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM
+                    || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT
+                    || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                 LiteralArgumentBuilder<ServerCommandSource> command = cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG ?
-                        new CommandRedirectBuilder(cmd).buildCommand(dispatcher) : new CommandReassignBuilder(cmd).buildCommand(dispatcher, this.reassignCommandList);
+                        new CommandRedirectBuilder(cmd).buildCommand(dispatcher) : new CommandReassignBuilder(cmd).buildCommand(dispatcher, this.reassignCommandMap);
                 if (command == null) {
                     continue;
                 } else {
@@ -87,10 +88,14 @@ public class CommandAliasesLoader {
                 }
             }
 
-            if (cmd.getCommand().contains(" ")) {
-                this.loadedCommands.add(cmd.getCommand().split(" ")[0]);
+            if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
+                this.loadedCommands.add(cmd.getCustomCommand().getParent());
             } else {
-                this.loadedCommands.add(cmd.getCommand());
+                if (cmd.getCommand().contains(" ")) {
+                    this.loadedCommands.add(cmd.getCommand().split(" ")[0]);
+                } else {
+                    this.loadedCommands.add(cmd.getCommand());
+                }
             }
         }
 
@@ -167,7 +172,7 @@ public class CommandAliasesLoader {
         for (String cmd : this.loadedCommands) {
             dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(cmd));
         }
-        for (Map.Entry<String, String> entry : this.reassignCommandList.entrySet()) {
+        for (Map.Entry<String, String> entry : this.reassignCommandMap.entrySet()) {
             CommandNode<ServerCommandSource> commandNode = dispatcher.getRoot().getChildren().stream().filter(node ->
                     node.getName().equals(entry.getValue())).findFirst().orElse(null);
 
@@ -192,7 +197,7 @@ public class CommandAliasesLoader {
             }
         }
 
-        this.reassignCommandList.clear();
+        this.reassignCommandMap.clear();
         this.loadedCommands.clear();
     }
 
@@ -224,34 +229,5 @@ public class CommandAliasesLoader {
         }
 
         return commandAliases;
-    }
-
-    /**
-     * Reads JSON file and serializes them to a List of Custom Commands
-     *
-     * @param file JSON file path
-     * @return List of CommandAliases
-     */
-    private List<CommandAliasParent> loadCustomCommands(File file) {
-        List<CommandAliasParent> commandAliasParents = new ObjectArrayList<>();
-
-        if (file.exists()) {
-            try (FileReader reader = new FileReader(file)) {
-                commandAliasParents = gson.fromJson(reader, new TypeToken<List<CommandAliasParent>>() {
-                }.getType());
-            } catch (IOException e) {
-                throw new RuntimeException("Could not parse CommandAliases Custom Commands File", e);
-            }
-        } else {
-            try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
-                String json = gson.toJson(new ObjectArrayList<>());
-                writer.write(json);
-                writer.flush();
-            } catch (IOException e) {
-                throw new RuntimeException("Could not write CommandAliases Custom Commands File", e);
-            }
-        }
-
-        return commandAliasParents;
     }
 }
