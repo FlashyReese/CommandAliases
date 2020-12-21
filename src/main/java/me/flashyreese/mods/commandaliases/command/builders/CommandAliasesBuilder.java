@@ -14,6 +14,8 @@ import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import me.flashyreese.mods.commandaliases.classtool.FormattingTypeMap;
@@ -44,10 +46,10 @@ public class CommandAliasesBuilder {
     private static final Pattern OPTIONAL_COMMAND_ALIAS_HOLDER = Pattern.compile("\\[(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?]");
 
     private final CommandAlias command;
-    private final List<CommandAliasesHolder> commandAliasesRequiredHolders = new ArrayList<>();
-    private final List<CommandAliasesHolder> commandAliasesOptionalHolders = new ArrayList<>();
+    private final List<CommandAliasesHolder> commandAliasesRequiredHolders = new ObjectArrayList<>();
+    private final List<CommandAliasesHolder> commandAliasesOptionalHolders = new ObjectArrayList<>();
 
-    private final Map<String, ClassTool<?>> classToolMap = new HashMap<>();
+    private final Map<String, ClassTool<?>> classToolMap = new Object2ObjectOpenHashMap<>();
     private final FormattingTypeMap formattingTypeMap;
 
     public CommandAliasesBuilder(CommandAlias command) {
@@ -67,7 +69,7 @@ public class CommandAliasesBuilder {
      * @return List of Command Alias Holders as String
      */
     private List<String> locateHolders(String commandAliasCommand, boolean required) {
-        List<String> holders = new ArrayList<>();
+        List<String> holders = new ObjectArrayList<>();
         Matcher m = required ? REQUIRED_COMMAND_ALIAS_HOLDER.matcher(commandAliasCommand) : OPTIONAL_COMMAND_ALIAS_HOLDER.matcher(commandAliasCommand);
         while (m.find()) {
             holders.add(m.group());
@@ -83,7 +85,7 @@ public class CommandAliasesBuilder {
      * @return List of CommandAliasesHolders
      */
     private List<CommandAliasesHolder> buildHolders(List<String> holders, boolean required) {
-        List<CommandAliasesHolder> commandAliasesHolders = new ArrayList<>();
+        List<CommandAliasesHolder> commandAliasesHolders = new ObjectArrayList<>();
         holders.forEach(holder -> commandAliasesHolders.add(new CommandAliasesHolder(holder, required)));
         return commandAliasesHolders;
     }
@@ -106,7 +108,7 @@ public class CommandAliasesBuilder {
      * @return HashMap Holder Variable Name - Input
      */
     private Map<String, String> getHolderInputMap(CommandContext<ServerCommandSource> context, boolean required) {
-        Map<String, String> inputMap = new HashMap<>();
+        Map<String, String> inputMap = new Object2ObjectOpenHashMap<>();
 
         for (CommandAliasesHolder holder : required ? this.commandAliasesRequiredHolders : this.commandAliasesOptionalHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
@@ -174,7 +176,7 @@ public class CommandAliasesBuilder {
         }
 
         //Execution Formatting/Binding
-        Map<String, String> newInputMap = new HashMap<>();
+        Map<String, String> newInputMap = new Object2ObjectOpenHashMap<>();
         List<CommandAliasesHolder> textHolders = this.getCommandAliasesHolders(formattedText, true);
         textHolders.addAll(this.getCommandAliasesHolders(formattedText, false));
         for (CommandAliasesHolder holder : textHolders) {
@@ -218,7 +220,7 @@ public class CommandAliasesBuilder {
             }
         }
         //Check for missing optional arguments and remove
-        if (!ignoreOptionalRemoval){
+        if (!ignoreOptionalRemoval) {
             List<String> missingOptionalHolders = this.locateHolders(formattedText, false);
             if (missingOptionalHolders.size() != 0) {
                 for (String holder : missingOptionalHolders) {
