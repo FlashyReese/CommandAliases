@@ -17,6 +17,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
+import me.flashyreese.mods.commandaliases.classtool.FormattingTypeMap;
 import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
 import me.flashyreese.mods.commandaliases.command.CommandAction;
 import me.flashyreese.mods.commandaliases.command.CommandChild;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Represents the Command Builder
@@ -44,6 +46,7 @@ public class CommandBuilder {
     private final CommandParent commandAliasParent;
 
     private final ArgumentTypeManager argumentTypeManager = new ArgumentTypeManager();
+    private final FormattingTypeMap formattingTypeMap = new FormattingTypeMap();
 
     public CommandBuilder(CommandParent commandAliasParent) {
         this.commandAliasParent = commandAliasParent;
@@ -217,20 +220,17 @@ public class CommandBuilder {
         //Input Map
         for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
             string = string.replace(String.format("{{%s}}", entry.getKey()), entry.getValue());
-            string = string.replace(String.format("{{%s@toJsonString}}", entry.getKey()), escape(entry.getValue()));
-        }
-        return string;
-    }
 
-    private String escape(String raw) {
-        String escaped = raw;
-        escaped = escaped.replace("\\", "\\\\");
-        escaped = escaped.replace("\"", "\\\"");
-        escaped = escaped.replace("\b", "\\b");
-        escaped = escaped.replace("\f", "\\f");
-        escaped = escaped.replace("\n", "\\n");
-        escaped = escaped.replace("\r", "\\r");
-        escaped = escaped.replace("\t", "\\t");
-        return escaped;
+            for (Map.Entry<String, Function<String, String>> entry2: this.formattingTypeMap.getFormatTypeMap().entrySet()){
+                String tempString = String.format("{{%s@%s}}", entry.getKey(), entry2.getKey());
+                if (string.contains(tempString)){
+                    String newString = entry2.getValue().apply(entry.getValue());
+                    string = string.replace(tempString, newString);
+                }
+            }
+        }
+
+        string = string.trim();
+        return string;
     }
 }
