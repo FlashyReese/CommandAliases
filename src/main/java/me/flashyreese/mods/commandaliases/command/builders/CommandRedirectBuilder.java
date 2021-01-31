@@ -70,9 +70,9 @@ public class CommandRedirectBuilder {
             if (commandBuilder != null) {
                 commandBuilder = CommandManager.literal(literal).then(commandBuilder);
             } else {
-                if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN){
+                if (this.command.getCommandMode() == CommandMode.COMMAND_REDIRECT){
                     commandBuilder = CommandManager.literal(literal).redirect(redirect);
-                }else{
+                }else if (this.command.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG){
                     commandBuilder = CommandManager.literal(literal).executes(redirect.getCommand());
                 }
             }
