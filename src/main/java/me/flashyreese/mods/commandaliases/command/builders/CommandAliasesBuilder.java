@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.2.0
+ * @version 0.4.1
  * @since 0.1.3
  */
 public class CommandAliasesBuilder {
@@ -367,9 +367,9 @@ public class CommandAliasesBuilder {
                 if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
                     if (tool.contains(holder.getMethod())) {
                         if (optionalArguments != null) { //If first argument start building
-                            optionalArguments = optionalArguments.then(CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)));
+                            optionalArguments = optionalArguments.then(CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)));
                         } else {
-                            optionalArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
+                            optionalArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
                         }
                     }
                 }
@@ -385,12 +385,12 @@ public class CommandAliasesBuilder {
                 if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
                     if (tool.contains(holder.getMethod())) {
                         if (requiredArguments != null) {
-                            requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).then(requiredArguments);
+                            requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).then(requiredArguments);
                         } else {
                             if (optionalArguments != null) {
-                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)).then(optionalArguments);
+                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)).then(optionalArguments);
                             } else {
-                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod()).getArgumentType()).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
+                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
                             }
                         }
                     }
