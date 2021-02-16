@@ -39,7 +39,7 @@ import java.util.function.Function;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.4.1
+ * @version 0.4.2
  * @since 0.4.0
  */
 public class CommandBuilder {

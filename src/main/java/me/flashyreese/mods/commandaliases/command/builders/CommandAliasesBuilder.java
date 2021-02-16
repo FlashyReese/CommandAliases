@@ -38,7 +38,7 @@ import java.util.regex.Pattern;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.4.1
+ * @version 0.4.2
  * @since 0.1.3
  */
 public class CommandAliasesBuilder {

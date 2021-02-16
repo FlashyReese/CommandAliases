@@ -26,7 +26,7 @@ import java.util.Map;
  * Represents the Argument Type Manager Class Tool
  *
  * @author FlashyReese
- * @version 0.4.1
+ * @version 0.4.2
  * @since 0.0.9
  * <p>
  * This ArgumentTypeManager maps ArgumentTypes to String.
