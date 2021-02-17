@@ -91,12 +91,12 @@ public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
         this.argumentMap.put("minecraft:mob_effect", MobEffectArgumentType.mobEffect());
         this.argumentMap.put("minecraft:function", FunctionArgumentType.function());
         this.argumentMap.put("minecraft:entity_anchor", EntityAnchorArgumentType.entityAnchor());
-        //this.argumentMap.put("minecraft:int_range", new ArgType(NumberRangeArgumentType.numberRange(), (commandContext, name) -> {}));
-        //this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.method_30918());
+        this.argumentMap.put("minecraft:int_range", NumberRangeArgumentType.numberRange());
+        this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.method_30918());
         this.argumentMap.put("minecraft:item_enchantment", ItemEnchantmentArgumentType.itemEnchantment());
         this.argumentMap.put("minecraft:entity_summon", EntitySummonArgumentType.entitySummon());
         this.argumentMap.put("minecraft:dimension", DimensionArgumentType.dimension());
-        //this.argumentMap.put("minecraft:time", new ArgType(TimeArgumentType.time(), (commandContext, name) -> {}));
+        this.argumentMap.put("minecraft:time", TimeArgumentType.time());
         this.argumentMap.put("minecraft:uuid", UuidArgumentType.uuid());
 
         this.argumentMap.put("brigadier:bool", BoolArgumentType.bool());
