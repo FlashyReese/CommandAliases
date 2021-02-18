@@ -18,7 +18,6 @@ import me.flashyreese.mods.commandaliases.command.CommandMode;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Map;
 
 /**
@@ -32,9 +31,12 @@ import java.util.Map;
  */
 public class CommandReassignBuilder {
     private final CommandAlias command;
+    private final Field literalCommandNodeLiteralField;
 
-    public CommandReassignBuilder(CommandAlias command) {
+
+    public CommandReassignBuilder(CommandAlias command, Field literalCommandNodeLiteralField) {
         this.command = command;
+        this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
     }
 
     /**
@@ -81,13 +83,8 @@ public class CommandReassignBuilder {
             dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(cmd.getCommand()));
 
             try {
-                Field f = commandNode.getClass().getDeclaredField("literal");
-                f.setAccessible(true);
-                Field modifiers = Field.class.getDeclaredField("modifiers");
-                modifiers.setAccessible(true);
-                modifiers.setInt(f, f.getModifiers() & ~Modifier.FINAL);
-                f.set(commandNode, cmd.getReassignTo());
-            } catch (NoSuchFieldException | IllegalAccessException e) {
+                this.literalCommandNodeLiteralField.set(commandNode, cmd.getReassignTo());
+            } catch (IllegalAccessException e) {
                 e.printStackTrace();
                 CommandAliasesMod.getLogger().error("Skipping \"{}\", couldn't modify command literal", cmd.getCommand());
                 return false;

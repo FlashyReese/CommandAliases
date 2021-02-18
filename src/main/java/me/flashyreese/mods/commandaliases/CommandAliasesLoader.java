@@ -15,6 +15,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
@@ -34,7 +35,6 @@ import net.minecraft.util.Formatting;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,16 @@ public class CommandAliasesLoader {
     private final List<String> loadedCommands = new ObjectArrayList<>();
     private final Map<String, String> reassignCommandMap = new Object2ObjectOpenHashMap<>();
 
+    private Field literalCommandNodeLiteralField = null;
+
     public CommandAliasesLoader() {
+        try {
+            this.literalCommandNodeLiteralField = LiteralCommandNode.class.getDeclaredField("literal");
+            this.literalCommandNodeLiteralField.setAccessible(true);
+        }catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             this.registerCommandAliasesCommands(dispatcher, dedicated);
             this.registerCommands(dispatcher, dedicated);
@@ -80,7 +89,7 @@ public class CommandAliasesLoader {
                     || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT
                     || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                 LiteralArgumentBuilder<ServerCommandSource> command = cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG ?
-                        new CommandRedirectBuilder(cmd).buildCommand(dispatcher) : new CommandReassignBuilder(cmd).buildCommand(dispatcher, this.reassignCommandMap);
+                        new CommandRedirectBuilder(cmd).buildCommand(dispatcher) : new CommandReassignBuilder(cmd, this.literalCommandNodeLiteralField).buildCommand(dispatcher, this.reassignCommandMap);
                 if (command == null) {
                     continue;
                 } else {
@@ -183,13 +192,8 @@ public class CommandAliasesLoader {
                 dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(entry.getValue()));
 
                 try {
-                    Field f = commandNode.getClass().getDeclaredField("literal");
-                    f.setAccessible(true);
-                    Field modifiers = Field.class.getDeclaredField("modifiers");
-                    modifiers.setAccessible(true);
-                    modifiers.setInt(f, f.getModifiers() & ~Modifier.FINAL);
-                    f.set(commandNode, entry.getKey());
-                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    this.literalCommandNodeLiteralField.set(commandNode, entry.getKey());
+                } catch (IllegalAccessException e) {
                     e.printStackTrace();
                     continue;
                 }
