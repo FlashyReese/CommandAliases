@@ -186,6 +186,9 @@ public class CommandBuilder {
                             String message = this.formatString(context, currentInputList, action.getMessage());
                             context.getSource().sendFeedback(new LiteralText(message), true);
                         }
+                        if (action.isStopIfFail() && executeState.get() != 1){
+                            break;
+                        }
                         if (action.getSleep() != null) {
                             String formattedTime = this.formatString(context, currentInputList, action.getSleep());
                             int time = Integer.parseInt(formattedTime);
@@ -219,6 +222,7 @@ public class CommandBuilder {
         //Functions fixme: more hardcoding
         string = string.replace("$executor_name()", context.getSource().getName());
         //Input Map
+        //Todo: track replaced substring indexes to prevent replacing previously replaced
         for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
             string = string.replace(String.format("{{%s}}", entry.getKey()), entry.getValue());
 

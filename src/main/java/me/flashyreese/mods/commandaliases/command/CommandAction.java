@@ -13,7 +13,7 @@ package me.flashyreese.mods.commandaliases.command;
  * Represents the CommandAliases Custom Command Action
  *
  * @author FlashyReese
- * @version 0.4.0
+ * @version 0.4.3
  * @since 0.4.0
  */
 public class CommandAction {
@@ -21,6 +21,7 @@ public class CommandAction {
     private CommandType commandType;
     private String sleep;
     private String message;
+    private boolean stopIfFail;
 
     public String getCommand() {
         return command;
@@ -36,5 +37,9 @@ public class CommandAction {
 
     public String getMessage() {
         return message;
+    }
+
+    public boolean isStopIfFail() {
+        return stopIfFail;
     }
 }
