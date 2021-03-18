@@ -12,17 +12,14 @@ package me.flashyreese.mods.commandaliases.command.builder.custom;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 /**
@@ -36,10 +33,8 @@ import java.util.function.Function;
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {
 
-    private final CommandDispatcher<ServerCommandSource> serverCommandDispatcher;
-    public ClientCustomCommandBuilder(CustomCommand commandAliasParent, CommandDispatcher<ServerCommandSource> serverCommandDispatcher) {
+    public ClientCustomCommandBuilder(CustomCommand commandAliasParent) {
         super(commandAliasParent);
-        this.serverCommandDispatcher = serverCommandDispatcher;
     }
 
     /**
@@ -79,7 +74,7 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
      */
     @Override
     protected int executeCommand(List<CustomCommandAction> actions, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandContext<FabricClientCommandSource> context, List<String> currentInputList) {
-        AtomicInteger executeState = new AtomicInteger();
+        //AtomicInteger executeState = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
                 if (actions != null) {
@@ -88,16 +83,18 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
                             String actionCommand = this.formatString(context, currentInputList, action.getCommand());
 
                             //Fixme: No longer needs to define command type
-                            executeState.set(this.serverCommandDispatcher.execute(actionCommand, context.getSource().getPlayer().getCommandSource()));
+                            //System.out.println(context.getSource().getPlayer().getCommandSource());
+                            context.getSource().getPlayer().sendChatMessage("/" + actionCommand);
                             //executeState.set(dispatcher.execute(actionCommand, context.getSource()));
                         }
                         if (action.getMessage() != null) {
                             String message = this.formatString(context, currentInputList, action.getMessage());
                             context.getSource().sendFeedback(new LiteralText(message));
                         }
-                        if (action.isRequireSuccess() && executeState.get() != 1){
+                        //Fixme: figure a way to check this.
+                        /*if (action.isRequireSuccess() && executeState.get() != 1) {
                             break;
-                        }
+                        }*/
                         if (action.getSleep() != null) {
                             String formattedTime = this.formatString(context, currentInputList, action.getSleep());
                             int time = Integer.parseInt(formattedTime);
@@ -105,7 +102,7 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
                         }
                     }
                 }
-            } catch (CommandSyntaxException | InterruptedException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
                 String output = e.getLocalizedMessage();
                 context.getSource().sendFeedback(new LiteralText(output));
@@ -113,7 +110,7 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
         });
         thread.setName("Command Aliases");
         thread.start();
-        return executeState.get();
+        return Command.SINGLE_SUCCESS;//executeState.get();
     }
 
     /**

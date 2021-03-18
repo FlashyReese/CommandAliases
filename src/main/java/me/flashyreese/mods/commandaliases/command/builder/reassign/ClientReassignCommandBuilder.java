@@ -30,11 +30,8 @@ import java.util.Map;
  */
 public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder<FabricClientCommandSource> {
 
-    private final CommandDispatcher<ServerCommandSource> serverCommandDispatcher;
-
-    public ClientReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignClientCommandMap, CommandDispatcher<ServerCommandSource> serverCommandDispatcher) {
+    public ClientReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignClientCommandMap) {
         super(command, literalCommandNodeLiteralField, reassignClientCommandMap);
-        this.serverCommandDispatcher = serverCommandDispatcher;
     }
 
     @Override
@@ -49,7 +46,7 @@ public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder
                 return new CommandAliasesBuilder(this.command).buildCommand(dispatcher);
             } else */
             if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-                return new ClientCustomCommandBuilder(this.command.getCustomCommand(), this.serverCommandDispatcher).buildCommand(dispatcher);
+                return new ClientCustomCommandBuilder(this.command.getCustomCommand()).buildCommand(dispatcher);
             }
         }
         return null;
