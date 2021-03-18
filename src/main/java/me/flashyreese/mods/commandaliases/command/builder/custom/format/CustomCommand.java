@@ -7,47 +7,39 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases.command;
+package me.flashyreese.mods.commandaliases.command.builder.custom.format;
 
 import java.util.List;
 
 /**
- * Represents the CommandAliases Custom Command Child Component
+ * Represents a custom command
+ * <p>
+ * JSON Serialization Template
  *
  * @author FlashyReese
- * @version 0.4.0
+ * @version 0.5.0
  * @since 0.4.0
  */
-public class CommandChild {
-    private String child;
-    private String type;
-    private String argumentType;
+public class CustomCommand {
+    private String parent;
     private int permission;
-    private List<CommandAction> actions;
-    private List<CommandChild> children;
+    private List<CustomCommandAction> actions;
+    private List<CustomCommandChild> children;
     private String message;
 
-    public String getChild() {
-        return child;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public String getArgumentType() {
-        return argumentType;
+    public String getParent() {
+        return parent;
     }
 
     public int getPermission() {
         return permission;
     }
 
-    public List<CommandAction> getActions() {
+    public List<CustomCommandAction> getActions() {
         return actions;
     }
 
-    public List<CommandChild> getChildren() {
+    public List<CustomCommandChild> getChildren() {
         return children;
     }
 

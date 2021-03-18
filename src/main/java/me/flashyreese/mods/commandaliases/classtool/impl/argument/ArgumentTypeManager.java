@@ -15,7 +15,7 @@ import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.context.StringRange;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
-import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;
 
@@ -26,7 +26,7 @@ import java.util.Map;
  * Represents the Argument Type Manager Class Tool
  *
  * @author FlashyReese
- * @version 0.4.2
+ * @version 0.5.0
  * @since 0.0.9
  * <p>
  * This ArgumentTypeManager maps ArgumentTypes to String.
@@ -123,7 +123,7 @@ public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
     }
 
     @Override
-    public String getValue(CommandContext<ServerCommandSource> context, CommandAliasesBuilder.CommandAliasesHolder holder) {
+    public String getValue(CommandContext<ServerCommandSource> context, AliasHolder holder) {
         return this.getInputString(context, holder.getVariableName());
     }
 
