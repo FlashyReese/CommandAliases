@@ -105,72 +105,67 @@ public class CommandAliasesLoader {
      * @param dispatcher Server CommandDispatcher
      */
     private void registerServerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
-        this.serverCommands.stream()
-                .filter(cmd -> cmd.getCommandType() != null && cmd.getCommandType() == CommandType.SERVER)
-                .forEach(cmd -> {
-                    if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
-                        LiteralArgumentBuilder<ServerCommandSource> command = new AliasCommandBuilder(cmd.getAliasCommand()).buildCommand(dispatcher);
-                        if (command != null) {
-                            dispatcher.register(command);
-                            this.loadedServerCommands.add(cmd.getAliasCommand().getCommand());
-                        }
-                    } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                        LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand()).buildCommand(dispatcher);
-                        if (command != null) {
-                            dispatcher.register(command);
-                            this.loadedServerCommands.add(cmd.getCustomCommand().getParent());
-                        }
-                    } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                        LiteralArgumentBuilder<ServerCommandSource> command = null;
-                        if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                            command = new CommandRedirectBuilder<ServerCommandSource>(cmd).buildCommand(dispatcher);
-                        } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                            command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignServerCommandMap).buildCommand(dispatcher);
-                        }
-                        if (command != null) {
-                            dispatcher.register(command);
-                            if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                                this.loadedServerCommands.add(cmd.getRedirectCommand().getCommand());
-                            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                                this.loadedServerCommands.add(cmd.getReassignCommand().getCommand());
-                            }
-                        }
+        this.serverCommands.forEach(cmd -> {
+            if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
+                LiteralArgumentBuilder<ServerCommandSource> command = new AliasCommandBuilder(cmd.getAliasCommand()).buildCommand(dispatcher);
+                if (command != null) {
+                    dispatcher.register(command);
+                    this.loadedServerCommands.add(cmd.getAliasCommand().getCommand());
+                }
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
+                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand()).buildCommand(dispatcher);
+                if (command != null) {
+                    dispatcher.register(command);
+                    this.loadedServerCommands.add(cmd.getCustomCommand().getParent());
+                }
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
+                LiteralArgumentBuilder<ServerCommandSource> command = null;
+                if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
+                    command = new CommandRedirectBuilder<ServerCommandSource>(cmd, CommandType.SERVER).buildCommand(dispatcher);
+                } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
+                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignServerCommandMap).buildCommand(dispatcher);
+                }
+                if (command != null) {
+                    dispatcher.register(command);
+                    if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
+                        this.loadedServerCommands.add(cmd.getRedirectCommand().getCommand());
+                    } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
+                        this.loadedServerCommands.add(cmd.getReassignCommand().getCommand());
                     }
-                });
+                }
+            }
+        });
         CommandAliasesMod.getLogger().info("Registered/Reloaded all your commands :P, you can now single command nuke!");
     }
 
     /**
      * Registers all server Command Aliases' custom commands.
-     *
      */
     private void registerClientCommands() {
-        this.clientCommands.stream()
-                .filter(cmd -> cmd.getCommandType() != null && cmd.getCommandType() == CommandType.CLIENT)
-                .forEach(cmd -> {
-                    if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                        LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand()).buildCommand(ClientCommandManager.DISPATCHER);
-                        if (command != null) {
-                            ClientCommandManager.DISPATCHER.register(command);
-                            this.loadedClientCommands.add(cmd.getCustomCommand().getParent());
-                        }
-                    } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                        LiteralArgumentBuilder<FabricClientCommandSource> command = null;
-                        if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                            command = new CommandRedirectBuilder<FabricClientCommandSource>(cmd).buildCommand(ClientCommandManager.DISPATCHER);
-                        } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                            command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignClientCommandMap).buildCommand(ClientCommandManager.DISPATCHER);
-                        }
-                        if (command != null) {
-                            ClientCommandManager.DISPATCHER.register(command);
-                            if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                                this.loadedClientCommands.add(cmd.getRedirectCommand().getCommand());
-                            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                                this.loadedClientCommands.add(cmd.getReassignCommand().getCommand());
-                            }
-                        }
+        this.clientCommands.forEach(cmd -> {
+            if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
+                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand()).buildCommand(ClientCommandManager.DISPATCHER);
+                if (command != null) {
+                    ClientCommandManager.DISPATCHER.register(command);
+                    this.loadedClientCommands.add(cmd.getCustomCommand().getParent());
+                }
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
+                LiteralArgumentBuilder<FabricClientCommandSource> command = null;
+                if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
+                    command = new CommandRedirectBuilder<FabricClientCommandSource>(cmd, CommandType.CLIENT).buildCommand(ClientCommandManager.DISPATCHER);
+                } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
+                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignClientCommandMap).buildCommand(ClientCommandManager.DISPATCHER);
+                }
+                if (command != null) {
+                    ClientCommandManager.DISPATCHER.register(command);
+                    if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
+                        this.loadedClientCommands.add(cmd.getRedirectCommand().getCommand());
+                    } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
+                        this.loadedClientCommands.add(cmd.getReassignCommand().getCommand());
                     }
-                });
+                }
+            }
+        });
         CommandAliasesMod.getLogger().info("Registered/Reloaded all your client commands :P, you can now single command nuke!");
     }
 
@@ -238,7 +233,6 @@ public class CommandAliasesLoader {
 
     /**
      * Registers all client Command Aliases' commands
-     *
      */
     private void registerClientCommandAliasesCommands() {
         ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("commandaliases").then(ClientCommandManager.literal("client")

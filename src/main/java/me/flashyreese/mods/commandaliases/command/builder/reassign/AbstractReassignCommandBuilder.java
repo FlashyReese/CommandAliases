@@ -14,6 +14,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import net.minecraft.command.CommandSource;
 
@@ -33,11 +34,13 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
     protected final CommandAlias command;
     private final Field literalCommandNodeLiteralField;
     protected final Map<String, String> reassignCommandMap;
+    private final CommandType commandType;
 
-    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap) {
+    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType) {
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.reassignCommandMap = reassignCommandMap;
+        this.commandType = commandType;
     }
 
     /**
@@ -61,7 +64,7 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
      */
     protected boolean reassignCommand(CommandAlias cmd, CommandDispatcher<S> dispatcher) {
         if (cmd.getReassignCommand() == null) {
-            CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing declaration!", cmd.getCommandType(), cmd.getCommandMode());
+            CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing declaration!", this.commandType, cmd.getCommandMode());
             return false;
         }
 
@@ -69,12 +72,12 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
         String reassignTo = cmd.getReassignCommand().getReassignTo().trim();
 
         if (command.contains(" ")) {
-            CommandAliasesMod.getLogger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\".", cmd.getCommandType(), cmd.getCommandMode(), command);
+            CommandAliasesMod.getLogger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), command);
             return false;
         }
 
         if (reassignTo.contains(" ")) {
-            CommandAliasesMod.getLogger().error("[{}] {} - \"reassignTo\" field must not contain spaces, skipping \"{}\".", cmd.getCommandType(), cmd.getCommandMode(), reassignTo);
+            CommandAliasesMod.getLogger().error("[{}] {} - \"reassignTo\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), reassignTo);
             return false;
         }
 
@@ -91,13 +94,13 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
                 this.literalCommandNodeLiteralField.set(commandNode, reassignTo);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                CommandAliasesMod.getLogger().error("[{}] {} - Failed to modify command literal \"{}\", skipping.", cmd.getCommandType(), cmd.getCommandMode(), command);
+                CommandAliasesMod.getLogger().error("[{}] {} - Failed to modify command literal \"{}\", skipping.", this.commandType, cmd.getCommandMode(), command);
                 return false;
             }
 
             dispatcher.getRoot().addChild(commandNode);
 
-            CommandAliasesMod.getLogger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\"", cmd.getCommandType(), cmd.getCommandMode(), command, reassignTo);
+            CommandAliasesMod.getLogger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\"", this.commandType, cmd.getCommandMode(), command, reassignTo);
             return true;
         }
         return false;

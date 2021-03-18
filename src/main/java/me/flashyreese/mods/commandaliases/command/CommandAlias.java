@@ -25,7 +25,6 @@ import me.flashyreese.mods.commandaliases.command.builder.redirect.format.Redire
  */
 public class CommandAlias {
     private CommandMode commandMode;
-    private CommandType commandType;
     private CustomCommand customCommand;
     private ReassignCommand reassignCommand;
     private RedirectCommand redirectCommand;
@@ -33,10 +32,6 @@ public class CommandAlias {
 
     public CommandMode getCommandMode() {
         return commandMode;
-    }
-
-    public CommandType getCommandType() {
-        return commandType;
     }
 
     public CustomCommand getCustomCommand() {

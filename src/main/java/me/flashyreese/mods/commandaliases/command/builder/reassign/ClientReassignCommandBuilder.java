@@ -13,6 +13,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
+import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ClientCustomCommandBuilder;
 import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
 import net.minecraft.server.command.ServerCommandSource;
@@ -31,7 +32,7 @@ import java.util.Map;
 public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder<FabricClientCommandSource> {
 
     public ClientReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignClientCommandMap) {
-        super(command, literalCommandNodeLiteralField, reassignClientCommandMap);
+        super(command, literalCommandNodeLiteralField, reassignClientCommandMap, CommandType.CLIENT);
     }
 
     @Override
