@@ -84,9 +84,21 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                         if (action.getCommand() != null) {
                             String actionCommand = this.formatString(context, currentInputList, action.getCommand());
                             if (action.getCommandType() == CommandType.CLIENT) {
-                                executeState.set(dispatcher.execute(actionCommand, context.getSource()));
+                                try {
+                                    executeState.set(dispatcher.execute(actionCommand, context.getSource()));
+                                } catch (CommandSyntaxException e) {
+                                    e.printStackTrace();
+                                    String output = e.getLocalizedMessage();
+                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                }
                             } else if (action.getCommandType() == CommandType.SERVER) {
-                                executeState.set(dispatcher.execute(actionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                try {
+                                    executeState.set(dispatcher.execute(actionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                } catch (CommandSyntaxException e) {
+                                    e.printStackTrace();
+                                    String output = e.getLocalizedMessage();
+                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                }
                             }
                         }
                         if (action.getMessage() != null) {
@@ -103,7 +115,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                         }
                     }
                 }
-            } catch (CommandSyntaxException | InterruptedException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
                 String output = e.getLocalizedMessage();
                 context.getSource().sendFeedback(new LiteralText(output), true);
