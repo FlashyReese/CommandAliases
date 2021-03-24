@@ -9,7 +9,10 @@
 
 package me.flashyreese.mods.commandaliases.command;
 
-import java.util.List;
+import me.flashyreese.mods.commandaliases.command.builder.alias.format.AliasCommand;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
+import me.flashyreese.mods.commandaliases.command.builder.reassign.format.ReassignCommand;
+import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
 
 /**
  * Represents the CommandAliases Command
@@ -17,58 +20,33 @@ import java.util.List;
  * JSON Serialization Template
  *
  * @author FlashyReese
- * @version 0.4.0
+ * @version 0.5.0
  * @since 0.0.9
  */
 public class CommandAlias {
     private CommandMode commandMode;
-    private String command;
-    private CommandParent customCommand;
-    private CommandType type;
-    private List<CommandAlias> execution;
-    private String sleep;
-    private String message;
-    private String reassignTo;
-    private String redirectTo;
-    private boolean ignoreOptionalRemoval;
+    private CustomCommand customCommand;
+    private ReassignCommand reassignCommand;
+    private RedirectCommand redirectCommand;
+    private AliasCommand aliasCommand;
 
     public CommandMode getCommandMode() {
         return commandMode;
     }
 
-    public String getCommand() {
-        return command;
-    }
-
-    public CommandParent getCustomCommand() {
+    public CustomCommand getCustomCommand() {
         return customCommand;
     }
 
-    public CommandType getType() {
-        return type;
+    public ReassignCommand getReassignCommand() {
+        return reassignCommand;
     }
 
-    public List<CommandAlias> getExecution() {
-        return execution;
+    public RedirectCommand getRedirectCommand() {
+        return redirectCommand;
     }
 
-    public String getSleep() {
-        return sleep;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getReassignTo() {
-        return reassignTo;
-    }
-
-    public String getRedirectTo() {
-        return redirectTo;
-    }
-
-    public boolean isIgnoreOptionalRemoval() {
-        return ignoreOptionalRemoval;
+    public AliasCommand getAliasCommand() {
+        return aliasCommand;
     }
 }

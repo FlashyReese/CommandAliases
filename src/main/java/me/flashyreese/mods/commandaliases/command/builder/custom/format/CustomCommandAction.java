@@ -7,21 +7,23 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases.command;
+package me.flashyreese.mods.commandaliases.command.builder.custom.format;
+
+import me.flashyreese.mods.commandaliases.command.CommandType;
 
 /**
- * Represents the CommandAliases Custom Command Action
+ * Represents a custom command Action
  *
  * @author FlashyReese
- * @version 0.4.3
+ * @version 0.5.0
  * @since 0.4.0
  */
-public class CommandAction {
+public class CustomCommandAction {
     private String command;
     private CommandType commandType;
     private String sleep;
     private String message;
-    private boolean stopIfFail;
+    private boolean requireSuccess;
 
     public String getCommand() {
         return command;
@@ -39,7 +41,7 @@ public class CommandAction {
         return message;
     }
 
-    public boolean isStopIfFail() {
-        return stopIfFail;
+    public boolean isRequireSuccess() {
+        return requireSuccess;
     }
 }
