@@ -251,9 +251,19 @@ public class CommandAliasesBuilder {
                         if (subCommandAlias.getCommand() != null) {
                             String executionCommand = this.formatExecutionCommandOrMessage(context, subCommandAlias.getCommand(), subCommandAlias.isIgnoreOptionalRemoval());
                             if (subCommandAlias.getType() == CommandType.CLIENT) {
-                                execute.set(dispatcher.execute(executionCommand, context.getSource()));
+                                try {
+                                    execute.set(dispatcher.execute(executionCommand, context.getSource()));
+                                } catch (CommandSyntaxException e) {
+                                    String output = e.getLocalizedMessage();
+                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                }
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
-                                execute.set(dispatcher.execute(executionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                try {
+                                    execute.set(dispatcher.execute(executionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                } catch (CommandSyntaxException e) {
+                                    String output = e.getLocalizedMessage();
+                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                }
                             }
                         }
                         if (subCommandAlias.getMessage() != null) {
@@ -267,7 +277,7 @@ public class CommandAliasesBuilder {
                         }
                     }
                 }
-            } catch (CommandSyntaxException | InterruptedException e) {
+            } catch (InterruptedException e) {
                 String output = e.getLocalizedMessage();
                 context.getSource().sendFeedback(new LiteralText(output), true);
             }

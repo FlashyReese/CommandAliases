@@ -177,16 +177,28 @@ public class CommandBuilder {
                         if (action.getCommand() != null) {
                             String actionCommand = this.formatString(context, currentInputList, action.getCommand());
                             if (action.getCommandType() == CommandType.CLIENT) {
-                                executeState.set(dispatcher.execute(actionCommand, context.getSource()));
+                                try {
+                                    executeState.set(dispatcher.execute(actionCommand, context.getSource()));
+                                } catch (CommandSyntaxException e) {
+                                    e.printStackTrace();
+                                    String output = e.getLocalizedMessage();
+                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                }
                             } else if (action.getCommandType() == CommandType.SERVER) {
-                                executeState.set(dispatcher.execute(actionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                try {
+                                    executeState.set(dispatcher.execute(actionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                } catch (CommandSyntaxException e) {
+                                    e.printStackTrace();
+                                    String output = e.getLocalizedMessage();
+                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                }
                             }
                         }
                         if (action.getMessage() != null) {
                             String message = this.formatString(context, currentInputList, action.getMessage());
                             context.getSource().sendFeedback(new LiteralText(message), true);
                         }
-                        if (action.isStopIfFail() && executeState.get() != 1){
+                        if (action.isStopIfFail() && executeState.get() != 1) {
                             break;
                         }
                         if (action.getSleep() != null) {
@@ -196,7 +208,7 @@ public class CommandBuilder {
                         }
                     }
                 }
-            } catch (CommandSyntaxException | InterruptedException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
                 String output = e.getLocalizedMessage();
                 context.getSource().sendFeedback(new LiteralText(output), true);
