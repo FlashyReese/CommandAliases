@@ -19,7 +19,7 @@ import java.util.function.Function;
  * Used to convert String to a certain state.
  *
  * @author FlashyReese
- * @version 0.1.3
+ * @version 0.5.0
  * @since 0.1.2
  */
 public class FormattingTypeMap {
@@ -34,6 +34,13 @@ public class FormattingTypeMap {
         this.formatTypeMap.put("jsonString", this::escape);
         this.formatTypeMap.put("toLower", String::toLowerCase);
         this.formatTypeMap.put("toUpper", String::toUpperCase);
+        this.formatTypeMap.put("removeDoubleQuotes", this::removeDoubleQuotes);
+    }
+
+    private String removeDoubleQuotes(String raw) {
+        String removed = raw;
+        removed = removed.replaceAll("\"", "");
+        return removed;
     }
 
     private String escape(String raw) {
