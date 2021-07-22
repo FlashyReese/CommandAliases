@@ -24,6 +24,7 @@ import me.flashyreese.mods.commandaliases.command.builders.CommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandReassignBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandRedirectBuilder;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.server.command.CommandManager;
@@ -57,8 +58,10 @@ public class CommandAliasesLoader {
     public CommandAliasesLoader() {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             this.registerCommandAliasesCommands(dispatcher, dedicated);
-            this.registerCommands(dispatcher, dedicated);
         });
+        ServerLifecycleEvents.SERVER_STARTED.register((server -> {
+            this.registerCommands(server.getCommandManager().getDispatcher(), server.isDedicated());
+        }));
     }
 
     /**
