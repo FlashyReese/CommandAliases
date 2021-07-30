@@ -24,6 +24,7 @@ import me.flashyreese.mods.commandaliases.command.builders.CommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandReassignBuilder;
 import me.flashyreese.mods.commandaliases.command.builders.CommandRedirectBuilder;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.server.command.CommandManager;
@@ -39,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 /**
  * Represents the custom command aliases loader.
@@ -57,8 +59,10 @@ public class CommandAliasesLoader {
     public CommandAliasesLoader() {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             this.registerCommandAliasesCommands(dispatcher, dedicated);
-            this.registerCommands(dispatcher, dedicated);
         });
+        ServerLifecycleEvents.SERVER_STARTED.register((server -> {
+            this.registerCommands(server.getCommandManager().getDispatcher(), server.isDedicated());
+        }));
     }
 
     /**
@@ -68,11 +72,16 @@ public class CommandAliasesLoader {
      * @param dedicated  Is Dedicated Server
      */
     private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, boolean dedicated) {
+        CommandAliasesMod.getLogger().info("About to Register/Reloaded all your commands.");
         this.commands.clear();
         this.commands.addAll(this.loadCommandAliases(new File("config/commandaliases.json")));
 
         for (CommandAlias cmd : this.commands) {
+            String commandName = cmd.getCommand();
+            String commandPermissionName = "commandaliases." + commandName;
+            CommandAliasesMod.getLogger().info("Registering Command: {}", commandName);
             if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
+                //if (Permissions.check((Predicate<ServerCommandSource>) dispatcher.getRoot().getChildren(), commandPermissionName));
                 dispatcher.register(new CommandAliasesBuilder(cmd).buildCommand(dispatcher));
             } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
                 dispatcher.register(new CommandBuilder(cmd.getCustomCommand()).buildCommand(dispatcher));
@@ -125,8 +134,8 @@ public class CommandAliasesLoader {
                                     this.registerCommands(dispatcher, dedicated);
 
                                     //Update Command Tree
-                                    for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                                        context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
+                                    for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
+                                        context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
 
                                     context.getSource().sendFeedback(new LiteralText("Reloaded all Command Aliases!"), true);
@@ -139,8 +148,8 @@ public class CommandAliasesLoader {
                                     context.getSource().sendFeedback(new LiteralText("Loading all Command Aliases!"), true);
                                     this.registerCommands(dispatcher, dedicated);
 
-                                    for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                                        context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
+                                    for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
+                                        context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
                                     context.getSource().sendFeedback(new LiteralText("Loaded all Command Aliases!"), true);
                                     return Command.SINGLE_SUCCESS;
@@ -152,8 +161,8 @@ public class CommandAliasesLoader {
                                     context.getSource().sendFeedback(new LiteralText("Unloading all Command Aliases!"), true);
                                     this.unregisterCommands(dispatcher);
 
-                                    for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                                        context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
+                                    for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
+                                        context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
                                     context.getSource().sendFeedback(new LiteralText("Unloaded all Command Aliases!"), true);
                                     return Command.SINGLE_SUCCESS;

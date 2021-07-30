@@ -26,6 +26,7 @@ import me.flashyreese.mods.commandaliases.command.CommandType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -253,7 +254,7 @@ public class CommandAliasesBuilder {
                             if (subCommandAlias.getType() == CommandType.CLIENT) {
                                 execute.set(dispatcher.execute(executionCommand, context.getSource()));
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
-                                execute.set(dispatcher.execute(executionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                execute.set(dispatcher.execute(executionCommand, context.getSource().getServer().getCommandSource()));
                             }
                         }
                         if (subCommandAlias.getMessage() != null) {
@@ -317,9 +318,9 @@ public class CommandAliasesBuilder {
             Collections.reverse(literals);
             for (String literal : literals) {
                 if (commandBuilder != null) {
-                    commandBuilder = CommandManager.literal(literal).then(commandBuilder);
+                    commandBuilder = CommandManager.literal(literal).requires(Permissions.require("commandaliases." + newCommand)).then(commandBuilder);
                 } else {
-                    commandBuilder = CommandManager.literal(literal).executes(context -> this.executeCommandAliases(command, dispatcher, context));
+                    commandBuilder = CommandManager.literal(literal).requires(Permissions.require("commandaliases." + newCommand)).executes(context -> this.executeCommandAliases(command, dispatcher, context));
                 }
             }
         } else if (newCommand.contains(" ") && allHolders.size() != 0) { //If holders are found and contains spaces, parse json literals plus arguments at the end. Fixme: make sure arguments are located in the end or bad time
@@ -328,23 +329,23 @@ public class CommandAliasesBuilder {
             Collections.reverse(literals);
             for (String literal : literals) {
                 if (commandBuilder != null) {
-                    commandBuilder = CommandManager.literal(literal).then(commandBuilder);
+                    commandBuilder = CommandManager.literal(literal).requires(Permissions.require("commandaliases." + newCommand)).then(commandBuilder);
                 } else {
                     if (arguments != null) {
-                        commandBuilder = CommandManager.literal(literal).then(arguments);
+                        commandBuilder = CommandManager.literal(literal).requires(Permissions.require("commandaliases." + newCommand)).then(arguments);
                     } else {
-                        commandBuilder = CommandManager.literal(literal).executes(context -> this.executeCommandAliases(command, dispatcher, context));
+                        commandBuilder = CommandManager.literal(literal).requires(Permissions.require("commandaliases." + newCommand)).executes(context -> this.executeCommandAliases(command, dispatcher, context));
                     }
                 }
             }
         } else if (!newCommand.contains(" ") && allHolders.size() == 0) { // No holders no spaces just a command rename with extra steps
-            commandBuilder = CommandManager.literal(newCommand).executes(context -> this.executeCommandAliases(command, dispatcher, context));
+            commandBuilder = CommandManager.literal(newCommand).requires(Permissions.require("commandaliases." + newCommand)).executes(context -> this.executeCommandAliases(command, dispatcher, context));
         } else if (!newCommand.contains(" ") && allHolders.size() != 0) { // Holders no spaces, parse city
             ArgumentBuilder<ServerCommandSource, ?> arguments = this.parseArguments(command, dispatcher); //parsearguments does most of the work although optional arguments might need to come through here
             if (arguments != null) {
-                commandBuilder = CommandManager.literal(newCommand).then(arguments);
+                commandBuilder = CommandManager.literal(newCommand).requires(Permissions.require("commandaliases." + newCommand)).then(arguments);
             } else {
-                commandBuilder = CommandManager.literal(newCommand).executes(context -> this.executeCommandAliases(command, dispatcher, context));
+                commandBuilder = CommandManager.literal(newCommand).requires(Permissions.require("commandaliases." + newCommand)).executes(context -> this.executeCommandAliases(command, dispatcher, context));
             }
         }
         return commandBuilder;
