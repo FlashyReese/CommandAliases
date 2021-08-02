@@ -71,22 +71,26 @@ public class CommandAliasesLoader {
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
+    }
 
+    public void registerCommandAliases() {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-            this.registerServerCommandAliasesCommands(dispatcher);
-            this.loadServerCommands();
-            this.registerServerCommands(dispatcher);
+            this.registerCommandAliasesCommands(dispatcher);
+            this.loadCommandAliases();
+            this.registerCommands(dispatcher);
         });
+    }
 
+    public void registerClientSidedCommandAliases() {
         this.registerClientCommandAliasesCommands();
-        this.loadClientCommands();
+        this.loadClientCommandAliases();
         this.registerClientCommands();
     }
 
     /**
      * Loads command aliases file, meant for integrated/dedicated servers.
      */
-    private void loadServerCommands() {
+    private void loadCommandAliases() {
         this.serverCommands.clear();
         this.serverCommands.addAll(this.loadCommandAliases(new File("config/commandaliases.json")));
     }
@@ -94,7 +98,7 @@ public class CommandAliasesLoader {
     /**
      * Loads client command aliases file, meant for clients.
      */
-    private void loadClientCommands() {
+    private void loadClientCommandAliases() {
         this.clientCommands.clear();
         this.clientCommands.addAll(this.loadCommandAliases(new File("config/commandaliases-client.json")));
     }
@@ -104,7 +108,7 @@ public class CommandAliasesLoader {
      *
      * @param dispatcher Server CommandDispatcher
      */
-    private void registerServerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
+    private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
         this.serverCommands.forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
                 LiteralArgumentBuilder<ServerCommandSource> command = new AliasCommandBuilder(cmd.getAliasCommand()).buildCommand(dispatcher);
@@ -174,7 +178,7 @@ public class CommandAliasesLoader {
      *
      * @param dispatcher The CommandDispatcher
      */
-    private void registerServerCommandAliasesCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
+    private void registerCommandAliasesCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("commandaliases").requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(4))
                 .executes(context -> {
                     Optional<ModContainer> modContainerOptional = FabricLoader.getInstance().getModContainer("commandaliases");
@@ -188,8 +192,8 @@ public class CommandAliasesLoader {
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Reloading all Command Aliases!"), true);
                                     this.unregisterServerCommands(dispatcher);
-                                    this.loadServerCommands();
-                                    this.registerServerCommands(dispatcher);
+                                    this.loadCommandAliases();
+                                    this.registerCommands(dispatcher);
 
                                     //Update Command Tree
                                     for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
@@ -204,8 +208,8 @@ public class CommandAliasesLoader {
                 .then(CommandManager.literal("load")
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Loading all Command Aliases!"), true);
-                                    this.loadServerCommands();
-                                    this.registerServerCommands(dispatcher);
+                                    this.loadCommandAliases();
+                                    this.registerCommands(dispatcher);
 
                                     for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
                                         context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
@@ -248,7 +252,7 @@ public class CommandAliasesLoader {
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Reloading all client Command Aliases!"));
                                     this.unregisterClientCommands();
-                                    this.loadClientCommands();
+                                    this.loadClientCommandAliases();
                                     this.registerClientCommands();
                                     context.getSource().sendFeedback(new LiteralText("Reloaded all client Command Aliases!"));
                                     return Command.SINGLE_SUCCESS;
@@ -258,7 +262,7 @@ public class CommandAliasesLoader {
                 .then(ClientCommandManager.literal("load")
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Loading all client Command Aliases!"));
-                                    this.loadClientCommands();
+                                    this.loadClientCommandAliases();
                                     this.registerClientCommands();
                                     context.getSource().sendFeedback(new LiteralText("Loaded all client Command Aliases!"));
                                     return Command.SINGLE_SUCCESS;

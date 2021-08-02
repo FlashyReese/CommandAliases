@@ -9,6 +9,7 @@
 
 package me.flashyreese.mods.commandaliases;
 
+import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,14 +21,19 @@ import org.apache.logging.log4j.Logger;
  * @version 0.1.3
  * @since 0.0.9
  */
-public class CommandAliasesMod implements ModInitializer {
+public class CommandAliasesMod implements ModInitializer, ClientModInitializer {
     private static Logger LOGGER;
 
-    private CommandAliasesLoader commandManager;
+    private final CommandAliasesLoader commandManager = new CommandAliasesLoader();
 
     @Override
     public void onInitialize() {
-        commandManager = new CommandAliasesLoader();
+        this.commandManager.registerCommandAliases();
+    }
+
+    @Override
+    public void onInitializeClient() {
+        this.commandManager.registerClientSidedCommandAliases();
     }
 
     public static Logger getLogger() {
