@@ -93,7 +93,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                                 }
                             } else if (action.getCommandType() == CommandType.SERVER) {
                                 try {
-                                    executeState.set(dispatcher.execute(actionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                    executeState.set(dispatcher.execute(actionCommand, context.getSource().getServer().getCommandSource()));
                                 } catch (CommandSyntaxException e) {
                                     e.printStackTrace();
                                     String output = e.getLocalizedMessage();
