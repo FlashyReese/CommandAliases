@@ -101,6 +101,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 inputs.add(child.getChild());
             } else {
                 CommandAliasesMod.getLogger().warn("Invalid Argument Type: {}", child.getArgumentType());
+                //fixme: error handle argument types properly
             }
         }
         if (argumentBuilder != null) {
@@ -119,7 +120,9 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
                 for (CustomCommandChild subChild : child.getChildren()) {
                     ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new ObjectArrayList<>(inputs));
-                    argumentBuilder = argumentBuilder.then(subArgumentBuilder);
+                    if (subArgumentBuilder != null) {
+                        argumentBuilder = argumentBuilder.then(subArgumentBuilder);
+                    }
                 }
             }
         }

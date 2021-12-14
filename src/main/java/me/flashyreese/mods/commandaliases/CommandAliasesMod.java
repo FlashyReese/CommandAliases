@@ -29,7 +29,9 @@ public class CommandAliasesMod implements ModInitializer, ClientModInitializer {
 
     @Override
     public void onInitialize() {
-        ServerLifecycleEvents.SERVER_STARTED.register((server -> this.commandManager.registerCommandAliases()));
+        this.commandManager.registerCommandAliases();
+        //fixme:
+        //ServerLifecycleEvents.SERVER_STARTED.register((server -> this.commandManager.registerCommandAliases()));
     }
 
     @Override
