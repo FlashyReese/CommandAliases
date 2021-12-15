@@ -19,7 +19,7 @@ import org.apache.logging.log4j.Logger;
  * Represents the Command Aliases Fabric mod.
  *
  * @author FlashyReese
- * @version 0.1.3
+ * @version 0.5.0
  * @since 0.0.9
  */
 public class CommandAliasesMod implements ModInitializer, ClientModInitializer {
