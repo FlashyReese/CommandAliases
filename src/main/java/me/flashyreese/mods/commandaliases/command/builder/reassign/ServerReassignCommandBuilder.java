@@ -39,7 +39,7 @@ public class ServerReassignCommandBuilder extends AbstractReassignCommandBuilder
     protected LiteralArgumentBuilder<ServerCommandSource> reassignCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
         if (this.reassignCommand(this.command, dispatcher)) {
             String command = this.command.getReassignCommand().getCommand().trim();
-            String reassignTo = this.command.getReassignCommand().getCommand().trim();
+            String reassignTo = this.command.getReassignCommand().getReassignTo().trim();
             this.reassignCommandMap.put(command, reassignTo);
 
             //Todo: check alias/custom command literal match reassignment command, if not spit a warning.

@@ -39,7 +39,7 @@ public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder
     protected LiteralArgumentBuilder<FabricClientCommandSource> reassignCommand(CommandDispatcher<FabricClientCommandSource> dispatcher) {
         if (this.reassignCommand(this.command, dispatcher)) {
             String command = this.command.getReassignCommand().getCommand().trim();
-            String reassignTo = this.command.getReassignCommand().getCommand().trim();
+            String reassignTo = this.command.getReassignCommand().getReassignTo().trim();
             this.reassignCommandMap.put(command, reassignTo);
 
             //Fixme: Do I want to support a deprecated format?

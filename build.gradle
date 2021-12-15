@@ -13,6 +13,13 @@ archivesBaseName = "${project.archives_base_name}-mc${project.minecraft_version}
 version = project.mod_version
 group = project.maven_group
 
+repositories {
+	maven {
+		name = "Gegy's Maven"
+		url = "https://maven.gegy.dev/"
+	}
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
@@ -20,6 +27,10 @@ dependencies {
 
 	// Fabric API
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+	modRuntime ("supercoder79:databreaker:0.2.8") {
+		exclude module: "fabric-loader"
+	}
 }
 
 processResources {
@@ -39,7 +50,7 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
 
 	// Minecraft 1.17 (21w19a) upwards uses Java 16.
-	it.options.release = 16
+	it.options.release = 17
 }
 
 java {
