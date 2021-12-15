@@ -128,8 +128,8 @@ public class CommandAliasesLoader {
                                     this.registerCommands(dispatcher, dedicated);
 
                                     //Update Command Tree
-                                    for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                                        context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
+                                    for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
+                                        context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
 
                                     context.getSource().sendFeedback(new LiteralText("Reloaded all Command Aliases!"), true);
@@ -142,8 +142,8 @@ public class CommandAliasesLoader {
                                     context.getSource().sendFeedback(new LiteralText("Loading all Command Aliases!"), true);
                                     this.registerCommands(dispatcher, dedicated);
 
-                                    for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                                        context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
+                                    for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
+                                        context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
                                     context.getSource().sendFeedback(new LiteralText("Loaded all Command Aliases!"), true);
                                     return Command.SINGLE_SUCCESS;
@@ -155,8 +155,8 @@ public class CommandAliasesLoader {
                                     context.getSource().sendFeedback(new LiteralText("Unloading all Command Aliases!"), true);
                                     this.unregisterCommands(dispatcher);
 
-                                    for (ServerPlayerEntity e : context.getSource().getMinecraftServer().getPlayerManager().getPlayerList()) {
-                                        context.getSource().getMinecraftServer().getPlayerManager().sendCommandTree(e);
+                                    for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
+                                        context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
                                     context.getSource().sendFeedback(new LiteralText("Unloaded all Command Aliases!"), true);
                                     return Command.SINGLE_SUCCESS;
