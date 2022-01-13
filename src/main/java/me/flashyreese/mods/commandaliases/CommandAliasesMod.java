@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -9,7 +9,9 @@
 
 package me.flashyreese.mods.commandaliases;
 
+import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,17 +19,24 @@ import org.apache.logging.log4j.Logger;
  * Represents the Command Aliases Fabric mod.
  *
  * @author FlashyReese
- * @version 0.1.3
+ * @version 0.5.0
  * @since 0.0.9
  */
-public class CommandAliasesMod implements ModInitializer {
+public class CommandAliasesMod implements ModInitializer, ClientModInitializer {
     private static Logger LOGGER;
 
-    private CommandAliasesLoader commandManager;
+    private final CommandAliasesLoader commandManager = new CommandAliasesLoader();
 
     @Override
     public void onInitialize() {
-        commandManager = new CommandAliasesLoader();
+        this.commandManager.registerCommandAliases();
+        //fixme:
+        //ServerLifecycleEvents.SERVER_STARTED.register((server -> this.commandManager.registerCommandAliases()));
+    }
+
+    @Override
+    public void onInitializeClient() {
+        this.commandManager.registerClientSidedCommandAliases();
     }
 
     public static Logger getLogger() {

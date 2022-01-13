@@ -13,6 +13,8 @@ Alternate short commands for complex commands (with tab completion)
 This mod allows you to rebind multiple commands into a single command, this also implies commands that may require 
 vanilla operator permissions.
 
+Additionally, provide format to start building new commands from scratch.
+
 ## Commands
 
 #### How to make a command?

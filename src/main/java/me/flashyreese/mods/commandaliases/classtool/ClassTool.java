@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -10,14 +10,14 @@
 package me.flashyreese.mods.commandaliases.classtool;
 
 import com.mojang.brigadier.context.CommandContext;
-import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
 import net.minecraft.server.command.ServerCommandSource;
 
 /**
  * Represents the ClassTool Interface
  *
  * @author FlashyReese
- * @version 0.1.3
+ * @version 0.5.0
  * @since 0.1.3
  */
 public interface ClassTool<T> {
@@ -27,5 +27,5 @@ public interface ClassTool<T> {
 
     T getValue(String key);
 
-    String getValue(CommandContext<ServerCommandSource> context, CommandAliasesBuilder.CommandAliasesHolder holder);
+    String getValue(CommandContext<ServerCommandSource> context, AliasHolder holder);
 }
