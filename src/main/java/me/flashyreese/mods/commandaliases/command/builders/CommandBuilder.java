@@ -179,7 +179,7 @@ public class CommandBuilder {
                             if (action.getCommandType() == CommandType.CLIENT) {
                                 executeState.set(dispatcher.execute(actionCommand, context.getSource()));
                             } else if (action.getCommandType() == CommandType.SERVER) {
-                                executeState.set(dispatcher.execute(actionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                executeState.set(dispatcher.execute(actionCommand, context.getSource().getServer().getCommandSource()));
                             }
                         }
                         if (action.getMessage() != null) {

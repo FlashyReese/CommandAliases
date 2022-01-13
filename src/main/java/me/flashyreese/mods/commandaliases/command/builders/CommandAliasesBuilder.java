@@ -253,7 +253,7 @@ public class CommandAliasesBuilder {
                             if (subCommandAlias.getType() == CommandType.CLIENT) {
                                 execute.set(dispatcher.execute(executionCommand, context.getSource()));
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
-                                execute.set(dispatcher.execute(executionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                execute.set(dispatcher.execute(executionCommand, context.getSource().getServer().getCommandSource()));
                             }
                         }
                         if (subCommandAlias.getMessage() != null) {
