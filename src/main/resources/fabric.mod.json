@@ -18,6 +18,9 @@
   "entrypoints": {
     "main": [
       "me.flashyreese.mods.commandaliases.CommandAliasesMod"
+    ],
+    "client": [
+      "me.flashyreese.mods.commandaliases.CommandAliasesMod"
     ]
   },
   "depends": {
