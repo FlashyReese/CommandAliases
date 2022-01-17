@@ -239,7 +239,7 @@ public class CommandAliasesLoader {
      * Registers all client Command Aliases' commands
      */
     private void registerClientCommandAliasesCommands() {
-        ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("commandaliases").then(ClientCommandManager.literal("client")
+        ClientCommandManager.DISPATCHER.register(ClientCommandManager.literal("commandaliases:client")
                 .executes(context -> {
                     Optional<ModContainer> modContainerOptional = FabricLoader.getInstance().getModContainer("commandaliases");
                     modContainerOptional.ifPresent(modContainer -> context.getSource().sendFeedback(new LiteralText("Running Command Aliases")
@@ -278,7 +278,7 @@ public class CommandAliasesLoader {
                                 }
                         )
                 )
-        ));
+        );
     }
 
     /**
