@@ -1,7 +1,7 @@
 import com.modrinth.minotaur.TaskModrinthUpload
 
 plugins {
-	id 'fabric-loom' version '0.10-SNAPSHOT'
+	id 'fabric-loom' version '0.11-SNAPSHOT'
 	id 'maven-publish'
 	id "com.modrinth.minotaur" version "1.2.1"
 }
@@ -15,8 +15,15 @@ group = project.maven_group
 
 repositories {
 	maven {
-		name = "Gegy's Maven"
-		url = "https://maven.gegy.dev/"
+		name = "Lucko"
+		url 'https://oss.sonatype.org/content/repositories/snapshots'
+	}
+	maven {
+		name = "Modrinth"
+		url = "https://api.modrinth.com/maven"
+		content {
+			includeGroup "maven.modrinth"
+		}
 	}
 }
 
@@ -28,9 +35,10 @@ dependencies {
 	// Fabric API
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modRuntime ("supercoder79:databreaker:0.2.8") {
-		exclude module: "fabric-loader"
-	}
+	// Permissions API
+	include(modImplementation("me.lucko:fabric-permissions-api:0.1-SNAPSHOT"))
+
+	modRuntimeOnly "maven.modrinth:lazydfu:0.1.2"
 }
 
 processResources {

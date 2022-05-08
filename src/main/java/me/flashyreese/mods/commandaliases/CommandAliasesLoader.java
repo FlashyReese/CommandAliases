@@ -27,10 +27,10 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCom
 import me.flashyreese.mods.commandaliases.command.builder.reassign.ClientReassignCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.reassign.ServerReassignCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.CommandRedirectBuilder;
+import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.server.command.CommandManager;
@@ -114,6 +114,8 @@ public class CommandAliasesLoader {
             if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
                 LiteralArgumentBuilder<ServerCommandSource> command = new AliasCommandBuilder(cmd.getAliasCommand()).buildCommand(dispatcher);
                 if (command != null) {
+                    //Assign permission for alias Fixme: better implementation
+                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral()));
                     dispatcher.register(command);
                     this.loadedServerCommands.add(cmd.getAliasCommand().getCommand());
                 }
@@ -131,6 +133,8 @@ public class CommandAliasesLoader {
                     command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignServerCommandMap).buildCommand(dispatcher);
                 }
                 if (command != null) {
+                    //Assign permission for alias Fixme: better implementation
+                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral()));
                     dispatcher.register(command);
                     if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                         this.loadedServerCommands.add(cmd.getRedirectCommand().getCommand());
@@ -180,7 +184,7 @@ public class CommandAliasesLoader {
      * @param dispatcher The CommandDispatcher
      */
     private void registerCommandAliasesCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
-        dispatcher.register(CommandManager.literal("commandaliases").requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(4))
+        dispatcher.register(CommandManager.literal("commandaliases").requires(Permissions.require("commandaliases", 4))
                 .executes(context -> {
                     Optional<ModContainer> modContainerOptional = FabricLoader.getInstance().getModContainer("commandaliases");
                     modContainerOptional.ifPresent(modContainer -> context.getSource().sendFeedback(new LiteralText("Running Command Aliases")
@@ -189,7 +193,7 @@ public class CommandAliasesLoader {
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(CommandManager.literal("reload")
+                .then(CommandManager.literal("reload").requires(Permissions.require("commandaliases.reload", 4))
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Reloading all Command Aliases!"), true);
                                     this.unregisterServerCommands(dispatcher);
@@ -206,7 +210,7 @@ public class CommandAliasesLoader {
                                 }
                         )
                 )
-                .then(CommandManager.literal("load")
+                .then(CommandManager.literal("load").requires(Permissions.require("commandaliases.load", 4))
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Loading all Command Aliases!"), true);
                                     this.loadCommandAliases();
@@ -220,7 +224,7 @@ public class CommandAliasesLoader {
                                 }
                         )
                 )
-                .then(CommandManager.literal("unload")
+                .then(CommandManager.literal("unload").requires(Permissions.require("commandaliases.unload", 4))
                         .executes(context -> {
                                     context.getSource().sendFeedback(new LiteralText("Unloading all Command Aliases!"), true);
                                     this.unregisterServerCommands(dispatcher);
