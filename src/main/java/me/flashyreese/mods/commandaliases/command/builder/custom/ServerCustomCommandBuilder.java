@@ -151,8 +151,8 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             string = string.replace("$executor_name().pos_x()", String.valueOf(context.getSource().getEntity().getBlockX()));
             string = string.replace("$executor_name().pos_y()", String.valueOf(context.getSource().getEntity().getBlockY()));
             string = string.replace("$executor_name().pos_z()", String.valueOf(context.getSource().getEntity().getBlockZ()));
+            string = string.replace("$executor_name().dimension()", String.valueOf(context.getSource().getEntity().getEntityWorld().getRegistryKey().getValue()));
         }
-        string = string.replace("$executor_name().dimension()", String.valueOf(context.getSource().getWorld().getRegistryKey().getValue()));
         //Input Map
         //Todo: track replaced substring indexes to prevent replacing previously replaced
         for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
