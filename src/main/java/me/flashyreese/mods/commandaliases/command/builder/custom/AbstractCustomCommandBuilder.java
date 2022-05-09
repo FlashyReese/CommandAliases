@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -31,11 +31,11 @@ import java.util.List;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.6.0
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
-    private final CustomCommand commandAliasParent;
+    protected final CustomCommand commandAliasParent;
 
     protected final ArgumentTypeManager argumentTypeManager = new ArgumentTypeManager();
     protected final FormattingTypeMap formattingTypeMap = new FormattingTypeMap();
@@ -60,9 +60,9 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @param dispatcher The command dispatcher
      * @return ArgumentBuilder
      */
-    private LiteralArgumentBuilder<S> buildCommandParent(CommandDispatcher<S> dispatcher) {
+    protected LiteralArgumentBuilder<S> buildCommandParent(CommandDispatcher<S> dispatcher) {
         LiteralArgumentBuilder<S> argumentBuilder = this.literal(this.commandAliasParent.getParent());
-        if (this.commandAliasParent.getPermission() < 0 && this.commandAliasParent.getPermission() >= 4) {
+        if (this.commandAliasParent.getPermission() > 0 && this.commandAliasParent.getPermission() <= 4) {
             argumentBuilder = argumentBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(this.commandAliasParent.getPermission()));
         }
 
@@ -91,7 +91,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @param inputs     User input list
      * @return ArgumentBuilder
      */
-    private ArgumentBuilder<S, ?> buildCommandChild(CustomCommandChild child, CommandDispatcher<S> dispatcher, List<String> inputs) {
+    protected ArgumentBuilder<S, ?> buildCommandChild(CustomCommandChild child, CommandDispatcher<S> dispatcher, List<String> inputs) {
         ArgumentBuilder<S, ?> argumentBuilder = null;
         if (child.getType().equals("literal")) {
             argumentBuilder = this.literal(child.getChild());
@@ -101,11 +101,12 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 inputs.add(child.getChild());
             } else {
                 CommandAliasesMod.getLogger().warn("Invalid Argument Type: {}", child.getArgumentType());
+                //fixme: error handle argument types properly
             }
         }
         if (argumentBuilder != null) {
             // Assign permission
-            if (child.getPermission() < 0 && child.getPermission() >= 4) {
+            if (child.getPermission() > 0 && child.getPermission() <= 4) {
                 argumentBuilder = argumentBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(child.getPermission()));
             }
 
@@ -119,7 +120,9 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
                 for (CustomCommandChild subChild : child.getChildren()) {
                     ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new ObjectArrayList<>(inputs));
-                    argumentBuilder = argumentBuilder.then(subArgumentBuilder);
+                    if (subArgumentBuilder != null) {
+                        argumentBuilder = argumentBuilder.then(subArgumentBuilder);
+                    }
                 }
             }
         }

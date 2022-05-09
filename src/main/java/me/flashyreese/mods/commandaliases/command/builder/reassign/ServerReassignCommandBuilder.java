@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -11,6 +11,7 @@ package me.flashyreese.mods.commandaliases.command.builder.reassign;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
@@ -39,10 +40,9 @@ public class ServerReassignCommandBuilder extends AbstractReassignCommandBuilder
     protected LiteralArgumentBuilder<ServerCommandSource> reassignCommand(CommandDispatcher<ServerCommandSource> dispatcher) {
         if (this.reassignCommand(this.command, dispatcher)) {
             String command = this.command.getReassignCommand().getCommand().trim();
-            String reassignTo = this.command.getReassignCommand().getCommand().trim();
+            String reassignTo = this.command.getReassignCommand().getReassignTo().trim();
             this.reassignCommandMap.put(command, reassignTo);
 
-            //Todo: check alias/custom command literal match reassignment command, if not spit a warning.
             if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS) {
                 return new AliasCommandBuilder(this.command.getAliasCommand()).buildCommand(dispatcher);
             } else if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {

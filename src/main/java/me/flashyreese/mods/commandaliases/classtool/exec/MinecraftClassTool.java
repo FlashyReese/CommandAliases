@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -48,7 +48,6 @@ public class MinecraftClassTool implements ClassTool<Function<CommandContext<Ser
         });
         this.minecraftMap.put("TIME", (context) -> String.valueOf(context.getSource().getWorld().getTime()));
         this.minecraftMap.put("RANDOM_ALIVE_PLAYER", (context) -> Objects.requireNonNull(context.getSource().getWorld().getRandomAlivePlayer()).getEntityName());
-        this.minecraftMap.put("BLOCK_ENTITIES_SIZE", (context) -> String.valueOf(context.getSource().getWorld().blockEntities.size()));
     }
 
     public Map<String, Function<CommandContext<ServerCommandSource>, String>> getMinecraftMap() {
