@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -14,6 +14,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import net.minecraft.command.CommandSource;
@@ -50,6 +51,31 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
      * @return Command
      */
     public LiteralArgumentBuilder<S> buildCommand(CommandDispatcher<S> dispatcher) {
+        if (this.command.getReassignCommand() == null) {
+            CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing declaration!", this.commandType, this.command.getCommandMode());
+            return null;
+        }
+
+        if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS) {
+            if (this.command.getAliasCommand() == null) {
+                CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing alias command declaration!", this.commandType, this.command.getCommandMode());
+                return null;
+            }
+            if (!this.command.getAliasCommand().getCommand().startsWith(this.command.getReassignCommand().getCommand())) {
+                CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, alias command name and reassign command mismatch!", this.commandType, this.command.getCommandMode());
+                return null;
+            }
+        } else if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
+            if (this.command.getCustomCommand() == null) {
+                CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing custom command declaration!", this.commandType, this.command.getCommandMode());
+                return null;
+            }
+            if (!this.command.getCustomCommand().getParent().equals(this.command.getReassignCommand().getCommand())) {
+                CommandAliasesMod.getLogger().error("[{}] {} - SSkipping reassignment, custom command parent and reassign command mismatch!", this.commandType, this.command.getCommandMode());
+                return null;
+            }
+        }
+
         return this.reassignCommand(dispatcher);
     }
 
@@ -89,7 +115,7 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
 
         if (commandNode != null && commandReassignNode == null) {
             dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(command));
-
+            // Fixme: Fallback if failed below
             try {
                 this.literalCommandNodeLiteralField.set(commandNode, reassignTo);
             } catch (IllegalAccessException e) {

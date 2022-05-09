@@ -18,10 +18,13 @@
   "entrypoints": {
     "main": [
       "me.flashyreese.mods.commandaliases.CommandAliasesMod"
+    ],
+    "client": [
+      "me.flashyreese.mods.commandaliases.CommandAliasesMod"
     ]
   },
   "depends": {
-    "fabricloader": ">=0.11.3",
+    "fabricloader": ">=0.14",
     "fabric": "*",
     "minecraft": "1.17.x"
   }

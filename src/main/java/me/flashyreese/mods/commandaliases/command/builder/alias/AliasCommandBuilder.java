@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -262,7 +262,7 @@ public class AliasCommandBuilder {
                                 }
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
                                 try {
-                                    execute.set(dispatcher.execute(executionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                    execute.set(dispatcher.execute(executionCommand, context.getSource().getServer().getCommandSource()));
                                 } catch (CommandSyntaxException e) {
                                     String output = e.getLocalizedMessage();
                                     context.getSource().sendFeedback(new LiteralText(output), true);

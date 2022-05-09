@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
