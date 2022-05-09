@@ -37,7 +37,7 @@ import java.util.function.Function;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.6.0
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {

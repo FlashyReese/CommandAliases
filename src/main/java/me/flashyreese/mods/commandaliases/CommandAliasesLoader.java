@@ -50,7 +50,7 @@ import java.util.Optional;
  * Represents the custom command aliases loader.
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.6.0
  * @since 0.0.9
  */
 public class CommandAliasesLoader {

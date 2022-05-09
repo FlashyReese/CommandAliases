@@ -31,7 +31,7 @@ import java.util.List;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.6.0
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
