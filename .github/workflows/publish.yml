@@ -2,8 +2,8 @@ name: Publish Release
 
 on:
   release:
-     types:
-       - published
+    types:
+      - published
 
 jobs:
   build:
@@ -11,18 +11,31 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - name: Set up JDK 8
+      - name: Set up JDK 17
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 17
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-      - name: Upload assets to releases
+      - name: Upload assets to GitHub
         run: ./gradlew build
         env:
           BUILD_RELEASE: ${{ github.event.prerelease == false }}
-      - name: Upload assets to GitHub
-        uses: AButler/upload-release-assets@v2.0
+      - name: Publish to Modrinth & CurseForge
+        uses: Kir-Antipov/mc-publish@v2.1
         with:
-          files: 'build/libs/*;LICENSE.txt'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          modrinth-id: dHTBnV1v
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+
+          curseforge-id: 409389
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          version-type: release
+
+          loaders: fabric
+
+          version-resolver: latest
+          dependencies: |
+            luckperms | recommends | *

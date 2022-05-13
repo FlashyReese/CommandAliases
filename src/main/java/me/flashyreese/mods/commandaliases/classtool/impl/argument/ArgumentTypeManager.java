@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -15,7 +15,7 @@ import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.context.StringRange;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
-import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;
 
@@ -26,7 +26,7 @@ import java.util.Map;
  * Represents the Argument Type Manager Class Tool
  *
  * @author FlashyReese
- * @version 0.4.2
+ * @version 0.5.0
  * @since 0.0.9
  * <p>
  * This ArgumentTypeManager maps ArgumentTypes to String.
@@ -74,13 +74,13 @@ public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
         this.argumentMap.put("minecraft:color", ColorArgumentType.color());
         this.argumentMap.put("minecraft:component", TextArgumentType.text());
         this.argumentMap.put("minecraft:message", MessageArgumentType.message());
-        this.argumentMap.put("minecraft:nbt_compound_tag", NbtCompoundTagArgumentType.nbtCompound());
-        this.argumentMap.put("minecraft:nbt_tag", NbtTagArgumentType.nbtTag());
+        this.argumentMap.put("minecraft:nbt_compound_tag", NbtCompoundArgumentType.nbtCompound());
+        this.argumentMap.put("minecraft:nbt_tag", NbtElementArgumentType.nbtElement());
         this.argumentMap.put("minecraft:nbt_path", NbtPathArgumentType.nbtPath());
-        this.argumentMap.put("minecraft:objective", ObjectiveArgumentType.objective());
-        this.argumentMap.put("minecraft:objective_criteria", ObjectiveCriteriaArgumentType.objectiveCriteria());
+        this.argumentMap.put("minecraft:objective", ScoreboardObjectiveArgumentType.scoreboardObjective());
+        this.argumentMap.put("minecraft:objective_criteria", ScoreboardCriterionArgumentType.scoreboardCriterion());
         this.argumentMap.put("minecraft:operation", OperationArgumentType.operation());
-        this.argumentMap.put("minecraft:particle", ParticleArgumentType.particle());
+        this.argumentMap.put("minecraft:particle", ParticleEffectArgumentType.particleEffect());
         this.argumentMap.put("minecraft:angle", AngleArgumentType.angle());
         this.argumentMap.put("minecraft:rotation", RotationArgumentType.rotation());
         this.argumentMap.put("minecraft:scoreboard_slot", ScoreboardSlotArgumentType.scoreboardSlot());
@@ -88,15 +88,15 @@ public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
         this.argumentMap.put("minecraft:team", TeamArgumentType.team());
         this.argumentMap.put("minecraft:item_slot", ItemSlotArgumentType.itemSlot());
         this.argumentMap.put("minecraft:resource_location", IdentifierArgumentType.identifier());
-        this.argumentMap.put("minecraft:mob_effect", MobEffectArgumentType.mobEffect());
-        this.argumentMap.put("minecraft:function", FunctionArgumentType.function());
+        this.argumentMap.put("minecraft:mob_effect", StatusEffectArgumentType.statusEffect());
+        this.argumentMap.put("minecraft:function", CommandFunctionArgumentType.commandFunction());
         this.argumentMap.put("minecraft:entity_anchor", EntityAnchorArgumentType.entityAnchor());
-        //this.argumentMap.put("minecraft:int_range", new ArgType(NumberRangeArgumentType.numberRange(), (commandContext, name) -> {}));
-        //this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.method_30918());
-        this.argumentMap.put("minecraft:item_enchantment", ItemEnchantmentArgumentType.itemEnchantment());
+        this.argumentMap.put("minecraft:int_range", NumberRangeArgumentType.intRange());
+        this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.method_30918());
+        this.argumentMap.put("minecraft:item_enchantment", EnchantmentArgumentType.enchantment());
         this.argumentMap.put("minecraft:entity_summon", EntitySummonArgumentType.entitySummon());
         this.argumentMap.put("minecraft:dimension", DimensionArgumentType.dimension());
-        //this.argumentMap.put("minecraft:time", new ArgType(TimeArgumentType.time(), (commandContext, name) -> {}));
+        this.argumentMap.put("minecraft:time", TimeArgumentType.time());
         this.argumentMap.put("minecraft:uuid", UuidArgumentType.uuid());
 
         this.argumentMap.put("brigadier:bool", BoolArgumentType.bool());
@@ -123,7 +123,7 @@ public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
     }
 
     @Override
-    public String getValue(CommandContext<ServerCommandSource> context, CommandAliasesBuilder.CommandAliasesHolder holder) {
+    public String getValue(CommandContext<ServerCommandSource> context, AliasHolder holder) {
         return this.getInputString(context, holder.getVariableName());
     }
 

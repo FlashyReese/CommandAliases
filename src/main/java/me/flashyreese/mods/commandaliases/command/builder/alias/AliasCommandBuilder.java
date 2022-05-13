@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -7,7 +7,7 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases.command.builders;
+package me.flashyreese.mods.commandaliases.command.builder.alias;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -21,13 +21,16 @@ import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import me.flashyreese.mods.commandaliases.classtool.FormattingTypeMap;
 import me.flashyreese.mods.commandaliases.classtool.exec.MinecraftClassTool;
 import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
-import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.builder.alias.format.AliasCommand;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,21 +41,21 @@ import java.util.regex.Pattern;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.4.2
+ * @version 0.5.0
  * @since 0.1.3
  */
-public class CommandAliasesBuilder {
-    private static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?}");
-    private static final Pattern OPTIONAL_COMMAND_ALIAS_HOLDER = Pattern.compile("\\[(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?]");
+public class AliasCommandBuilder {
+    protected static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?}");
+    protected static final Pattern OPTIONAL_COMMAND_ALIAS_HOLDER = Pattern.compile("\\[(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?]");
 
-    private final CommandAlias command;
-    private final List<CommandAliasesHolder> commandAliasesRequiredHolders = new ObjectArrayList<>();
-    private final List<CommandAliasesHolder> commandAliasesOptionalHolders = new ObjectArrayList<>();
+    private final AliasCommand command;
+    private final List<AliasHolder> commandAliasesRequiredHolders = new ObjectArrayList<>();
+    private final List<AliasHolder> commandAliasesOptionalHolders = new ObjectArrayList<>();
 
     private final Map<String, ClassTool<?>> classToolMap = new Object2ObjectOpenHashMap<>();
     private final FormattingTypeMap formattingTypeMap;
 
-    public CommandAliasesBuilder(CommandAlias command) {
+    public AliasCommandBuilder(AliasCommand command) {
         this.command = command;
         this.commandAliasesRequiredHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), true));
         this.commandAliasesOptionalHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), false));
@@ -84,10 +87,10 @@ public class CommandAliasesBuilder {
      * @param required Required/Optional
      * @return List of CommandAliasesHolders
      */
-    private List<CommandAliasesHolder> buildHolders(List<String> holders, boolean required) {
-        List<CommandAliasesHolder> commandAliasesHolders = new ObjectArrayList<>();
-        holders.forEach(holder -> commandAliasesHolders.add(new CommandAliasesHolder(holder, required)));
-        return commandAliasesHolders;
+    private List<AliasHolder> buildHolders(List<String> holders, boolean required) {
+        List<AliasHolder> aliasHolders = new ObjectArrayList<>();
+        holders.forEach(holder -> aliasHolders.add(new AliasHolder(holder, required)));
+        return aliasHolders;
     }
 
     /**
@@ -97,7 +100,7 @@ public class CommandAliasesBuilder {
      * @param required Required/Optional
      * @return List of CommandAliasesHolders
      */
-    public List<CommandAliasesHolder> getCommandAliasesHolders(String command, boolean required) {
+    public List<AliasHolder> getCommandAliasesHolders(String command, boolean required) {
         return this.buildHolders(this.locateHolders(command, required), required);
     }
 
@@ -110,7 +113,7 @@ public class CommandAliasesBuilder {
     private Map<String, String> getHolderInputMap(CommandContext<ServerCommandSource> context, boolean required) {
         Map<String, String> inputMap = new Object2ObjectOpenHashMap<>();
 
-        for (CommandAliasesHolder holder : required ? this.commandAliasesRequiredHolders : this.commandAliasesOptionalHolders) {
+        for (AliasHolder holder : required ? this.commandAliasesRequiredHolders : this.commandAliasesOptionalHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 if (this.classToolMap.get(holder.getClassTool()).contains(holder.getMethod())) {
                     String key = holder.getVariableName();
@@ -177,9 +180,9 @@ public class CommandAliasesBuilder {
 
         //Execution Formatting/Binding
         Map<String, String> newInputMap = new Object2ObjectOpenHashMap<>();
-        List<CommandAliasesHolder> textHolders = this.getCommandAliasesHolders(formattedText, true);
+        List<AliasHolder> textHolders = this.getCommandAliasesHolders(formattedText, true);
         textHolders.addAll(this.getCommandAliasesHolders(formattedText, false));
-        for (CommandAliasesHolder holder : textHolders) {
+        for (AliasHolder holder : textHolders) {
             String value = null;
 
             if (requiredInputMap.containsKey(holder.getVariableName())) {
@@ -242,18 +245,28 @@ public class CommandAliasesBuilder {
      * @param context    CommandContext
      * @return Command Execution Status
      */
-    private int executeCommandAliases(CommandAlias cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) {
+    private int executeCommandAliases(AliasCommand cmd, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context) {
         AtomicInteger execute = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
                 if (cmd.getExecution() != null) {
-                    for (CommandAlias subCommandAlias : cmd.getExecution()) {
+                    for (AliasCommand subCommandAlias : cmd.getExecution()) {
                         if (subCommandAlias.getCommand() != null) {
                             String executionCommand = this.formatExecutionCommandOrMessage(context, subCommandAlias.getCommand(), subCommandAlias.isIgnoreOptionalRemoval());
                             if (subCommandAlias.getType() == CommandType.CLIENT) {
-                                execute.set(dispatcher.execute(executionCommand, context.getSource()));
+                                try {
+                                    execute.set(dispatcher.execute(executionCommand, context.getSource()));
+                                } catch (CommandSyntaxException e) {
+                                    String output = e.getLocalizedMessage();
+                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                }
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
-                                execute.set(dispatcher.execute(executionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                try {
+                                    execute.set(dispatcher.execute(executionCommand, context.getSource().getMinecraftServer().getCommandSource()));
+                                } catch (CommandSyntaxException e) {
+                                    String output = e.getLocalizedMessage();
+                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                }
                             }
                         }
                         if (subCommandAlias.getMessage() != null) {
@@ -267,7 +280,7 @@ public class CommandAliasesBuilder {
                         }
                     }
                 }
-            } catch (CommandSyntaxException | InterruptedException e) {
+            } catch (InterruptedException e) {
                 String output = e.getLocalizedMessage();
                 context.getSource().sendFeedback(new LiteralText(output), true);
             }
@@ -298,7 +311,7 @@ public class CommandAliasesBuilder {
      * @param dispatcher CommandDispatcher
      * @return Command
      */
-    private LiteralArgumentBuilder<ServerCommandSource> parseCommand(CommandAlias command, CommandDispatcher<ServerCommandSource> dispatcher) {
+    private LiteralArgumentBuilder<ServerCommandSource> parseCommand(AliasCommand command, CommandDispatcher<ServerCommandSource> dispatcher) {
         LiteralArgumentBuilder<ServerCommandSource> commandBuilder = null;
 
         List<String> allHolders = this.locateHolders(command.getCommand(), true);
@@ -357,11 +370,11 @@ public class CommandAliasesBuilder {
      * @param dispatcher   CommandDispatcher
      * @return ArgumentBuilder
      */
-    private ArgumentBuilder<ServerCommandSource, ?> parseArguments(CommandAlias commandAlias, CommandDispatcher<ServerCommandSource> dispatcher) {
+    private ArgumentBuilder<ServerCommandSource, ?> parseArguments(AliasCommand commandAlias, CommandDispatcher<ServerCommandSource> dispatcher) {
         //Check for optional arguments then build
-        List<CommandAliasesHolder> commandOptionalHolders = this.getCommandAliasesHolders(this.command.getCommand(), false);
+        List<AliasHolder> commandOptionalHolders = this.getCommandAliasesHolders(this.command.getCommand(), false);
         ArgumentBuilder<ServerCommandSource, ?> optionalArguments = null;
-        for (CommandAliasesHolder holder : commandOptionalHolders) {
+        for (AliasHolder holder : commandOptionalHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
                 if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
@@ -376,10 +389,10 @@ public class CommandAliasesBuilder {
             }
         }
         //Build Required Arguments
-        List<CommandAliasesHolder> commandRequiredHolders = this.getCommandAliasesHolders(this.command.getCommand(), true);
+        List<AliasHolder> commandRequiredHolders = this.getCommandAliasesHolders(this.command.getCommand(), true);
         ArgumentBuilder<ServerCommandSource, ?> requiredArguments = null;
         Collections.reverse(commandRequiredHolders);
-        for (CommandAliasesHolder holder : commandRequiredHolders) {
+        for (AliasHolder holder : commandRequiredHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
                 if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
@@ -400,75 +413,5 @@ public class CommandAliasesBuilder {
             }
         }
         return requiredArguments;
-    }
-
-    public static class CommandAliasesHolder {
-        private final String holder;
-
-        private String classTool;
-        private String method;
-        private String variableName;
-        private String formattingType;
-
-        private final boolean required;
-
-        public CommandAliasesHolder(String holder, boolean required) {
-            this.holder = holder;
-            this.required = required;
-            this.locateVariables();
-        }
-
-        private void locateVariables() {
-            Matcher matcher = this.required ? CommandAliasesBuilder.REQUIRED_COMMAND_ALIAS_HOLDER.matcher(this.holder) : CommandAliasesBuilder.OPTIONAL_COMMAND_ALIAS_HOLDER.matcher(this.holder);
-            if (matcher.matches()) {
-                String classTool = matcher.group("classTool");
-                String method = matcher.group("method");
-                String variableName = matcher.group("variableName");
-                String formattingType = matcher.group("formattingType");
-
-                this.updateVariables(classTool, method, variableName, formattingType);
-            } else {
-                CommandAliasesMod.getLogger().error("Invalid Command Aliases Holder: {}", this.holder);
-            }
-        }
-
-        private void updateVariables(String classTool, String method, String variableName, String formattingType) {
-            String cT = classTool;
-            String vN = variableName;
-
-            if (method == null && vN == null) {
-                vN = cT;
-                cT = null;
-            }
-
-            this.classTool = cT;
-            this.method = method;
-            this.variableName = vN;
-            this.formattingType = formattingType;
-        }
-
-        public String toString() {
-            return this.holder;
-        }
-
-        public String getHolder() {
-            return this.holder;
-        }
-
-        public String getClassTool() {
-            return this.classTool;
-        }
-
-        public String getMethod() {
-            return this.method;
-        }
-
-        public String getVariableName() {
-            return this.variableName;
-        }
-
-        public String getFormattingType() {
-            return this.formattingType;
-        }
     }
 }
