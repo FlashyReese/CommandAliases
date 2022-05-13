@@ -115,7 +115,7 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
 
         if (commandNode != null && commandReassignNode == null) {
             dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(command));
-
+            // Fixme: Fallback if failed below
             try {
                 this.literalCommandNodeLiteralField.set(commandNode, reassignTo);
             } catch (IllegalAccessException e) {

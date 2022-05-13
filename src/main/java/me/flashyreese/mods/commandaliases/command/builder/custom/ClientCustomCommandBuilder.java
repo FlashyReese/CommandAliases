@@ -28,7 +28,7 @@ import java.util.function.Function;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.6.0
  * @since 0.5.0
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {
@@ -74,7 +74,6 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
      */
     @Override
     protected int executeCommand(List<CustomCommandAction> actions, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandContext<FabricClientCommandSource> context, List<String> currentInputList) {
-        //AtomicInteger executeState = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
                 if (actions != null) {
@@ -82,19 +81,13 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
                         if (action.getCommand() != null) {
                             String actionCommand = this.formatString(context, currentInputList, action.getCommand());
 
-                            //Fixme: No longer needs to define command type
-                            //System.out.println(context.getSource().getPlayer().getCommandSource());
                             context.getSource().getPlayer().sendChatMessage("/" + actionCommand);
-                            //executeState.set(dispatcher.execute(actionCommand, context.getSource()));
                         }
                         if (action.getMessage() != null) {
                             String message = this.formatString(context, currentInputList, action.getMessage());
                             context.getSource().sendFeedback(new LiteralText(message));
                         }
-                        //Fixme: figure a way to check this.
-                        /*if (action.isRequireSuccess() && executeState.get() != 1) {
-                            break;
-                        }*/
+
                         if (action.getSleep() != null) {
                             String formattedTime = this.formatString(context, currentInputList, action.getSleep());
                             int time = Integer.parseInt(formattedTime);
@@ -128,6 +121,10 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
         currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeManager.getInputString(context, input)));
         //Functions fixme: more hardcoding
         string = string.replace("$executor_name()", context.getSource().getPlayer().getName().getString());
+        string = string.replace("$executor_name().pos_x()", String.valueOf(context.getSource().getPlayer().getBlockX()));
+        string = string.replace("$executor_name().pos_y()", String.valueOf(context.getSource().getPlayer().getBlockY()));
+        string = string.replace("$executor_name().pos_z()", String.valueOf(context.getSource().getPlayer().getBlockZ()));
+        string = string.replace("$executor_name().dimension()", String.valueOf(context.getSource().getPlayer().getWorld().getRegistryKey().getValue()));
         //Input Map
         //Todo: track replaced substring indexes to prevent replacing previously replaced
         for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
