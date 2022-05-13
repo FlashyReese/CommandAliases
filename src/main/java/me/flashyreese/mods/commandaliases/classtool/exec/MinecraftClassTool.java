@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -13,7 +13,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
-import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
 import net.minecraft.server.command.ServerCommandSource;
 
 import java.util.Map;
@@ -26,7 +26,7 @@ import java.util.function.Function;
  * Maps custom values to hashmap
  *
  * @author FlashyReese
- * @version 0.2.0
+ * @version 0.5.0
  * @since 0.1.3
  */
 public class MinecraftClassTool implements ClassTool<Function<CommandContext<ServerCommandSource>, String>> {
@@ -70,7 +70,7 @@ public class MinecraftClassTool implements ClassTool<Function<CommandContext<Ser
     }
 
     @Override
-    public String getValue(CommandContext<ServerCommandSource> context, CommandAliasesBuilder.CommandAliasesHolder holder) {
+    public String getValue(CommandContext<ServerCommandSource> context, AliasHolder holder) {
         return this.getValue(holder.getMethod()).apply(context);
     }
 }

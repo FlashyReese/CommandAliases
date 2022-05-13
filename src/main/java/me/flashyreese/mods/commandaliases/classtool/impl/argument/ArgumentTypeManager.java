@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 FlashyReese
+ * Copyright © 2020-2021 FlashyReese
  *
  * This file is part of CommandAliases.
  *
@@ -15,7 +15,7 @@ import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.context.StringRange;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
-import me.flashyreese.mods.commandaliases.command.builders.CommandAliasesBuilder;
+import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;
 
@@ -26,7 +26,7 @@ import java.util.Map;
  * Represents the Argument Type Manager Class Tool
  *
  * @author FlashyReese
- * @version 0.4.2
+ * @version 0.5.0
  * @since 0.0.9
  * <p>
  * This ArgumentTypeManager maps ArgumentTypes to String.
@@ -91,12 +91,12 @@ public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
         this.argumentMap.put("minecraft:mob_effect", StatusEffectArgumentType.statusEffect());
         this.argumentMap.put("minecraft:function", CommandFunctionArgumentType.commandFunction());
         this.argumentMap.put("minecraft:entity_anchor", EntityAnchorArgumentType.entityAnchor());
-        //this.argumentMap.put("minecraft:int_range", new ArgType(NumberRangeArgumentType.numberRange(), (commandContext, name) -> {}));
-        //this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.method_30918());
+        this.argumentMap.put("minecraft:int_range", NumberRangeArgumentType.intRange());
+        this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.floatRange());
         this.argumentMap.put("minecraft:item_enchantment", EnchantmentArgumentType.enchantment());
         this.argumentMap.put("minecraft:entity_summon", EntitySummonArgumentType.entitySummon());
         this.argumentMap.put("minecraft:dimension", DimensionArgumentType.dimension());
-        //this.argumentMap.put("minecraft:time", new ArgType(TimeArgumentType.time(), (commandContext, name) -> {}));
+        this.argumentMap.put("minecraft:time", TimeArgumentType.time());
         this.argumentMap.put("minecraft:uuid", UuidArgumentType.uuid());
 
         this.argumentMap.put("brigadier:bool", BoolArgumentType.bool());
@@ -123,7 +123,7 @@ public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
     }
 
     @Override
-    public String getValue(CommandContext<ServerCommandSource> context, CommandAliasesBuilder.CommandAliasesHolder holder) {
+    public String getValue(CommandContext<ServerCommandSource> context, AliasHolder holder) {
         return this.getInputString(context, holder.getVariableName());
     }
 
