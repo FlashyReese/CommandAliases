@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Java CI with Brachyura
 
 on: [ push, pull_request ]
 
@@ -12,10 +12,8 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 17
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+    - name: Build with Brachyura
+      run: java -jar brachyura-bootstrap-0.jar build
     - name: Upload build artifacts
       uses: actions/upload-artifact@v1
       with:

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "commandaliases",
-  "version": "${version}",
+  "version": "{dev-env}",
 
   "name": "Command Aliases",
   "description": "Alternate short commands for complex commands",
@@ -25,7 +25,9 @@
   },
   "depends": {
     "fabricloader": ">=0.12.5",
-    "fabric": "*",
+    "fabric-lifecycle-events-v1": "*",
+    "fabric-command-api-v1": "*",
+    "fabric-api-base": "*",
     "minecraft": "1.18.x"
   }
 }

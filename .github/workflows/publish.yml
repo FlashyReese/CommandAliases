@@ -15,10 +15,8 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: 17
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
       - name: Upload assets to GitHub
-        run: ./gradlew build
+        run: java -jar brachyura-bootstrap-0.jar build
         env:
           BUILD_RELEASE: ${{ github.event.prerelease == false }}
       - name: Publish to Modrinth & CurseForge
