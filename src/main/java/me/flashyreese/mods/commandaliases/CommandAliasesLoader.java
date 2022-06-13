@@ -126,7 +126,7 @@ public class CommandAliasesLoader {
                 LiteralArgumentBuilder<ServerCommandSource> command = new AliasCommandBuilder(cmd.getAliasCommand(), registryAccess).buildCommand(dispatcher);
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
-                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral()));
+                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), 0));
                     dispatcher.register(command);
                     this.loadedServerCommands.add(cmd.getAliasCommand().getCommand());
                 }
@@ -145,7 +145,7 @@ public class CommandAliasesLoader {
                 }
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
-                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral()));
+                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), 0));
                     dispatcher.register(command);
                     if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                         this.loadedServerCommands.add(cmd.getRedirectCommand().getCommand());
