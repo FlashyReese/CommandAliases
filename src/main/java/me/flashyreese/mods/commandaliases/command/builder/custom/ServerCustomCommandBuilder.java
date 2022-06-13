@@ -169,6 +169,8 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             string = string.replace("$executor_pos_x()", String.valueOf(context.getSource().getEntity().getX()));
             string = string.replace("$executor_pos_y()", String.valueOf(context.getSource().getEntity().getY()));
             string = string.replace("$executor_pos_z()", String.valueOf(context.getSource().getEntity().getZ()));
+            string = string.replace("$executor_yaw()", String.valueOf(context.getSource().getEntity().getYaw()));
+            string = string.replace("$executor_pitch()", String.valueOf(context.getSource().getEntity().getPitch()));
             string = string.replace("$executor_block_pos_x()", String.valueOf(context.getSource().getEntity().getBlockX()));
             string = string.replace("$executor_block_pos_y()", String.valueOf(context.getSource().getEntity().getBlockY()));
             string = string.replace("$executor_block_pos_z()", String.valueOf(context.getSource().getEntity().getBlockZ()));

@@ -129,6 +129,8 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
         string = string.replace("$executor_pos_x()", String.valueOf(context.getSource().getPlayer().getX()));
         string = string.replace("$executor_pos_y()", String.valueOf(context.getSource().getPlayer().getY()));
         string = string.replace("$executor_pos_z()", String.valueOf(context.getSource().getPlayer().getZ()));
+        string = string.replace("$executor_yaw()", String.valueOf(context.getSource().getPlayer().getYaw()));
+        string = string.replace("$executor_pitch()", String.valueOf(context.getSource().getPlayer().getPitch()));
         string = string.replace("$executor_block_pos_x()", String.valueOf(context.getSource().getPlayer().getBlockX()));
         string = string.replace("$executor_block_pos_y()", String.valueOf(context.getSource().getPlayer().getBlockY()));
         string = string.replace("$executor_block_pos_z()", String.valueOf(context.getSource().getPlayer().getBlockZ()));
