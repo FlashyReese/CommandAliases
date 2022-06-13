@@ -20,6 +20,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.command.CommandManagerExtended;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasCommandBuilder;
@@ -35,6 +36,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.command.CommandRegistryAccess;
@@ -43,6 +45,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.WorldSavePath;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -68,7 +71,7 @@ public class CommandAliasesLoader {
     private final Map<String, String> reassignServerCommandMap = new Object2ObjectOpenHashMap<>();
     private final Map<String, String> reassignClientCommandMap = new Object2ObjectOpenHashMap<>();
 
-    private final AbstractDatabase<byte[], byte[]> serverDatabase = new RocksDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases").toString());
+    private AbstractDatabase<byte[], byte[]> serverDatabase;
     private final AbstractDatabase<byte[], byte[]> clientDatabase = new RocksDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString());
 
     private Field literalCommandNodeLiteralField = null;
@@ -80,12 +83,18 @@ public class CommandAliasesLoader {
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
-        this.serverDatabase.create();
-        this.clientDatabase.create();
     }
 
     public void registerCommandAliases() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, dedicated) -> {
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            //CommandRegistrationCallback won't work here because it gets called before the server even starts.
+            CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
+            CommandRegistryAccess registryAccess = ((CommandManagerExtended) server.getCommandManager()).getCommandRegistryAccess();
+            CommandManager.RegistrationEnvironment environment = ((CommandManagerExtended) server.getCommandManager()).getEnvironment();
+
+            this.serverDatabase = new RocksDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString());
+            this.serverDatabase.create();
+
             this.registerCommandAliasesCommands(dispatcher, registryAccess);
             this.loadCommandAliases();
             this.registerCommands(dispatcher, registryAccess);
@@ -93,6 +102,7 @@ public class CommandAliasesLoader {
     }
 
     public void registerClientSidedCommandAliases() {
+        this.clientDatabase.create();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             this.registerClientCommandAliasesCommands(dispatcher, registryAccess);
             this.loadClientCommandAliases();
