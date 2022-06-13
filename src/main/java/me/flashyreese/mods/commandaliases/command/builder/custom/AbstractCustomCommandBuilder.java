@@ -21,6 +21,7 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCo
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
 
 import java.util.List;
@@ -37,10 +38,11 @@ import java.util.List;
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
     protected final CustomCommand commandAliasParent;
 
-    protected final ArgumentTypeManager argumentTypeManager = new ArgumentTypeManager();
+    protected final ArgumentTypeManager argumentTypeManager;
     protected final FormattingTypeMap formattingTypeMap = new FormattingTypeMap();
 
-    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent) {
+    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess) {
+        this.argumentTypeManager = new ArgumentTypeManager(registryAccess);
         this.commandAliasParent = commandAliasParent;
     }
 

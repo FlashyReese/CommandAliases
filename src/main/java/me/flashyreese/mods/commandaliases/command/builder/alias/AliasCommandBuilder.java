@@ -23,9 +23,10 @@ import me.flashyreese.mods.commandaliases.classtool.exec.MinecraftClassTool;
 import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.alias.format.AliasCommand;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,11 +56,11 @@ public class AliasCommandBuilder {
     private final Map<String, ClassTool<?>> classToolMap = new Object2ObjectOpenHashMap<>();
     private final FormattingTypeMap formattingTypeMap;
 
-    public AliasCommandBuilder(AliasCommand command) {
+    public AliasCommandBuilder(AliasCommand command, CommandRegistryAccess registryAccess) {
         this.command = command;
         this.commandAliasesRequiredHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), true));
         this.commandAliasesOptionalHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), false));
-        this.classToolMap.put("arg", new ArgumentTypeManager());
+        this.classToolMap.put("arg", new ArgumentTypeManager(registryAccess));
         this.classToolMap.put("this", new MinecraftClassTool());
         this.formattingTypeMap = new FormattingTypeMap();
     }
@@ -258,20 +259,20 @@ public class AliasCommandBuilder {
                                     execute.set(dispatcher.execute(executionCommand, context.getSource()));
                                 } catch (CommandSyntaxException e) {
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), true);
                                 }
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
                                 try {
                                     execute.set(dispatcher.execute(executionCommand, context.getSource().getServer().getCommandSource()));
                                 } catch (CommandSyntaxException e) {
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), true);
                                 }
                             }
                         }
                         if (subCommandAlias.getMessage() != null) {
                             String message = this.formatExecutionCommandOrMessage(context, subCommandAlias.getMessage(), subCommandAlias.isIgnoreOptionalRemoval());
-                            context.getSource().sendFeedback(new LiteralText(message), true);
+                            context.getSource().sendFeedback(Text.literal(message), true);
                         }
                         if (subCommandAlias.getSleep() != null) {
                             String formattedTime = this.formatExecutionCommandOrMessage(context, subCommandAlias.getSleep(), false);
@@ -282,11 +283,11 @@ public class AliasCommandBuilder {
                 }
             } catch (InterruptedException e) {
                 String output = e.getLocalizedMessage();
-                context.getSource().sendFeedback(new LiteralText(output), true);
+                context.getSource().sendFeedback(Text.literal(output), true);
             }
             if (cmd.getMessage() != null) {
                 String message = this.formatExecutionCommandOrMessage(context, cmd.getMessage(), false);
-                context.getSource().sendFeedback(new LiteralText(message), true);
+                context.getSource().sendFeedback(Text.literal(message), true);
             }
         });
         thread.setName("Command Aliases");

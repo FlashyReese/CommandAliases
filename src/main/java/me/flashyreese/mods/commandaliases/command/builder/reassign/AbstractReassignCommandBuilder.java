@@ -17,6 +17,7 @@ import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
 
 import java.lang.reflect.Field;
@@ -36,12 +37,14 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
     private final Field literalCommandNodeLiteralField;
     protected final Map<String, String> reassignCommandMap;
     private final CommandType commandType;
+    protected final CommandRegistryAccess registryAccess;
 
-    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType) {
+    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType, CommandRegistryAccess registryAccess) {
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.reassignCommandMap = reassignCommandMap;
         this.commandType = commandType;
+        this.registryAccess = registryAccess;
     }
 
     /**

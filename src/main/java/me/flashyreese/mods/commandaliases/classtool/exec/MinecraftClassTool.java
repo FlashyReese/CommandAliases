@@ -10,7 +10,6 @@
 package me.flashyreese.mods.commandaliases.classtool.exec;
 
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
@@ -38,14 +37,7 @@ public class MinecraftClassTool implements ClassTool<Function<CommandContext<Ser
     }
 
     private void registerClassTools() {
-        this.minecraftMap.put("SELF", (context) -> {
-            try {
-                return context.getSource().getPlayer().getEntityName();
-            } catch (CommandSyntaxException e) {
-                e.printStackTrace();
-            }
-            return null;
-        });
+        this.minecraftMap.put("SELF", (context) -> context.getSource().getPlayer().getEntityName());
         this.minecraftMap.put("TIME", (context) -> String.valueOf(context.getSource().getWorld().getTime()));
         this.minecraftMap.put("RANDOM_ALIVE_PLAYER", (context) -> Objects.requireNonNull(context.getSource().getWorld().getRandomAlivePlayer()).getEntityName());
     }

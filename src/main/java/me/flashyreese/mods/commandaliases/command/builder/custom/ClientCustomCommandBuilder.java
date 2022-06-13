@@ -15,8 +15,9 @@ import com.mojang.brigadier.context.CommandContext;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
-import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
-import net.minecraft.text.LiteralText;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.text.Text;
 
 import java.util.List;
 import java.util.Map;
@@ -33,8 +34,8 @@ import java.util.function.Function;
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {
 
-    public ClientCustomCommandBuilder(CustomCommand commandAliasParent) {
-        super(commandAliasParent);
+    public ClientCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess) {
+        super(commandAliasParent, registryAccess);
     }
 
     /**
@@ -51,14 +52,14 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
     protected int executeAction(List<CustomCommandAction> actions, String message, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandContext<FabricClientCommandSource> context, List<String> currentInputList) {
         if ((actions == null || actions.isEmpty()) && (message != null || !message.isEmpty())) {
             String formatString = this.formatString(context, currentInputList, message);
-            context.getSource().sendFeedback(new LiteralText(formatString));
+            context.getSource().sendFeedback(Text.literal(formatString));
             return Command.SINGLE_SUCCESS;
         } else if ((actions != null || !actions.isEmpty()) && (message == null || message.isEmpty())) {
             return this.executeCommand(actions, dispatcher, context, currentInputList);
         } else {
             int state = this.executeCommand(actions, dispatcher, context, currentInputList);
             String formatString = this.formatString(context, currentInputList, message);
-            context.getSource().sendFeedback(new LiteralText(formatString));
+            context.getSource().sendFeedback(Text.literal(formatString));
             return state;
         }
     }
@@ -85,7 +86,7 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
                         }
                         if (action.getMessage() != null) {
                             String message = this.formatString(context, currentInputList, action.getMessage());
-                            context.getSource().sendFeedback(new LiteralText(message));
+                            context.getSource().sendFeedback(Text.literal(message));
                         }
 
                         if (action.getSleep() != null) {
@@ -98,7 +99,7 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 String output = e.getLocalizedMessage();
-                context.getSource().sendFeedback(new LiteralText(output));
+                context.getSource().sendFeedback(Text.literal(output));
             }
         });
         thread.setName("Command Aliases");

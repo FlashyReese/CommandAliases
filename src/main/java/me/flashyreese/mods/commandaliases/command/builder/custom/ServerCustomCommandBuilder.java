@@ -23,8 +23,9 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCo
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
 import me.lucko.fabric.api.permissions.v0.Permissions;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 
 import java.util.List;
 import java.util.Map;
@@ -41,8 +42,8 @@ import java.util.function.Function;
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
-    public ServerCustomCommandBuilder(CustomCommand commandAliasParent) {
-        super(commandAliasParent);
+    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess) {
+        super(commandAliasParent, registryAccess);
     }
 
     /**
@@ -59,14 +60,14 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
     protected int executeAction(List<CustomCommandAction> actions, String message, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, List<String> currentInputList) {
         if ((actions == null || actions.isEmpty()) && (message != null || !message.isEmpty())) {
             String formatString = this.formatString(context, currentInputList, message);
-            context.getSource().sendFeedback(new LiteralText(formatString), true);
+            context.getSource().sendFeedback(Text.literal(formatString), true);
             return Command.SINGLE_SUCCESS;
         } else if ((actions != null || !actions.isEmpty()) && (message == null || message.isEmpty())) {
             return this.executeCommand(actions, dispatcher, context, currentInputList);
         } else {
             int state = this.executeCommand(actions, dispatcher, context, currentInputList);
             String formatString = this.formatString(context, currentInputList, message);
-            context.getSource().sendFeedback(new LiteralText(formatString), true);
+            context.getSource().sendFeedback(Text.literal(formatString), true);
             return state;
         }
     }
@@ -95,7 +96,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                                 } catch (CommandSyntaxException e) {
                                     e.printStackTrace();
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), true);
                                 }
                             } else if (action.getCommandType() == CommandType.SERVER) {
                                 try {
@@ -103,13 +104,13 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                                 } catch (CommandSyntaxException e) {
                                     e.printStackTrace();
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(new LiteralText(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), true);
                                 }
                             }
                         }
                         if (action.getMessage() != null) {
                             String message = this.formatString(context, currentInputList, action.getMessage());
-                            context.getSource().sendFeedback(new LiteralText(message), true);
+                            context.getSource().sendFeedback(Text.literal(message), true);
                         }
                         if (action.isRequireSuccess() && executeState.get() != 1) {
                             break;
@@ -124,7 +125,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 String output = e.getLocalizedMessage();
-                context.getSource().sendFeedback(new LiteralText(output), true);
+                context.getSource().sendFeedback(Text.literal(output), true);
             }
         });
         thread.setName("Command Aliases");
