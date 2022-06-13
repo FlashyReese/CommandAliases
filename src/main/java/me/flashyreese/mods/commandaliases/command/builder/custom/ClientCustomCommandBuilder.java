@@ -122,10 +122,13 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
         currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeManager.getInputString(context, input)));
         //Functions fixme: more hardcoding
         string = string.replace("$executor_name()", context.getSource().getPlayer().getName().getString());
-        string = string.replace("$executor_name().pos_x()", String.valueOf(context.getSource().getPlayer().getBlockX()));
-        string = string.replace("$executor_name().pos_y()", String.valueOf(context.getSource().getPlayer().getBlockY()));
-        string = string.replace("$executor_name().pos_z()", String.valueOf(context.getSource().getPlayer().getBlockZ()));
-        string = string.replace("$executor_name().dimension()", String.valueOf(context.getSource().getPlayer().getWorld().getRegistryKey().getValue()));
+        string = string.replace("$executor_pos_x()", String.valueOf(context.getSource().getPlayer().getX()));
+        string = string.replace("$executor_pos_y()", String.valueOf(context.getSource().getPlayer().getY()));
+        string = string.replace("$executor_pos_z()", String.valueOf(context.getSource().getPlayer().getZ()));
+        string = string.replace("$executor_block_pos_x()", String.valueOf(context.getSource().getPlayer().getBlockX()));
+        string = string.replace("$executor_block_pos_y()", String.valueOf(context.getSource().getPlayer().getBlockY()));
+        string = string.replace("$executor_block_pos_z()", String.valueOf(context.getSource().getPlayer().getBlockZ()));
+        string = string.replace("$executor_dimension()", String.valueOf(context.getSource().getPlayer().getWorld().getRegistryKey().getValue()));
         //Input Map
         //Todo: track replaced substring indexes to prevent replacing previously replaced
         for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here

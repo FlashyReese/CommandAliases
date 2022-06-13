@@ -149,10 +149,13 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         //Functions fixme: more hardcoding
         string = string.replace("$executor_name()", context.getSource().getName());
         if (context.getSource().getEntity() != null) {
-            string = string.replace("$executor_name().pos_x()", String.valueOf(context.getSource().getEntity().getBlockX()));
-            string = string.replace("$executor_name().pos_y()", String.valueOf(context.getSource().getEntity().getBlockY()));
-            string = string.replace("$executor_name().pos_z()", String.valueOf(context.getSource().getEntity().getBlockZ()));
-            string = string.replace("$executor_name().dimension()", String.valueOf(context.getSource().getEntity().getEntityWorld().getRegistryKey().getValue()));
+            string = string.replace("$executor_pos_x()", String.valueOf(context.getSource().getEntity().getX()));
+            string = string.replace("$executor_pos_y()", String.valueOf(context.getSource().getEntity().getY()));
+            string = string.replace("$executor_pos_z()", String.valueOf(context.getSource().getEntity().getZ()));
+            string = string.replace("$executor_block_pos_x()", String.valueOf(context.getSource().getEntity().getBlockX()));
+            string = string.replace("$executor_block_pos_y()", String.valueOf(context.getSource().getEntity().getBlockY()));
+            string = string.replace("$executor_block_pos_z()", String.valueOf(context.getSource().getEntity().getBlockZ()));
+            string = string.replace("$executor_dimension()", String.valueOf(context.getSource().getEntity().getEntityWorld().getRegistryKey().getValue()));
         }
         //Input Map
         //Todo: track replaced substring indexes to prevent replacing previously replaced
