@@ -64,7 +64,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
     protected int executeAction(List<CustomCommandAction> actions, String message, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, List<String> currentInputList) {
         if (actions == null || actions.isEmpty()) {
             String formatString = this.formatString(context, currentInputList, message);
-            context.getSource().sendFeedback(Text.literal(formatString), true);
+            context.getSource().sendFeedback(Text.literal(formatString), CommandAliasesMod.options().debugSettings.broadcastToOps);
             return Command.SINGLE_SUCCESS;
         } else {
             if (message == null || message.isEmpty()) {
@@ -72,7 +72,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             } else {
                 int state = this.executeCommand(actions, dispatcher, context, currentInputList);
                 String formatString = this.formatString(context, currentInputList, message);
-                context.getSource().sendFeedback(Text.literal(formatString), true);
+                context.getSource().sendFeedback(Text.literal(formatString), CommandAliasesMod.options().debugSettings.broadcastToOps);
                 return state;
             }
         }
@@ -94,7 +94,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             try {
                 if (actions != null) {
                     for (CustomCommandAction action : actions) {
-                        if (action.getCommand() != null) {
+                        if (action.getCommand() != null && action.getCommandType() != null) {
                             String actionCommand = this.formatString(context, currentInputList, action.getCommand());
                             if (action.getCommandType() == CommandType.CLIENT) {
                                 try {
@@ -102,7 +102,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                                 } catch (CommandSyntaxException e) {
                                     e.printStackTrace();
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(Text.literal(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                 }
                             } else if (action.getCommandType() == CommandType.SERVER) {
                                 try {
@@ -110,16 +110,27 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                                 } catch (CommandSyntaxException e) {
                                     e.printStackTrace();
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(Text.literal(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                 }
                             }
-                            if (action.isRequireSuccess() && executeState.get() != 1) {
-                                break;
+                            if (executeState.get() != Command.SINGLE_SUCCESS) {
+                                if (action.getUnsuccessfulMessage() != null) {
+                                    String message = this.formatString(context, currentInputList, action.getUnsuccessfulMessage());
+                                    context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
+                                }
+                                if (action.isRequireSuccess()) {
+                                    break;
+                                }
+                            } else {
+                                if (action.getSuccessfulMessage() != null) {
+                                    String message = this.formatString(context, currentInputList, action.getSuccessfulMessage());
+                                    context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
+                                }
                             }
                         }
                         if (action.getMessage() != null) {
                             String message = this.formatString(context, currentInputList, action.getMessage());
-                            context.getSource().sendFeedback(Text.literal(message), true);
+                            context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
                         }
                         if (action.getSleep() != null) {
                             String formattedTime = this.formatString(context, currentInputList, action.getSleep());
@@ -131,7 +142,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 String output = e.getLocalizedMessage();
-                context.getSource().sendFeedback(Text.literal(output), true);
+                context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
             }
         });
         thread.setName("Command Aliases");

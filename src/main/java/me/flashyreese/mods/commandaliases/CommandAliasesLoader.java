@@ -81,6 +81,7 @@ public class CommandAliasesLoader {
             e.printStackTrace();
         }
         this.serverDatabase.create();
+        this.clientDatabase.create();
     }
 
     public void registerCommandAliases() {
@@ -243,15 +244,49 @@ public class CommandAliasesLoader {
                                     byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
                                     byte[] value = this.serverDatabase.read(key);
                                     if (value != null) {
-                                        context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)), true);
+                                        context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     }
                                     return Command.SINGLE_SUCCESS;
                                 })
                         )
                 )
+                .then(CommandManager.literal("contains").requires(Permissions.require("commandaliases.contains", 4))
+                        .then(CommandManager.argument("key", StringArgumentType.string())
+                                .executes(context -> {
+                                    String originalKey = StringArgumentType.getString(context, "key");
+
+                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                    byte[] value = this.serverDatabase.read(key);
+                                    if (value != null) {
+                                        return Command.SINGLE_SUCCESS;
+                                    }
+                                    return 0;
+                                })
+                        )
+                )
+                .then(CommandManager.literal("compare").requires(Permissions.require("commandaliases.compare", 4))
+                        .then(CommandManager.argument("key", StringArgumentType.string())
+                                .then(CommandManager.argument("value", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+                                            String originalValue = StringArgumentType.getString(context, "value");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            byte[] value = this.serverDatabase.read(key);
+                                            if (value != null) {
+                                                String unpackedValue = new String(value, StandardCharsets.UTF_8);
+                                                if (unpackedValue.equals(originalValue)) {
+                                                    return Command.SINGLE_SUCCESS;
+                                                }
+                                            }
+                                            return 0;
+                                        })
+                                )
+                        )
+                )
                 .then(CommandManager.literal("reload").requires(Permissions.require("commandaliases.reload", 4))
                         .executes(context -> {
-                                    context.getSource().sendFeedback(Text.literal("Reloading all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Reloading all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     this.unregisterServerCommands(dispatcher);
                                     this.loadCommandAliases();
                                     this.registerCommands(dispatcher, registryAccess);
@@ -261,34 +296,34 @@ public class CommandAliasesLoader {
                                         context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
 
-                                    context.getSource().sendFeedback(Text.literal("Reloaded all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Reloaded all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     return Command.SINGLE_SUCCESS;
                                 }
                         )
                 )
                 .then(CommandManager.literal("load").requires(Permissions.require("commandaliases.load", 4))
                         .executes(context -> {
-                                    context.getSource().sendFeedback(Text.literal("Loading all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Loading all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     this.loadCommandAliases();
                                     this.registerCommands(dispatcher, registryAccess);
 
                                     for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
                                         context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
-                                    context.getSource().sendFeedback(Text.literal("Loaded all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Loaded all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     return Command.SINGLE_SUCCESS;
                                 }
                         )
                 )
                 .then(CommandManager.literal("unload").requires(Permissions.require("commandaliases.unload", 4))
                         .executes(context -> {
-                                    context.getSource().sendFeedback(Text.literal("Unloading all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Unloading all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     this.unregisterServerCommands(dispatcher);
 
                                     for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
                                         context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
-                                    context.getSource().sendFeedback(Text.literal("Unloaded all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Unloaded all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     return Command.SINGLE_SUCCESS;
                                 }
                         )
@@ -318,10 +353,10 @@ public class CommandAliasesLoader {
 
                                             byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
                                             byte[] value = originalValue.getBytes(StandardCharsets.UTF_8);
-                                            if (this.serverDatabase.read(key) != null) {
-                                                this.serverDatabase.delete(key);
+                                            if (this.clientDatabase.read(key) != null) {
+                                                this.clientDatabase.delete(key);
                                             }
-                                            this.serverDatabase.write(key, value);
+                                            this.clientDatabase.write(key, value);
                                             return Command.SINGLE_SUCCESS;
                                         })
                                 )
@@ -333,8 +368,8 @@ public class CommandAliasesLoader {
                                     String originalKey = StringArgumentType.getString(context, "key");
 
                                     byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                    if (this.serverDatabase.read(key) != null) {
-                                        this.serverDatabase.delete(key);
+                                    if (this.clientDatabase.read(key) != null) {
+                                        this.clientDatabase.delete(key);
                                     }
                                     return Command.SINGLE_SUCCESS;
                                 })
@@ -346,12 +381,47 @@ public class CommandAliasesLoader {
                                     String originalKey = StringArgumentType.getString(context, "key");
 
                                     byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                    byte[] value = this.serverDatabase.read(key);
+                                    byte[] value = this.clientDatabase.read(key);
                                     if (value != null) {
                                         context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)));
                                     }
                                     return Command.SINGLE_SUCCESS;
                                 })
+                        )
+                )
+                .then(ClientCommandManager.literal("contains")
+                        .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                .executes(context -> {
+                                    String originalKey = StringArgumentType.getString(context, "key");
+
+                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                    byte[] value = this.clientDatabase.read(key);
+                                    if (value != null) {
+                                        return Command.SINGLE_SUCCESS;
+                                    }
+                                    return 0;
+                                })
+                        )
+                )
+                .then(ClientCommandManager.literal("compare")
+                        .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                .then(ClientCommandManager.argument("value", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+                                            String originalValue = StringArgumentType.getString(context, "value");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            byte[] value = this.clientDatabase.read(key);
+                                            if (value != null) {
+                                                String unpackedValue = new String(value, StandardCharsets.UTF_8);
+                                                if (unpackedValue.equals(originalValue)) {
+                                                    return Command.SINGLE_SUCCESS;
+                                                }
+                                            }
+                                            return 0;
+                                        })
+                                )
+
                         )
                 )
                 .then(ClientCommandManager.literal("reload")

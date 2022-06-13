@@ -259,20 +259,20 @@ public class AliasCommandBuilder {
                                     execute.set(dispatcher.execute(executionCommand, context.getSource()));
                                 } catch (CommandSyntaxException e) {
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(Text.literal(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                 }
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
                                 try {
                                     execute.set(dispatcher.execute(executionCommand, context.getSource().getServer().getCommandSource()));
                                 } catch (CommandSyntaxException e) {
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(Text.literal(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                 }
                             }
                         }
                         if (subCommandAlias.getMessage() != null) {
                             String message = this.formatExecutionCommandOrMessage(context, subCommandAlias.getMessage(), subCommandAlias.isIgnoreOptionalRemoval());
-                            context.getSource().sendFeedback(Text.literal(message), true);
+                            context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
                         }
                         if (subCommandAlias.getSleep() != null) {
                             String formattedTime = this.formatExecutionCommandOrMessage(context, subCommandAlias.getSleep(), false);
@@ -283,11 +283,11 @@ public class AliasCommandBuilder {
                 }
             } catch (InterruptedException e) {
                 String output = e.getLocalizedMessage();
-                context.getSource().sendFeedback(Text.literal(output), true);
+                context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
             }
             if (cmd.getMessage() != null) {
                 String message = this.formatExecutionCommandOrMessage(context, cmd.getMessage(), false);
-                context.getSource().sendFeedback(Text.literal(message), true);
+                context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
             }
         });
         thread.setName("Command Aliases");

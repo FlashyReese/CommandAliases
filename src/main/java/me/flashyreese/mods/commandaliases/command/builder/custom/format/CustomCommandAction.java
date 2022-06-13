@@ -24,6 +24,8 @@ public class CustomCommandAction {
     private String sleep;
     private String message;
     private boolean requireSuccess;
+    private String unsuccessfulMessage;
+    private String successfulMessage;
 
     public String getCommand() {
         return command;
@@ -43,5 +45,13 @@ public class CustomCommandAction {
 
     public boolean isRequireSuccess() {
         return requireSuccess;
+    }
+
+    public String getUnsuccessfulMessage() {
+        return unsuccessfulMessage;
+    }
+
+    public String getSuccessfulMessage() {
+        return successfulMessage;
     }
 }
