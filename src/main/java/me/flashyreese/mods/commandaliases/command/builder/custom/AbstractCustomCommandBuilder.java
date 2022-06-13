@@ -22,6 +22,7 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCo
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import net.minecraft.command.CommandRegistryAccess;
+import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
 import net.minecraft.command.CommandSource;
 
 import java.util.List;
@@ -40,10 +41,12 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
 
     protected final ArgumentTypeManager argumentTypeManager;
     protected final FormattingTypeMap formattingTypeMap = new FormattingTypeMap();
+    protected final AbstractDatabase<byte[], byte[]> database;
 
-    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess) {
+    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
         this.argumentTypeManager = new ArgumentTypeManager(registryAccess);
         this.commandAliasParent = commandAliasParent;
+        this.database = database;
     }
 
     /**

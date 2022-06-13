@@ -15,6 +15,7 @@ import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ClientCustomCommandBuilder;
+import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 
@@ -31,8 +32,8 @@ import java.util.Map;
  */
 public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder<FabricClientCommandSource> {
 
-    public ClientReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignClientCommandMap, CommandRegistryAccess registryAccess) {
-        super(command, literalCommandNodeLiteralField, reassignClientCommandMap, CommandType.CLIENT, registryAccess);
+    public ClientReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignClientCommandMap, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
+        super(command, literalCommandNodeLiteralField, reassignClientCommandMap, CommandType.CLIENT, registryAccess, database);
     }
 
     @Override
@@ -47,7 +48,7 @@ public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder
                 return new CommandAliasesBuilder(this.command).buildCommand(dispatcher);
             } else */
             if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-                return new ClientCustomCommandBuilder(this.command.getCustomCommand(), this.registryAccess).buildCommand(dispatcher);
+                return new ClientCustomCommandBuilder(this.command.getCustomCommand(), this.registryAccess, this.database).buildCommand(dispatcher);
             }
         }
         return null;

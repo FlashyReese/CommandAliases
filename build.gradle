@@ -35,6 +35,8 @@ dependencies {
 	// Permissions API
 	include(modImplementation("me.lucko:fabric-permissions-api:0.1-SNAPSHOT"))
 
+	include(implementation("org.rocksdb:rocksdbjni:7.2.2"))
+
 	modRuntimeOnly "maven.modrinth:lazydfu:0.1.2"
 }
 

@@ -15,13 +15,17 @@ import com.mojang.brigadier.context.CommandContext;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
+import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents the Client Custom Command Builder
@@ -34,8 +38,8 @@ import java.util.function.Function;
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {
 
-    public ClientCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess) {
-        super(commandAliasParent, registryAccess);
+    public ClientCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
+        super(commandAliasParent, registryAccess, database);
     }
 
     /**
@@ -50,11 +54,11 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
      */
     @Override
     protected int executeAction(List<CustomCommandAction> actions, String message, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandContext<FabricClientCommandSource> context, List<String> currentInputList) {
-        if ((actions == null || actions.isEmpty()) && (message != null || !message.isEmpty())) {
+        if (actions == null || actions.isEmpty()) {
             String formatString = this.formatString(context, currentInputList, message);
             context.getSource().sendFeedback(Text.literal(formatString));
             return Command.SINGLE_SUCCESS;
-        } else if ((actions != null || !actions.isEmpty()) && (message == null || message.isEmpty())) {
+        } else if (message == null || message.isEmpty()) {
             return this.executeCommand(actions, dispatcher, context, currentInputList);
         } else {
             int state = this.executeCommand(actions, dispatcher, context, currentInputList);
@@ -141,6 +145,15 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
                     string = string.replace(tempString, newString);
                 }
             }
+        }
+
+        //Variable Mapping
+        Matcher matcher = Pattern.compile("\\{\\{(?<var>\\w+.*?)}}").matcher(string);
+        while (matcher.find()) {
+            String var = matcher.group("var");
+            byte[] value = this.database.read(var.getBytes(StandardCharsets.UTF_8));
+            if (value != null)
+                string = string.replace("{{" + var + "}}", new String(value, StandardCharsets.UTF_8));
         }
 
         string = string.trim();

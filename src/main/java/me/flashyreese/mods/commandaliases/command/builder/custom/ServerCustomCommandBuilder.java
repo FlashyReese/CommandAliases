@@ -18,19 +18,23 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
+import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents the Server Custom Command Builder
@@ -42,8 +46,8 @@ import java.util.function.Function;
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
-    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess) {
-        super(commandAliasParent, registryAccess);
+    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
+        super(commandAliasParent, registryAccess, database);
     }
 
     /**
@@ -58,17 +62,19 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
      */
     @Override
     protected int executeAction(List<CustomCommandAction> actions, String message, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, List<String> currentInputList) {
-        if ((actions == null || actions.isEmpty()) && (message != null || !message.isEmpty())) {
+        if (actions == null || actions.isEmpty()) {
             String formatString = this.formatString(context, currentInputList, message);
             context.getSource().sendFeedback(Text.literal(formatString), true);
             return Command.SINGLE_SUCCESS;
-        } else if ((actions != null || !actions.isEmpty()) && (message == null || message.isEmpty())) {
-            return this.executeCommand(actions, dispatcher, context, currentInputList);
         } else {
-            int state = this.executeCommand(actions, dispatcher, context, currentInputList);
-            String formatString = this.formatString(context, currentInputList, message);
-            context.getSource().sendFeedback(Text.literal(formatString), true);
-            return state;
+            if (message == null || message.isEmpty()) {
+                return this.executeCommand(actions, dispatcher, context, currentInputList);
+            } else {
+                int state = this.executeCommand(actions, dispatcher, context, currentInputList);
+                String formatString = this.formatString(context, currentInputList, message);
+                context.getSource().sendFeedback(Text.literal(formatString), true);
+                return state;
+            }
         }
     }
 
@@ -107,13 +113,13 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                                     context.getSource().sendFeedback(Text.literal(output), true);
                                 }
                             }
+                            if (action.isRequireSuccess() && executeState.get() != 1) {
+                                break;
+                            }
                         }
                         if (action.getMessage() != null) {
                             String message = this.formatString(context, currentInputList, action.getMessage());
                             context.getSource().sendFeedback(Text.literal(message), true);
-                        }
-                        if (action.isRequireSuccess() && executeState.get() != 1) {
-                            break;
                         }
                         if (action.getSleep() != null) {
                             String formattedTime = this.formatString(context, currentInputList, action.getSleep());
@@ -169,6 +175,15 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                     string = string.replace(tempString, newString);
                 }
             }
+        }
+
+        //Variable Mapping
+        Matcher matcher = Pattern.compile("\\{\\{(?<var>\\w+.*?)}}").matcher(string);
+        while (matcher.find()) {
+            String var = matcher.group("var");
+            byte[] value = this.database.read(var.getBytes(StandardCharsets.UTF_8));
+            if (value != null)
+                string = string.replace("{{" + var + "}}", new String(value, StandardCharsets.UTF_8));
         }
 
         string = string.trim();
