@@ -19,6 +19,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.FunctionMapManager;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
@@ -46,6 +47,7 @@ import java.util.regex.Pattern;
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
+    private final FunctionMapManager functionMapManager = new FunctionMapManager();
     public ServerCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
         super(commandAliasParent, registryAccess, database);
     }
@@ -106,29 +108,28 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         return executeState.get();
     }
 
-
     public int processActions(List<CustomCommandAction> actions, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, List<String> currentInputList) throws InterruptedException {
         int state = 0;
         long start = System.nanoTime();
         for (CustomCommandAction action : actions) {
             if (action.getCommand() != null && action.getCommandType() != null) {
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());
-                if (action.getCommandType() == CommandType.CLIENT) {
-                    try {
+                try {
+                    if (action.getCommandType() == CommandType.CLIENT) {
                         state = dispatcher.execute(actionCommand, context.getSource());
-                    } catch (CommandSyntaxException e) {
-                        e.printStackTrace();
-                        String output = e.getLocalizedMessage();
-                        context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
-                    }
-                } else if (action.getCommandType() == CommandType.SERVER) {
-                    try {
+                    } else if (action.getCommandType() == CommandType.SERVER) {
                         state = dispatcher.execute(actionCommand, context.getSource().getServer().getCommandSource());
-                    } catch (CommandSyntaxException e) {
-                        e.printStackTrace();
+                    }
+                } catch (CommandSyntaxException e) {
+                    if (CommandAliasesMod.options().debugSettings.debugMode) {
+                        CommandAliasesMod.getLogger().error("Failed to process command");
+                        CommandAliasesMod.getLogger().error("Original Action Command: {}", action.getCommand());
+                        CommandAliasesMod.getLogger().error("Original Action Command: {}", action.getCommandType());
+                        CommandAliasesMod.getLogger().error("Post Processed Action Command: {}", actionCommand);
                         String output = e.getLocalizedMessage();
                         context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
                     }
+                    e.printStackTrace();
                 }
                 if (state != Command.SINGLE_SUCCESS) {
                     if (action.getUnsuccessfulMessage() != null) {
@@ -159,7 +160,9 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             }
         }
         long end = System.nanoTime();
-        CommandAliasesMod.getLogger().info("Process time: " + (end-start) + "ns");
+        if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+            CommandAliasesMod.getLogger().info("Process time: " + (end-start) + "ns");
+        }
         return state;
     }
 
@@ -178,17 +181,6 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeManager.getInputString(context, input)));
         //Functions fixme: more hardcoding
         string = string.replace("$executor_name()", context.getSource().getName());
-        if (context.getSource().getEntity() != null) {
-            string = string.replace("$executor_pos_x()", String.valueOf(context.getSource().getEntity().getX()));
-            string = string.replace("$executor_pos_y()", String.valueOf(context.getSource().getEntity().getY()));
-            string = string.replace("$executor_pos_z()", String.valueOf(context.getSource().getEntity().getZ()));
-            string = string.replace("$executor_yaw()", String.valueOf(context.getSource().getEntity().getYaw()));
-            string = string.replace("$executor_pitch()", String.valueOf(context.getSource().getEntity().getPitch()));
-            string = string.replace("$executor_block_pos_x()", String.valueOf(context.getSource().getEntity().getBlockX()));
-            string = string.replace("$executor_block_pos_y()", String.valueOf(context.getSource().getEntity().getBlockY()));
-            string = string.replace("$executor_block_pos_z()", String.valueOf(context.getSource().getEntity().getBlockZ()));
-            string = string.replace("$executor_dimension()", String.valueOf(context.getSource().getEntity().getEntityWorld().getRegistryKey().getValue()));
-        }
         //Input Map
         //Todo: track replaced substring indexes to prevent replacing previously replaced
         for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
@@ -203,14 +195,17 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             }
         }
 
-        //Variable Mapping
+        // Variable Mapping
         Matcher matcher = Pattern.compile("\\{\\{(?<var>\\w+.*?)}}").matcher(string);
         while (matcher.find()) {
             String var = matcher.group("var");
             byte[] value = this.database.read(var.getBytes(StandardCharsets.UTF_8));
             if (value != null)
-                string = string.replace("{{" + var + "}}", new String(value, StandardCharsets.UTF_8));
+                string = string.replace("{{" + var + "}}", new String(value, StandardCharsets.UTF_8)); // fixme:
         }
+
+        // Function processor
+        string = this.functionMapManager.processFunctions(string, context.getSource());
 
         string = string.trim();
         return string;

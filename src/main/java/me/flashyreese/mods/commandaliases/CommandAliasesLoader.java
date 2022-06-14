@@ -73,7 +73,7 @@ public class CommandAliasesLoader {
     private final Map<String, String> reassignClientCommandMap = new Object2ObjectOpenHashMap<>();
 
     private AbstractDatabase<byte[], byte[]> serverDatabase;
-    private final AbstractDatabase<byte[], byte[]> clientDatabase = new RocksDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString());
+    private AbstractDatabase<byte[], byte[]> clientDatabase;
 
     private Field literalCommandNodeLiteralField = null;
 
@@ -84,7 +84,6 @@ public class CommandAliasesLoader {
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
-        this.clientDatabase.create();
     }
 
     public void registerCommandAliases() {
@@ -107,6 +106,10 @@ public class CommandAliasesLoader {
 
     public void registerClientSidedCommandAliases() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            if (this.clientDatabase == null) {
+                this.clientDatabase = new RocksDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString());
+                this.clientDatabase.create();
+            }
             this.registerClientCommandAliasesCommands(dispatcher, registryAccess);
             this.loadClientCommandAliases();
             this.registerClientCommands(dispatcher, registryAccess);

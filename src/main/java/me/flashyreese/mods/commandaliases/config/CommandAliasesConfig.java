@@ -58,10 +58,12 @@ public class CommandAliasesConfig {
 
     public static class DebugSettings {
         public boolean debugMode;
+        public boolean showProcessingTime;
         public boolean broadcastToOps;
 
         public DebugSettings() {
             this.debugMode = true;
+            this.showProcessingTime = true;
             this.broadcastToOps = true;
         }
     }
