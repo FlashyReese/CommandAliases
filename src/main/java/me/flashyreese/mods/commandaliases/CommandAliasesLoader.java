@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
@@ -35,7 +36,6 @@ import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -215,79 +215,199 @@ public class CommandAliasesLoader {
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(CommandManager.literal("put").requires(Permissions.require("commandaliases.put", 4))
-                        .then(CommandManager.argument("key", StringArgumentType.string())
-                                .then(CommandManager.argument("value", StringArgumentType.greedyString())
+                .then(CommandManager.literal("compute").requires(Permissions.require("commandaliases.compute", 4))
+                        .then(CommandManager.literal("equals").requires(Permissions.require("commandaliases.compute.equals", 4))
+                                .then(CommandManager.argument("value1", StringArgumentType.string())
+                                        .then(CommandManager.argument("value2", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("addition").requires(Permissions.require("commandaliases.compute.addition", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 + originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("subtraction").requires(Permissions.require("commandaliases.compute.subtraction", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 - originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("multiplication").requires(Permissions.require("commandaliases.compute.multiplication", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 * originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("division").requires(Permissions.require("commandaliases.compute.division", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 / originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("modulus").requires(Permissions.require("commandaliases.compute.modulus", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 % originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                )
+                .then(CommandManager.literal("database").requires(Permissions.require("commandaliases.database", 4))
+                        .then(CommandManager.literal("put").requires(Permissions.require("commandaliases.database.put", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    String originalKey = StringArgumentType.getString(context, "key");
+                                                    String originalValue = StringArgumentType.getString(context, "value");
+
+                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                    byte[] value = originalValue.getBytes(StandardCharsets.UTF_8);
+                                                    if (this.serverDatabase.read(key) != null) {
+                                                        this.serverDatabase.delete(key);
+                                                    }
+                                                    this.serverDatabase.write(key, value);
+                                                    return Command.SINGLE_SUCCESS;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("delete").requires(Permissions.require("commandaliases.database.delete", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
                                         .executes(context -> {
                                             String originalKey = StringArgumentType.getString(context, "key");
-                                            String originalValue = StringArgumentType.getString(context, "value");
 
                                             byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                            byte[] value = originalValue.getBytes(StandardCharsets.UTF_8);
                                             if (this.serverDatabase.read(key) != null) {
                                                 this.serverDatabase.delete(key);
                                             }
-                                            this.serverDatabase.write(key, value);
                                             return Command.SINGLE_SUCCESS;
                                         })
                                 )
                         )
-                )
-                .then(CommandManager.literal("delete").requires(Permissions.require("commandaliases.delete", 4))
-                        .then(CommandManager.argument("key", StringArgumentType.string())
-                                .executes(context -> {
-                                    String originalKey = StringArgumentType.getString(context, "key");
-
-                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                    if (this.serverDatabase.read(key) != null) {
-                                        this.serverDatabase.delete(key);
-                                    }
-                                    return Command.SINGLE_SUCCESS;
-                                })
-                        )
-                )
-                .then(CommandManager.literal("get").requires(Permissions.require("commandaliases.get", 4))
-                        .then(CommandManager.argument("key", StringArgumentType.string())
-                                .executes(context -> {
-                                    String originalKey = StringArgumentType.getString(context, "key");
-
-                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                    byte[] value = this.serverDatabase.read(key);
-                                    if (value != null) {
-                                        context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)), CommandAliasesMod.options().debugSettings.broadcastToOps);
-                                    }
-                                    return Command.SINGLE_SUCCESS;
-                                })
-                        )
-                )
-                .then(CommandManager.literal("contains").requires(Permissions.require("commandaliases.contains", 4))
-                        .then(CommandManager.argument("key", StringArgumentType.string())
-                                .executes(context -> {
-                                    String originalKey = StringArgumentType.getString(context, "key");
-
-                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                    byte[] value = this.serverDatabase.read(key);
-                                    if (value != null) {
-                                        return Command.SINGLE_SUCCESS;
-                                    }
-                                    return 0;
-                                })
-                        )
-                )
-                .then(CommandManager.literal("compare").requires(Permissions.require("commandaliases.compare", 4))
-                        .then(CommandManager.argument("key", StringArgumentType.string())
-                                .then(CommandManager.argument("value", StringArgumentType.greedyString())
+                        .then(CommandManager.literal("get").requires(Permissions.require("commandaliases.database.get", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
                                         .executes(context -> {
                                             String originalKey = StringArgumentType.getString(context, "key");
-                                            String originalValue = StringArgumentType.getString(context, "value");
 
                                             byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
                                             byte[] value = this.serverDatabase.read(key);
                                             if (value != null) {
-                                                String unpackedValue = new String(value, StandardCharsets.UTF_8);
-                                                if (unpackedValue.equals(originalValue)) {
-                                                    return Command.SINGLE_SUCCESS;
-                                                }
+                                                context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)), CommandAliasesMod.options().debugSettings.broadcastToOps);
+                                            }
+                                            return Command.SINGLE_SUCCESS;
+                                        })
+                                )
+                        )
+                        .then(CommandManager.literal("contains").requires(Permissions.require("commandaliases.database.contains", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            byte[] value = this.serverDatabase.read(key);
+                                            if (value != null) {
+                                                return Command.SINGLE_SUCCESS;
                                             }
                                             return 0;
                                         })
@@ -354,84 +474,203 @@ public class CommandAliasesLoader {
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(ClientCommandManager.literal("put")
-                        .then(ClientCommandManager.argument("key", StringArgumentType.string())
-                                .then(ClientCommandManager.argument("value", StringArgumentType.greedyString())
+                .then(ClientCommandManager.literal("compute")
+                        .then(ClientCommandManager.literal("equals")
+                                .then(ClientCommandManager.argument("value1", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value2", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("addition")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 + originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("subtraction")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 - originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("multiplication")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 * originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("division")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 / originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("modulus")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 % originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                )
+                .then(ClientCommandManager.literal("database")
+                        .then(ClientCommandManager.literal("put")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    String originalKey = StringArgumentType.getString(context, "key");
+                                                    String originalValue = StringArgumentType.getString(context, "value");
+
+                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                    byte[] value = originalValue.getBytes(StandardCharsets.UTF_8);
+                                                    if (this.serverDatabase.read(key) != null) {
+                                                        this.serverDatabase.delete(key);
+                                                    }
+                                                    this.serverDatabase.write(key, value);
+                                                    return Command.SINGLE_SUCCESS;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("delete")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
                                         .executes(context -> {
                                             String originalKey = StringArgumentType.getString(context, "key");
-                                            String originalValue = StringArgumentType.getString(context, "value");
 
                                             byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                            byte[] value = originalValue.getBytes(StandardCharsets.UTF_8);
-                                            if (this.clientDatabase.read(key) != null) {
-                                                this.clientDatabase.delete(key);
+                                            if (this.serverDatabase.read(key) != null) {
+                                                this.serverDatabase.delete(key);
                                             }
-                                            this.clientDatabase.write(key, value);
                                             return Command.SINGLE_SUCCESS;
                                         })
                                 )
                         )
-                )
-                .then(ClientCommandManager.literal("delete")
-                        .then(ClientCommandManager.argument("key", StringArgumentType.string())
-                                .executes(context -> {
-                                    String originalKey = StringArgumentType.getString(context, "key");
-
-                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                    if (this.clientDatabase.read(key) != null) {
-                                        this.clientDatabase.delete(key);
-                                    }
-                                    return Command.SINGLE_SUCCESS;
-                                })
-                        )
-                )
-                .then(ClientCommandManager.literal("get")
-                        .then(ClientCommandManager.argument("key", StringArgumentType.string())
-                                .executes(context -> {
-                                    String originalKey = StringArgumentType.getString(context, "key");
-
-                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                    byte[] value = this.clientDatabase.read(key);
-                                    if (value != null) {
-                                        context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)));
-                                    }
-                                    return Command.SINGLE_SUCCESS;
-                                })
-                        )
-                )
-                .then(ClientCommandManager.literal("contains")
-                        .then(ClientCommandManager.argument("key", StringArgumentType.string())
-                                .executes(context -> {
-                                    String originalKey = StringArgumentType.getString(context, "key");
-
-                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                    byte[] value = this.clientDatabase.read(key);
-                                    if (value != null) {
-                                        return Command.SINGLE_SUCCESS;
-                                    }
-                                    return 0;
-                                })
-                        )
-                )
-                .then(ClientCommandManager.literal("compare")
-                        .then(ClientCommandManager.argument("key", StringArgumentType.string())
-                                .then(ClientCommandManager.argument("value", StringArgumentType.greedyString())
+                        .then(ClientCommandManager.literal("get")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
                                         .executes(context -> {
                                             String originalKey = StringArgumentType.getString(context, "key");
-                                            String originalValue = StringArgumentType.getString(context, "value");
 
                                             byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                            byte[] value = this.clientDatabase.read(key);
+                                            byte[] value = this.serverDatabase.read(key);
                                             if (value != null) {
-                                                String unpackedValue = new String(value, StandardCharsets.UTF_8);
-                                                if (unpackedValue.equals(originalValue)) {
-                                                    return Command.SINGLE_SUCCESS;
-                                                }
+                                                context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)));
+                                            }
+                                            return Command.SINGLE_SUCCESS;
+                                        })
+                                )
+                        )
+                        .then(ClientCommandManager.literal("contains")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            byte[] value = this.serverDatabase.read(key);
+                                            if (value != null) {
+                                                return Command.SINGLE_SUCCESS;
                                             }
                                             return 0;
                                         })
                                 )
-
                         )
                 )
                 .then(ClientCommandManager.literal("reload")
