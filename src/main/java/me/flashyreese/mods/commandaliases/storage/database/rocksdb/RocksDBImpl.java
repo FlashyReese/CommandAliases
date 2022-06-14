@@ -1,6 +1,6 @@
-package me.flashyreese.mods.commandaliases.db.rocksdb;
+package me.flashyreese.mods.commandaliases.storage.database.rocksdb;
 
-import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
@@ -11,6 +11,7 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
         RocksDB.loadLibrary();
     }
 
+    private RocksDB database;
     private final String path;
 
     public RocksDBImpl(String path) {
@@ -20,7 +21,7 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
     public void create() {
         try (final Options options = new Options().setCreateIfMissing(true)) {
             try {
-                RocksDB.open(options, this.path).close();
+                this.database = RocksDB.open(options, this.path);
             } catch (RocksDBException e) {
                 e.printStackTrace();
             }
@@ -29,8 +30,8 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
 
     @Override
     public void write(byte[] key, byte[] value) {
-        try (final RocksDB db = RocksDB.open(this.path)) {
-            db.put(key, value);
+        try {
+            this.database.put(key, value);
         } catch (RocksDBException e) {
             e.printStackTrace();
         }
@@ -38,8 +39,8 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
 
     @Override
     public byte[] read(byte[] key) {
-        try (final RocksDB db = RocksDB.openReadOnly(this.path)) {
-            return db.get(key);
+        try {
+            return this.database.get(key);
         } catch (RocksDBException e) {
             e.printStackTrace();
         }
@@ -48,8 +49,8 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
 
     @Override
     public void delete(byte[] key) {
-        try (final RocksDB db = RocksDB.open(this.path)) {
-            db.delete(key);
+        try {
+            this.database.delete(key);
         } catch (RocksDBException e) {
             e.printStackTrace();
         }

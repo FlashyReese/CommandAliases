@@ -15,7 +15,7 @@ import com.mojang.brigadier.context.CommandContext;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
-import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;

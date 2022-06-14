@@ -30,8 +30,9 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCom
 import me.flashyreese.mods.commandaliases.command.builder.reassign.ClientReassignCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.reassign.ServerReassignCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.CommandRedirectBuilder;
-import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
-import me.flashyreese.mods.commandaliases.db.rocksdb.RocksDBImpl;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
+import me.flashyreese.mods.commandaliases.storage.database.rocksdb.RocksDBImpl;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -83,6 +84,7 @@ public class CommandAliasesLoader {
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
         }
+        this.clientDatabase.create();
     }
 
     public void registerCommandAliases() {
@@ -92,8 +94,10 @@ public class CommandAliasesLoader {
             CommandRegistryAccess registryAccess = ((CommandManagerExtended) server.getCommandManager()).getCommandRegistryAccess();
             CommandManager.RegistrationEnvironment environment = ((CommandManagerExtended) server.getCommandManager()).getEnvironment();
 
-            this.serverDatabase = new RocksDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString());
-            this.serverDatabase.create();
+            if (this.serverDatabase == null) {
+                this.serverDatabase = new RocksDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString());
+                this.serverDatabase.create();
+            }
 
             this.registerCommandAliasesCommands(dispatcher, registryAccess);
             this.loadCommandAliases();
@@ -102,7 +106,6 @@ public class CommandAliasesLoader {
     }
 
     public void registerClientSidedCommandAliases() {
-        this.clientDatabase.create();
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             this.registerClientCommandAliasesCommands(dispatcher, registryAccess);
             this.loadClientCommandAliases();

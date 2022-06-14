@@ -1,4 +1,4 @@
-package me.flashyreese.mods.commandaliases.db;
+package me.flashyreese.mods.commandaliases.storage.database;
 
 public interface AbstractDatabase<K,V> {
     void create();

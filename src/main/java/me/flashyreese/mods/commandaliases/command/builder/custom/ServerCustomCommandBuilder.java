@@ -22,7 +22,7 @@ import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
-import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
@@ -109,6 +109,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
 
     public int processActions(List<CustomCommandAction> actions, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, List<String> currentInputList) throws InterruptedException {
         int state = 0;
+        long start = System.nanoTime();
         for (CustomCommandAction action : actions) {
             if (action.getCommand() != null && action.getCommandType() != null) {
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());
@@ -157,6 +158,8 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                 Thread.sleep(time);
             }
         }
+        long end = System.nanoTime();
+        CommandAliasesMod.getLogger().info("Process time: " + (end-start) + "ns");
         return state;
     }
 

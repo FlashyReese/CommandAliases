@@ -142,7 +142,7 @@ public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
     }
 
     @SuppressWarnings("unchecked")
-    private  <S> Map<String, ParsedArgument<S, ?>> getArguments(CommandContext<S> commandContext) {
+    private <S> Map<String, ParsedArgument<S, ?>> getArguments(CommandContext<S> commandContext) {
         if (this.commandContextArgumentsField == null) return null;
         try {
             return (Map<String, ParsedArgument<S, ?>>) this.commandContextArgumentsField.get(commandContext);

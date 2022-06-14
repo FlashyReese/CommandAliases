@@ -16,7 +16,7 @@ import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder;
-import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
 

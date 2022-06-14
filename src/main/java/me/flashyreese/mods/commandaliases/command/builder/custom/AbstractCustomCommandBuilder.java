@@ -22,7 +22,7 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCo
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import net.minecraft.command.CommandRegistryAccess;
-import me.flashyreese.mods.commandaliases.db.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandSource;
 
 import java.util.List;

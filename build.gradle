@@ -37,6 +37,9 @@ dependencies {
 
 	include(implementation("org.rocksdb:rocksdbjni:7.2.2"))
 
+	implementation(include("org.iq80.leveldb:leveldb:0.12"))
+	implementation(include("org.iq80.leveldb:leveldb-api:0.12"))
+
 	modRuntimeOnly "maven.modrinth:lazydfu:0.1.2"
 }
 
