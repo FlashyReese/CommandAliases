@@ -113,7 +113,15 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         long start = System.nanoTime();
         for (CustomCommandAction action : actions) {
             if (action.getCommand() != null && action.getCommandType() != null) {
+                long startFormat = System.nanoTime();
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());
+                long endFormat = System.nanoTime();
+                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.getLogger().info("Original Action Command: {}", action.getCommand());
+                    CommandAliasesMod.getLogger().info("Original Action Command Type: {}", action.getCommandType());
+                    CommandAliasesMod.getLogger().info("Post Processed Action Command: {}", actionCommand);
+                    CommandAliasesMod.getLogger().info("Process time: " + (endFormat-startFormat) + "ns");
+                }
                 try {
                     if (action.getCommandType() == CommandType.CLIENT) {
                         state = dispatcher.execute(actionCommand, context.getSource());
@@ -124,7 +132,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                     if (CommandAliasesMod.options().debugSettings.debugMode) {
                         CommandAliasesMod.getLogger().error("Failed to process command");
                         CommandAliasesMod.getLogger().error("Original Action Command: {}", action.getCommand());
-                        CommandAliasesMod.getLogger().error("Original Action Command: {}", action.getCommandType());
+                        CommandAliasesMod.getLogger().error("Original Action Command Type: {}", action.getCommandType());
                         CommandAliasesMod.getLogger().error("Post Processed Action Command: {}", actionCommand);
                         String output = e.getLocalizedMessage();
                         context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
@@ -262,8 +270,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                 argumentBuilder = this.argument(child.getChild(), this.argumentTypeManager.getValue(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
-                CommandAliasesMod.getLogger().warn("Invalid Argument Type: {}", child.getArgumentType());
-                //fixme: error handle argument types properly
+                CommandAliasesMod.getLogger().error("Invalid Argument Type: {}", child.getArgumentType());
             }
         }
         if (argumentBuilder != null) {

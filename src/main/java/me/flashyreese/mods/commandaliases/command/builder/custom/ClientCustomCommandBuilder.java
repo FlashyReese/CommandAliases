@@ -12,17 +12,23 @@ package me.flashyreese.mods.commandaliases.command.builder.custom;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.flashyreese.mods.commandaliases.CommandAliasesMod;
+import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,26 +85,11 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
      */
     @Override
     protected int executeCommand(List<CustomCommandAction> actions, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandContext<FabricClientCommandSource> context, List<String> currentInputList) {
+        AtomicInteger executeState = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
                 if (actions != null) {
-                    for (CustomCommandAction action : actions) {
-                        if (action.getCommand() != null) {
-                            String actionCommand = this.formatString(context, currentInputList, action.getCommand());
-
-                            context.getSource().getPlayer().sendChatMessage("/" + actionCommand);
-                        }
-                        if (action.getMessage() != null) {
-                            String message = this.formatString(context, currentInputList, action.getMessage());
-                            context.getSource().sendFeedback(Text.literal(message));
-                        }
-
-                        if (action.getSleep() != null) {
-                            String formattedTime = this.formatString(context, currentInputList, action.getSleep());
-                            int time = Integer.parseInt(formattedTime);
-                            Thread.sleep(time);
-                        }
-                    }
+                    executeState.set(this.processActions(actions, dispatcher, context, currentInputList));
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -108,7 +99,74 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
         });
         thread.setName("Command Aliases");
         thread.start();
-        return Command.SINGLE_SUCCESS;//executeState.get();
+        return executeState.get();
+    }
+
+    public int processActions(List<CustomCommandAction> actions, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandContext<FabricClientCommandSource> context, List<String> currentInputList) throws InterruptedException {
+        int state = 0;
+        long start = System.nanoTime();
+        for (CustomCommandAction action : actions) {
+            if (action.getCommand() != null && action.getCommandType() != null) {
+                long startFormat = System.nanoTime();
+                String actionCommand = this.formatString(context, currentInputList, action.getCommand());
+                long endFormat = System.nanoTime();
+                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.getLogger().info("Original Action Command: {}", action.getCommand());
+                    CommandAliasesMod.getLogger().info("Original Action Command Type: {}", action.getCommandType());
+                    CommandAliasesMod.getLogger().info("Post Processed Action Command: {}", actionCommand);
+                    CommandAliasesMod.getLogger().info("Process time: " + (endFormat-startFormat) + "ns");
+                }
+                try {
+                    if (action.getCommandType() == CommandType.CLIENT) {
+                        context.getSource().getPlayer().sendChatMessage("/" + actionCommand);
+                        state = Command.SINGLE_SUCCESS;
+                    } else {
+                        state = Objects.requireNonNull(context.getSource().getWorld().getServer()).getCommandManager().getDispatcher().execute(actionCommand, Objects.requireNonNull(context.getSource().getWorld().getServer()).getCommandSource());
+                    }
+                } catch (CommandSyntaxException e) {
+                    if (CommandAliasesMod.options().debugSettings.debugMode) {
+                        CommandAliasesMod.getLogger().error("Failed to process command");
+                        CommandAliasesMod.getLogger().error("Original Action Command: {}", action.getCommand());
+                        CommandAliasesMod.getLogger().error("Original Action Command Type: {}", action.getCommandType());
+                        CommandAliasesMod.getLogger().error("Post Processed Action Command: {}", actionCommand);
+                        String output = e.getLocalizedMessage();
+                        context.getSource().sendFeedback(Text.literal(output));
+                    }
+                    e.printStackTrace();
+                }
+                if (state != Command.SINGLE_SUCCESS) {
+                    if (action.getUnsuccessfulMessage() != null) {
+                        String message = this.formatString(context, currentInputList, action.getUnsuccessfulMessage());
+                        context.getSource().sendFeedback(Text.literal(message));
+                    }
+                    if (action.getUnsuccessfulActions() != null && !action.getUnsuccessfulActions().isEmpty()) {
+                        state = this.processActions(action.getUnsuccessfulActions(), dispatcher, context, currentInputList);
+                    }
+                    if (action.isRequireSuccess()) {
+                        break;
+                    }
+                } else {
+                    if (action.getSuccessfulMessage() != null) {
+                        String message = this.formatString(context, currentInputList, action.getSuccessfulMessage());
+                        context.getSource().sendFeedback(Text.literal(message));
+                    }
+                }
+            }
+            if (action.getMessage() != null) {
+                String message = this.formatString(context, currentInputList, action.getMessage());
+                context.getSource().sendFeedback(Text.literal(message));
+            }
+            if (action.getSleep() != null) {
+                String formattedTime = this.formatString(context, currentInputList, action.getSleep());
+                int time = Integer.parseInt(formattedTime);
+                Thread.sleep(time);
+            }
+        }
+        long end = System.nanoTime();
+        if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+            CommandAliasesMod.getLogger().info("Process time: " + (end-start) + "ns");
+        }
+        return state;
     }
 
     /**

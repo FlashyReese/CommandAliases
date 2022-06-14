@@ -62,9 +62,9 @@ public class CommandAliasesConfig {
         public boolean broadcastToOps;
 
         public DebugSettings() {
-            this.debugMode = true;
-            this.showProcessingTime = true;
-            this.broadcastToOps = true;
+            this.debugMode = false;
+            this.showProcessingTime = false;
+            this.broadcastToOps = false;
         }
     }
 }
