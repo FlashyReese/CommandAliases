@@ -11,6 +11,8 @@ package me.flashyreese.mods.commandaliases.command.builder.custom.format;
 
 import me.flashyreese.mods.commandaliases.command.CommandType;
 
+import java.util.List;
+
 /**
  * Represents a custom command Action
  *
@@ -26,6 +28,7 @@ public class CustomCommandAction {
     private boolean requireSuccess;
     private String unsuccessfulMessage;
     private String successfulMessage;
+    private List<CustomCommandAction> unsuccessfulActions;
 
     public String getCommand() {
         return command;
@@ -53,5 +56,9 @@ public class CustomCommandAction {
 
     public String getSuccessfulMessage() {
         return successfulMessage;
+    }
+
+    public List<CustomCommandAction> getUnsuccessfulActions() {
+        return unsuccessfulActions;
     }
 }

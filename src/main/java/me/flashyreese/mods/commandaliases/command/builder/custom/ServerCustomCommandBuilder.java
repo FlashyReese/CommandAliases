@@ -93,51 +93,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         Thread thread = new Thread(() -> {
             try {
                 if (actions != null) {
-                    for (CustomCommandAction action : actions) {
-                        if (action.getCommand() != null && action.getCommandType() != null) {
-                            String actionCommand = this.formatString(context, currentInputList, action.getCommand());
-                            if (action.getCommandType() == CommandType.CLIENT) {
-                                try {
-                                    executeState.set(dispatcher.execute(actionCommand, context.getSource()));
-                                } catch (CommandSyntaxException e) {
-                                    e.printStackTrace();
-                                    String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
-                                }
-                            } else if (action.getCommandType() == CommandType.SERVER) {
-                                try {
-                                    executeState.set(dispatcher.execute(actionCommand, context.getSource().getServer().getCommandSource()));
-                                } catch (CommandSyntaxException e) {
-                                    e.printStackTrace();
-                                    String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
-                                }
-                            }
-                            if (executeState.get() != Command.SINGLE_SUCCESS) {
-                                if (action.getUnsuccessfulMessage() != null) {
-                                    String message = this.formatString(context, currentInputList, action.getUnsuccessfulMessage());
-                                    context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
-                                }
-                                if (action.isRequireSuccess()) {
-                                    break;
-                                }
-                            } else {
-                                if (action.getSuccessfulMessage() != null) {
-                                    String message = this.formatString(context, currentInputList, action.getSuccessfulMessage());
-                                    context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
-                                }
-                            }
-                        }
-                        if (action.getMessage() != null) {
-                            String message = this.formatString(context, currentInputList, action.getMessage());
-                            context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
-                        }
-                        if (action.getSleep() != null) {
-                            String formattedTime = this.formatString(context, currentInputList, action.getSleep());
-                            int time = Integer.parseInt(formattedTime);
-                            Thread.sleep(time);
-                        }
-                    }
+                    executeState.set(this.processActions(actions, dispatcher, context, currentInputList));
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -148,6 +104,60 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         thread.setName("Command Aliases");
         thread.start();
         return executeState.get();
+    }
+
+
+    public int processActions(List<CustomCommandAction> actions, CommandDispatcher<ServerCommandSource> dispatcher, CommandContext<ServerCommandSource> context, List<String> currentInputList) throws InterruptedException {
+        int state = 0;
+        for (CustomCommandAction action : actions) {
+            if (action.getCommand() != null && action.getCommandType() != null) {
+                String actionCommand = this.formatString(context, currentInputList, action.getCommand());
+                if (action.getCommandType() == CommandType.CLIENT) {
+                    try {
+                        state = dispatcher.execute(actionCommand, context.getSource());
+                    } catch (CommandSyntaxException e) {
+                        e.printStackTrace();
+                        String output = e.getLocalizedMessage();
+                        context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
+                    }
+                } else if (action.getCommandType() == CommandType.SERVER) {
+                    try {
+                        state = dispatcher.execute(actionCommand, context.getSource().getServer().getCommandSource());
+                    } catch (CommandSyntaxException e) {
+                        e.printStackTrace();
+                        String output = e.getLocalizedMessage();
+                        context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
+                    }
+                }
+                if (state != Command.SINGLE_SUCCESS) {
+                    if (action.getUnsuccessfulMessage() != null) {
+                        String message = this.formatString(context, currentInputList, action.getUnsuccessfulMessage());
+                        context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
+                    }
+                    if (action.getUnsuccessfulActions() != null && !action.getUnsuccessfulActions().isEmpty()) {
+                        state = this.processActions(action.getUnsuccessfulActions(), dispatcher, context, currentInputList);
+                    }
+                    if (action.isRequireSuccess()) {
+                        break;
+                    }
+                } else {
+                    if (action.getSuccessfulMessage() != null) {
+                        String message = this.formatString(context, currentInputList, action.getSuccessfulMessage());
+                        context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
+                    }
+                }
+            }
+            if (action.getMessage() != null) {
+                String message = this.formatString(context, currentInputList, action.getMessage());
+                context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
+            }
+            if (action.getSleep() != null) {
+                String formattedTime = this.formatString(context, currentInputList, action.getSleep());
+                int time = Integer.parseInt(formattedTime);
+                Thread.sleep(time);
+            }
+        }
+        return state;
     }
 
     /**
