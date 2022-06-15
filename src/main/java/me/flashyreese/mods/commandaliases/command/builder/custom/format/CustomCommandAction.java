@@ -1,21 +1,14 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.custom.format;
 
 import me.flashyreese.mods.commandaliases.command.CommandType;
+
+import java.util.List;
 
 /**
  * Represents a custom command Action
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.7.0
  * @since 0.4.0
  */
 public class CustomCommandAction {
@@ -24,6 +17,9 @@ public class CustomCommandAction {
     private String sleep;
     private String message;
     private boolean requireSuccess;
+    private String unsuccessfulMessage;
+    private String successfulMessage;
+    private List<CustomCommandAction> unsuccessfulActions;
 
     public String getCommand() {
         return command;
@@ -43,5 +39,17 @@ public class CustomCommandAction {
 
     public boolean isRequireSuccess() {
         return requireSuccess;
+    }
+
+    public String getUnsuccessfulMessage() {
+        return unsuccessfulMessage;
+    }
+
+    public String getSuccessfulMessage() {
+        return successfulMessage;
+    }
+
+    public List<CustomCommandAction> getUnsuccessfulActions() {
+        return unsuccessfulActions;
     }
 }

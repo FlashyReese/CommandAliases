@@ -1,37 +1,30 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
+package me.flashyreese.mods.commandaliases.command.impl;
 
-package me.flashyreese.mods.commandaliases.classtool;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
 /**
- * Represents the String Formatting Type
+ * Represents the String Formatting Type Processor
  * <p>
  * Used to convert String to a certain state.
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.7.0
  * @since 0.1.2
  */
-public class FormattingTypeMap {
+public class FormattingTypeProcessor {
 
-    private final Map<String, Function<String, String>> formatTypeMap = new HashMap<>();
+    private final Map<String, Function<String, String>> formatTypeMap = new Object2ObjectOpenHashMap<>();
 
-    public FormattingTypeMap() {
+    public FormattingTypeProcessor() {
         registerFormatTypes();
     }
 
     private void registerFormatTypes() {
-        this.formatTypeMap.put("jsonString", this::escape);
+        this.formatTypeMap.put("jsonEscape", this::escape);
+        this.formatTypeMap.put("jsonUnescape", this::unescape);
         this.formatTypeMap.put("toLower", String::toLowerCase);
         this.formatTypeMap.put("toUpper", String::toUpperCase);
         this.formatTypeMap.put("removeDoubleQuotes", this::removeDoubleQuotes);
@@ -53,6 +46,18 @@ public class FormattingTypeMap {
         escaped = escaped.replace("\r", "\\r");
         escaped = escaped.replace("\t", "\\t");
         return escaped;
+    }
+
+    private String unescape(String raw) {
+        String unescape = raw;
+        unescape = unescape.replace("\\\\", "\\");
+        unescape = unescape.replace("\\\"", "\"");
+        unescape = unescape.replace("\\b", "\b");
+        unescape = unescape.replace("\\f", "\f");
+        unescape = unescape.replace("\\n", "\n");
+        unescape = unescape.replace("\\r", "\r");
+        unescape = unescape.replace("\\t", "\t");
+        return unescape;
     }
 
     public Map<String, Function<String, String>> getFormatTypeMap() {
