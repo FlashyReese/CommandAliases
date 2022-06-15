@@ -1,24 +1,18 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.FloatArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.command.CommandManagerExtended;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasCommandBuilder;
@@ -27,11 +21,13 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCom
 import me.flashyreese.mods.commandaliases.command.builder.reassign.ClientReassignCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.reassign.ServerReassignCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.CommandRedirectBuilder;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.command.CommandRegistryAccess;
@@ -40,6 +36,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.WorldSavePath;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -52,7 +49,7 @@ import java.util.Optional;
  * Represents the custom command aliases loader.
  *
  * @author FlashyReese
- * @version 0.6.0
+ * @version 0.7.0
  * @since 0.0.9
  */
 public class CommandAliasesLoader {
@@ -64,6 +61,9 @@ public class CommandAliasesLoader {
     private final List<String> loadedClientCommands = new ObjectArrayList<>();
     private final Map<String, String> reassignServerCommandMap = new Object2ObjectOpenHashMap<>();
     private final Map<String, String> reassignClientCommandMap = new Object2ObjectOpenHashMap<>();
+
+    private AbstractDatabase<byte[], byte[]> serverDatabase;
+    private AbstractDatabase<byte[], byte[]> clientDatabase;
 
     private Field literalCommandNodeLiteralField = null;
 
@@ -77,7 +77,17 @@ public class CommandAliasesLoader {
     }
 
     public void registerCommandAliases() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, dedicated) -> {
+        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            //CommandRegistrationCallback won't work here because it gets called before the server even starts.
+            CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
+            CommandRegistryAccess registryAccess = ((CommandManagerExtended) server.getCommandManager()).getCommandRegistryAccess();
+            CommandManager.RegistrationEnvironment environment = ((CommandManagerExtended) server.getCommandManager()).getEnvironment();
+
+            if (this.serverDatabase == null) {
+                this.serverDatabase = new LevelDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString());
+                this.serverDatabase.open();
+            }
+
             this.registerCommandAliasesCommands(dispatcher, registryAccess);
             this.loadCommandAliases();
             this.registerCommands(dispatcher, registryAccess);
@@ -86,6 +96,10 @@ public class CommandAliasesLoader {
 
     public void registerClientSidedCommandAliases() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            if (this.clientDatabase == null) {
+                this.clientDatabase = new LevelDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString());
+                this.clientDatabase.open();
+            }
             this.registerClientCommandAliasesCommands(dispatcher, registryAccess);
             this.loadClientCommandAliases();
             this.registerClientCommands(dispatcher, registryAccess);
@@ -116,15 +130,16 @@ public class CommandAliasesLoader {
     private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         this.serverCommands.forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
+                CommandAliasesMod.logger().warn("The command mode \"COMMAND_ALIAS\" is now deprecated and scheduled to remove on version 1.0.0");
+                CommandAliasesMod.logger().warn("Please migrate to command mode \"COMMAND_CUSTOM\", it is more feature packed and receives more support. :)");
                 LiteralArgumentBuilder<ServerCommandSource> command = new AliasCommandBuilder(cmd.getAliasCommand(), registryAccess).buildCommand(dispatcher);
                 if (command != null) {
-                    //Assign permission for alias Fixme: better implementation
-                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral()));
+                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), true));
                     dispatcher.register(command);
                     this.loadedServerCommands.add(cmd.getAliasCommand().getCommand());
                 }
             } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), registryAccess).buildCommand(dispatcher);
+                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.serverDatabase).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.loadedServerCommands.add(cmd.getCustomCommand().getParent());
@@ -134,11 +149,11 @@ public class CommandAliasesLoader {
                 if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                     command = new CommandRedirectBuilder<ServerCommandSource>(cmd, CommandType.SERVER).buildCommand(dispatcher);
                 } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignServerCommandMap, registryAccess).buildCommand(dispatcher);
+                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignServerCommandMap, registryAccess, this.serverDatabase).buildCommand(dispatcher);
                 }
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
-                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral()));
+                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), true));
                     dispatcher.register(command);
                     if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                         this.loadedServerCommands.add(cmd.getRedirectCommand().getCommand());
@@ -148,7 +163,7 @@ public class CommandAliasesLoader {
                 }
             }
         });
-        CommandAliasesMod.getLogger().info("Registered/Reloaded all your commands :P, you can now single command nuke!");
+        CommandAliasesMod.logger().info("Registered/Reloaded all your commands :P, you can now single command nuke!");
     }
 
     /**
@@ -157,7 +172,7 @@ public class CommandAliasesLoader {
     private void registerClientCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         this.clientCommands.forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), registryAccess).buildCommand(dispatcher);
+                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.clientDatabase).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.loadedClientCommands.add(cmd.getCustomCommand().getParent());
@@ -167,7 +182,7 @@ public class CommandAliasesLoader {
                 if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                     command = new CommandRedirectBuilder<FabricClientCommandSource>(cmd, CommandType.CLIENT).buildCommand(dispatcher);
                 } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignClientCommandMap, registryAccess).buildCommand(dispatcher);
+                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.reassignClientCommandMap, registryAccess, this.clientDatabase).buildCommand(dispatcher);
                 }
                 if (command != null) {
                     dispatcher.register(command);
@@ -179,7 +194,7 @@ public class CommandAliasesLoader {
                 }
             }
         });
-        CommandAliasesMod.getLogger().info("Registered/Reloaded all your client commands :P, you can now single command nuke!");
+        CommandAliasesMod.logger().info("Registered/Reloaded all your client commands :P, you can now single command nuke!");
     }
 
     /**
@@ -197,9 +212,198 @@ public class CommandAliasesLoader {
 
                     return Command.SINGLE_SUCCESS;
                 })
+                .then(CommandManager.literal("compute").requires(Permissions.require("commandaliases.compute", 4))
+                        .then(CommandManager.literal("equals").requires(Permissions.require("commandaliases.compute.equals", 4))
+                                .then(CommandManager.argument("value1", StringArgumentType.string())
+                                        .then(CommandManager.argument("value2", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("addition").requires(Permissions.require("commandaliases.compute.addition", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 + originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("subtraction").requires(Permissions.require("commandaliases.compute.subtraction", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 - originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("multiplication").requires(Permissions.require("commandaliases.compute.multiplication", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 * originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("division").requires(Permissions.require("commandaliases.compute.division", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 / originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("modulus").requires(Permissions.require("commandaliases.compute.modulus", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(CommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 % originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                )
+                .then(CommandManager.literal("database").requires(Permissions.require("commandaliases.database", 4))
+                        .then(CommandManager.literal("put").requires(Permissions.require("commandaliases.database.put", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .then(CommandManager.argument("value", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    String originalKey = StringArgumentType.getString(context, "key");
+                                                    String originalValue = StringArgumentType.getString(context, "value");
+
+                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                    byte[] value = originalValue.getBytes(StandardCharsets.UTF_8);
+                                                    if (this.serverDatabase.read(key) != null) {
+                                                        this.serverDatabase.delete(key);
+                                                    }
+                                                    this.serverDatabase.write(key, value);
+                                                    return Command.SINGLE_SUCCESS;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(CommandManager.literal("delete").requires(Permissions.require("commandaliases.database.delete", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            if (this.serverDatabase.read(key) != null) {
+                                                this.serverDatabase.delete(key);
+                                            }
+                                            return Command.SINGLE_SUCCESS;
+                                        })
+                                )
+                        )
+                        .then(CommandManager.literal("get").requires(Permissions.require("commandaliases.database.get", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            byte[] value = this.serverDatabase.read(key);
+                                            if (value != null) {
+                                                context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)), CommandAliasesMod.options().debugSettings.broadcastToOps);
+                                            }
+                                            return Command.SINGLE_SUCCESS;
+                                        })
+                                )
+                        )
+                        .then(CommandManager.literal("contains").requires(Permissions.require("commandaliases.database.contains", 4))
+                                .then(CommandManager.argument("key", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            byte[] value = this.serverDatabase.read(key);
+                                            if (value != null) {
+                                                return Command.SINGLE_SUCCESS;
+                                            }
+                                            return 0;
+                                        })
+                                )
+                        )
+                )
                 .then(CommandManager.literal("reload").requires(Permissions.require("commandaliases.reload", 4))
                         .executes(context -> {
-                                    context.getSource().sendFeedback(Text.literal("Reloading all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Reloading all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     this.unregisterServerCommands(dispatcher);
                                     this.loadCommandAliases();
                                     this.registerCommands(dispatcher, registryAccess);
@@ -209,34 +413,34 @@ public class CommandAliasesLoader {
                                         context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
 
-                                    context.getSource().sendFeedback(Text.literal("Reloaded all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Reloaded all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     return Command.SINGLE_SUCCESS;
                                 }
                         )
                 )
                 .then(CommandManager.literal("load").requires(Permissions.require("commandaliases.load", 4))
                         .executes(context -> {
-                                    context.getSource().sendFeedback(Text.literal("Loading all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Loading all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     this.loadCommandAliases();
                                     this.registerCommands(dispatcher, registryAccess);
 
                                     for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
                                         context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
-                                    context.getSource().sendFeedback(Text.literal("Loaded all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Loaded all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     return Command.SINGLE_SUCCESS;
                                 }
                         )
                 )
                 .then(CommandManager.literal("unload").requires(Permissions.require("commandaliases.unload", 4))
                         .executes(context -> {
-                                    context.getSource().sendFeedback(Text.literal("Unloading all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Unloading all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     this.unregisterServerCommands(dispatcher);
 
                                     for (ServerPlayerEntity e : context.getSource().getServer().getPlayerManager().getPlayerList()) {
                                         context.getSource().getServer().getPlayerManager().sendCommandTree(e);
                                     }
-                                    context.getSource().sendFeedback(Text.literal("Unloaded all Command Aliases!"), true);
+                                    context.getSource().sendFeedback(Text.literal("Unloaded all Command Aliases!"), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                     return Command.SINGLE_SUCCESS;
                                 }
                         )
@@ -257,6 +461,195 @@ public class CommandAliasesLoader {
 
                     return Command.SINGLE_SUCCESS;
                 })
+                .then(ClientCommandManager.literal("compute")
+                        .then(ClientCommandManager.literal("equals")
+                                .then(ClientCommandManager.argument("value1", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value2", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("addition")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 + originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("subtraction")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 - originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("multiplication")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 * originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("division")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 / originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("modulus")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value1", FloatArgumentType.floatArg())
+                                                .then(ClientCommandManager.argument("value2", FloatArgumentType.floatArg())
+                                                        .executes(context -> {
+                                                            String originalKey = StringArgumentType.getString(context, "key");
+                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
+                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+
+                                                            float finalValue = originalValue1 % originalValue2;
+
+                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                            if (this.serverDatabase.read(key) != null) {
+                                                                this.serverDatabase.delete(key);
+                                                            }
+                                                            this.serverDatabase.write(key, value);
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                )
+                .then(ClientCommandManager.literal("database")
+                        .then(ClientCommandManager.literal("put")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .then(ClientCommandManager.argument("value", StringArgumentType.greedyString())
+                                                .executes(context -> {
+                                                    String originalKey = StringArgumentType.getString(context, "key");
+                                                    String originalValue = StringArgumentType.getString(context, "value");
+
+                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                    byte[] value = originalValue.getBytes(StandardCharsets.UTF_8);
+                                                    if (this.serverDatabase.read(key) != null) {
+                                                        this.serverDatabase.delete(key);
+                                                    }
+                                                    this.serverDatabase.write(key, value);
+                                                    return Command.SINGLE_SUCCESS;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(ClientCommandManager.literal("delete")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            if (this.serverDatabase.read(key) != null) {
+                                                this.serverDatabase.delete(key);
+                                            }
+                                            return Command.SINGLE_SUCCESS;
+                                        })
+                                )
+                        )
+                        .then(ClientCommandManager.literal("get")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            byte[] value = this.serverDatabase.read(key);
+                                            if (value != null) {
+                                                context.getSource().sendFeedback(Text.literal(new String(value, StandardCharsets.UTF_8)));
+                                            }
+                                            return Command.SINGLE_SUCCESS;
+                                        })
+                                )
+                        )
+                        .then(ClientCommandManager.literal("contains")
+                                .then(ClientCommandManager.argument("key", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String originalKey = StringArgumentType.getString(context, "key");
+
+                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            byte[] value = this.serverDatabase.read(key);
+                                            if (value != null) {
+                                                return Command.SINGLE_SUCCESS;
+                                            }
+                                            return 0;
+                                        })
+                                )
+                        )
+                )
                 .then(ClientCommandManager.literal("reload")
                         .executes(context -> {
                                     context.getSource().sendFeedback(Text.literal("Reloading all client Command Aliases!"));

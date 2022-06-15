@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.reassign;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -16,6 +7,7 @@ import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
 
@@ -27,13 +19,13 @@ import java.util.Map;
  * <p>
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.7.0
  * @since 0.5.0
  */
 public class ServerReassignCommandBuilder extends AbstractReassignCommandBuilder<ServerCommandSource> {
 
-    public ServerReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandRegistryAccess registryAccess) {
-        super(command, literalCommandNodeLiteralField, reassignCommandMap, CommandType.SERVER, registryAccess);
+    public ServerReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
+        super(command, literalCommandNodeLiteralField, reassignCommandMap, CommandType.SERVER, registryAccess, database);
     }
 
     @Override
@@ -46,7 +38,7 @@ public class ServerReassignCommandBuilder extends AbstractReassignCommandBuilder
             if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS) {
                 return new AliasCommandBuilder(this.command.getAliasCommand(), this.registryAccess).buildCommand(dispatcher);
             } else if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-                return new ServerCustomCommandBuilder(this.command.getCustomCommand(), this.registryAccess).buildCommand(dispatcher);
+                return new ServerCustomCommandBuilder(this.command.getCustomCommand(), this.registryAccess, this.database).buildCommand(dispatcher);
             }
         }
         return null;

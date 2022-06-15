@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.alias;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -18,11 +9,11 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
-import me.flashyreese.mods.commandaliases.classtool.FormattingTypeMap;
 import me.flashyreese.mods.commandaliases.classtool.exec.MinecraftClassTool;
-import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.alias.format.AliasCommand;
+import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
+import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -42,9 +33,11 @@ import java.util.regex.Pattern;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.7.0
  * @since 0.1.3
+ * @deprecated As of 0.7.0, because format is no longer viable to maintain use {@link me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder} instead.
  */
+@Deprecated
 public class AliasCommandBuilder {
     protected static final Pattern REQUIRED_COMMAND_ALIAS_HOLDER = Pattern.compile("\\{(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?}");
     protected static final Pattern OPTIONAL_COMMAND_ALIAS_HOLDER = Pattern.compile("\\[(?<classTool>\\w+)(::(?<method>[\\w:]+))?(#(?<variableName>\\w+))?(@(?<formattingType>\\w+))?]");
@@ -54,15 +47,15 @@ public class AliasCommandBuilder {
     private final List<AliasHolder> commandAliasesOptionalHolders = new ObjectArrayList<>();
 
     private final Map<String, ClassTool<?>> classToolMap = new Object2ObjectOpenHashMap<>();
-    private final FormattingTypeMap formattingTypeMap;
+    private final FormattingTypeProcessor formattingTypeMap;
 
     public AliasCommandBuilder(AliasCommand command, CommandRegistryAccess registryAccess) {
         this.command = command;
         this.commandAliasesRequiredHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), true));
         this.commandAliasesOptionalHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), false));
-        this.classToolMap.put("arg", new ArgumentTypeManager(registryAccess));
+        this.classToolMap.put("arg", new ArgumentTypeMapper(registryAccess));
         this.classToolMap.put("this", new MinecraftClassTool());
-        this.formattingTypeMap = new FormattingTypeMap();
+        this.formattingTypeMap = new FormattingTypeProcessor();
     }
 
     /**
@@ -126,7 +119,7 @@ public class AliasCommandBuilder {
                     }
 
                     if (value == null) {
-                        CommandAliasesMod.getLogger().error("Return value for \"{}\" was null, skipped!", key);
+                        CommandAliasesMod.logger().error("Return value for \"{}\" was null, skipped!", key);
                         if (required) {
                             break;
                         } else {
@@ -138,17 +131,17 @@ public class AliasCommandBuilder {
                         if (this.formattingTypeMap.getFormatTypeMap().containsKey(holder.getFormattingType())) {
                             inputMap.put(key, this.formattingTypeMap.getFormatTypeMap().get(holder.getFormattingType()).apply(value));
                         } else {
-                            CommandAliasesMod.getLogger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
+                            CommandAliasesMod.logger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
                             inputMap.put(key, value);
                         }
                     } else {
                         inputMap.put(key, value);
                     }
                 } else {
-                    CommandAliasesMod.getLogger().error("No method found for \"{}\"", holder.getHolder());
+                    CommandAliasesMod.logger().error("No method found for \"{}\"", holder.getHolder());
                 }
             } else {
-                CommandAliasesMod.getLogger().error("No class tool found for \"{}\"", holder.getHolder());
+                CommandAliasesMod.logger().error("No class tool found for \"{}\"", holder.getHolder());
             }
         }
         return inputMap;
@@ -198,12 +191,12 @@ public class AliasCommandBuilder {
 
                     }
                 } else {
-                    CommandAliasesMod.getLogger().warn("No method found for \"{}\"", holder.getHolder());
+                    CommandAliasesMod.logger().warn("No method found for \"{}\"", holder.getHolder());
                 }
             }
 
             if (value == null) {
-                CommandAliasesMod.getLogger().warn("Unable to find a value for \"{}\", skipping", holder.getHolder());
+                CommandAliasesMod.logger().warn("Unable to find a value for \"{}\", skipping", holder.getHolder());
                 continue;
             }
 
@@ -211,7 +204,7 @@ public class AliasCommandBuilder {
                 if (this.formattingTypeMap.getFormatTypeMap().containsKey(holder.getFormattingType())) {
                     newInputMap.put(holder.getHolder(), this.formattingTypeMap.getFormatTypeMap().get(holder.getFormattingType()).apply(value));
                 } else {
-                    CommandAliasesMod.getLogger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
+                    CommandAliasesMod.logger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
                     newInputMap.put(holder.getHolder(), value);
                 }
             } else {
@@ -259,20 +252,20 @@ public class AliasCommandBuilder {
                                     execute.set(dispatcher.execute(executionCommand, context.getSource()));
                                 } catch (CommandSyntaxException e) {
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(Text.literal(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                 }
                             } else if (subCommandAlias.getType() == CommandType.SERVER) {
                                 try {
                                     execute.set(dispatcher.execute(executionCommand, context.getSource().getServer().getCommandSource()));
                                 } catch (CommandSyntaxException e) {
                                     String output = e.getLocalizedMessage();
-                                    context.getSource().sendFeedback(Text.literal(output), true);
+                                    context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
                                 }
                             }
                         }
                         if (subCommandAlias.getMessage() != null) {
                             String message = this.formatExecutionCommandOrMessage(context, subCommandAlias.getMessage(), subCommandAlias.isIgnoreOptionalRemoval());
-                            context.getSource().sendFeedback(Text.literal(message), true);
+                            context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
                         }
                         if (subCommandAlias.getSleep() != null) {
                             String formattedTime = this.formatExecutionCommandOrMessage(context, subCommandAlias.getSleep(), false);
@@ -283,11 +276,11 @@ public class AliasCommandBuilder {
                 }
             } catch (InterruptedException e) {
                 String output = e.getLocalizedMessage();
-                context.getSource().sendFeedback(Text.literal(output), true);
+                context.getSource().sendFeedback(Text.literal(output), CommandAliasesMod.options().debugSettings.broadcastToOps);
             }
             if (cmd.getMessage() != null) {
                 String message = this.formatExecutionCommandOrMessage(context, cmd.getMessage(), false);
-                context.getSource().sendFeedback(Text.literal(message), true);
+                context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
             }
         });
         thread.setName("Command Aliases");
@@ -378,12 +371,12 @@ public class AliasCommandBuilder {
         for (AliasHolder holder : commandOptionalHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
-                if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
+                if (tool instanceof ArgumentTypeMapper) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
                     if (tool.contains(holder.getMethod())) {
                         if (optionalArguments != null) { //If first argument start building
-                            optionalArguments = optionalArguments.then(CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)));
+                            optionalArguments = optionalArguments.then(CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)));
                         } else {
-                            optionalArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
+                            optionalArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
                         }
                     }
                 }
@@ -396,21 +389,21 @@ public class AliasCommandBuilder {
         for (AliasHolder holder : commandRequiredHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
-                if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
+                if (tool instanceof ArgumentTypeMapper) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
                     if (tool.contains(holder.getMethod())) {
                         if (requiredArguments != null) {
-                            requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).then(requiredArguments);
+                            requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).then(requiredArguments);
                         } else {
                             if (optionalArguments != null) {
-                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)).then(optionalArguments);
+                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)).then(optionalArguments);
                             } else {
-                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
+                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
                             }
                         }
                     }
                 }
             } else {
-                CommandAliasesMod.getLogger().error("No class tool found for \"{}\"", holder.getHolder());
+                CommandAliasesMod.logger().error("No class tool found for \"{}\"", holder.getHolder());
             }
         }
         return requiredArguments;
