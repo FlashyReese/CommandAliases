@@ -1,13 +1,13 @@
 plugins {
-	id 'fabric-loom' version '0.11-SNAPSHOT'
+	id 'fabric-loom' version '0.12-SNAPSHOT'
 	id 'maven-publish'
 }
 
 sourceCompatibility = JavaVersion.VERSION_17
 targetCompatibility = JavaVersion.VERSION_17
 
-archivesBaseName = "${project.archives_base_name}-mc${project.minecraft_version}"
-version = project.mod_version
+archivesBaseName = project.archives_base_name
+version = "${project.mod_version}+mc${project.minecraft_version}-${getVersionMetadata()}"
 group = project.maven_group
 
 repositories {
@@ -35,6 +35,13 @@ dependencies {
 	// Permissions API
 	include(modImplementation("me.lucko:fabric-permissions-api:0.1-SNAPSHOT"))
 
+	// RocksDB
+	implementation("org.rocksdb:rocksdbjni:7.2.2") //include()
+
+	// LevelDB
+	include(implementation("org.iq80.leveldb:leveldb:0.12"))
+	include(implementation("org.iq80.leveldb:leveldb-api:0.12"))
+
 	modRuntimeOnly "maven.modrinth:lazydfu:0.1.2"
 }
 
@@ -47,13 +54,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	// ensure that the encoding is set to UTF-8, no matter what the system default is
-	// this fixes some edge cases with special characters not displaying correctly
-	// see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-	// If Javadoc is generated, this must be specified in that task too.
-	it.options.encoding = "UTF-8"
-
-	// Minecraft 1.17 (21w19a) upwards uses Java 16.
+	// Minecraft 1.18 (1.18-pre2) upwards uses Java 17.
 	it.options.release = 17
 }
 
@@ -65,30 +66,47 @@ java {
 }
 
 jar {
-	from("LICENSE.txt") {
-		rename { "${it}_${project.archivesBaseName}"}
-	}
+	from("LICENSE.txt")
 }
 
 // configure the maven publication
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
-			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
-			}
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-			}
+			from components.java
 		}
 	}
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	// select the repositories you want to publish to
 	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
+		// uncomment to publish to the local maven
+		maven {
+			name = "FlashyReeseReleases"
+			url = "https://maven.flashyreese.me/releases"
+			credentials {
+				username = System.getenv("MAVEN_USERNAME")
+				password = System.getenv("MAVEN_PASSWORD")
+			}
+		}
+		maven {
+			name = "FlashyReeseSnapshots"
+			url = "https://maven.flashyreese.me/snapshots"
+			credentials {
+				username = System.getenv("MAVEN_USERNAME")
+				password = System.getenv("MAVEN_PASSWORD")
+			}
+		}
 	}
+}
+
+static def getVersionMetadata() {
+	def build_id = System.getenv("GITHUB_RUN_NUMBER")
+
+	// CI builds only
+	if (build_id != null) {
+		return "build.${build_id}"
+	}
+
+	// No tracking information could be found about the build
+	return "unknown"
 }
