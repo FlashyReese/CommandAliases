@@ -73,7 +73,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         if (this.commandAliasParent.isOptional()) {
             argumentBuilder = argumentBuilder.executes(context -> {
                 //Execution action here
-                return this.executeAction(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new ObjectArrayList<>());
+                return this.executeActions(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new ObjectArrayList<>());
             });
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
@@ -104,8 +104,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getValue(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
-                CommandAliasesMod.logger().warn("Invalid Argument Type: {}", child.getArgumentType());
-                //fixme: error handle argument types properly
+                CommandAliasesMod.logger().error("Invalid Argument Type: {}", child.getArgumentType());
             }
         }
         if (argumentBuilder != null) {
@@ -117,7 +116,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             if (child.isOptional()) {
                 argumentBuilder = argumentBuilder.executes(context -> {
                     //Execution action here
-                    return this.executeAction(child.getActions(), child.getMessage(), dispatcher, context, inputs);
+                    return this.executeActions(child.getActions(), child.getMessage(), dispatcher, context, inputs);
                 });
             }
             //Start building children if exist
@@ -142,10 +141,30 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @return Formatted string
      */
     protected String formatString(CommandContext<S> context, List<String> currentInputList, String string) {
+        /* Maps child to command inputs
+
+         "child": "name",
+         "type": "argument",
+         "argumentType": "minecraft:word",
+
+         Command Syntax: /test <name>
+         Executed Command: /test helloWorld
+         Mapped Entry -> "name":"helloWorld"
+         */
         Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
-        //Todo: valid if getInputString returns null and if it does catch it :>
         currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeMapper.getInputString(context, input)));
-        //Input Map
+
+        /* Maps resolved inputs to placeholders
+
+            {
+              "message": "{{name}} tested!"
+            }
+            
+            Remaps string
+            {
+              "message": "helloWorld tested!"
+            }
+         */
         //Todo: track replaced substring indexes to prevent replacing previously replaced
         for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
             string = string.replace(String.format("{{%s}}", entry.getKey()), entry.getValue());
@@ -203,7 +222,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @param currentInputList User input list
      * @return Command execution state
      */
-    protected int executeAction(List<CustomCommandAction> actions, String message, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
+    protected int executeActions(List<CustomCommandAction> actions, String message, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
         if (actions == null || actions.isEmpty()) {
             String formatString = this.formatString(context, currentInputList, message);
             this.sendFeedback(context, formatString);
