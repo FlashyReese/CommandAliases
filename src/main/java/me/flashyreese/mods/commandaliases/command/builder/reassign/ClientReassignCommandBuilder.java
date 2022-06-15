@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.reassign;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -27,7 +18,7 @@ import java.util.Map;
  * <p>
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.7.0
  * @since 0.5.0
  */
 public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder<FabricClientCommandSource> {
@@ -43,10 +34,6 @@ public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder
             String reassignTo = this.command.getReassignCommand().getReassignTo().trim();
             this.reassignCommandMap.put(command, reassignTo);
 
-            //Fixme: Do I want to support a deprecated format?
-            /*if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS) {
-                return new CommandAliasesBuilder(this.command).buildCommand(dispatcher);
-            } else */
             if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
                 return new ClientCustomCommandBuilder(this.command.getCustomCommand(), this.registryAccess, this.database).buildCommand(dispatcher);
             }

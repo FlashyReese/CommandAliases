@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.custom;
 
 import com.mojang.brigadier.Command;
@@ -29,7 +20,7 @@ import java.util.Objects;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.6.0
+ * @version 0.7.0
  * @since 0.5.0
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {

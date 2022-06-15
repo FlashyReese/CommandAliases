@@ -10,6 +10,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 
+/**
+ * Command Aliases Configuration
+ * <p>
+ * Always end-users to toggle settings
+ *
+ * @author FlashyReese
+ * @version 0.7.0
+ * @since 0.7.0
+ */
 public class CommandAliasesConfig {
     private static final Gson gson = new GsonBuilder()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)

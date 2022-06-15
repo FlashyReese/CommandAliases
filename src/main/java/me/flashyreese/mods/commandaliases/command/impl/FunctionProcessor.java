@@ -16,6 +16,15 @@ import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Represents the Function Processor
+ * <p>
+ * Applies function to argument passed toward the function
+ *
+ * @author FlashyReese
+ * @version 0.7.0
+ * @since 0.7.0
+ */
 public class FunctionProcessor {
     private final Pattern singleArgumentFunction = Pattern.compile("\\$(?<fn>\\w+?)\\((?<arg>[+-]?(\\d+([.]\\d*)?|[.]\\d+)?|\\w+.*?)\\)");
 

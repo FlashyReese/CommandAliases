@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.custom;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -34,7 +25,7 @@ import java.util.List;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.6.0
+ * @version 0.7.0
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
@@ -57,13 +48,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
     protected void sendFeedback(CommandContext<ServerCommandSource> context, String message) {
         context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
     }
-
-    /**
-     * Builds parent ArgumentBuilder
-     *
-     * @param dispatcher The command dispatcher
-     * @return ArgumentBuilder
-     */
+    
     @Override
     protected LiteralArgumentBuilder<ServerCommandSource> buildCommandParent(CommandDispatcher<ServerCommandSource> dispatcher) {
         LiteralArgumentBuilder<ServerCommandSource> argumentBuilder = this.literal(this.commandAliasParent.getParent());

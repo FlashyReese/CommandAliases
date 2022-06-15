@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.impl;
 
 import com.mojang.brigadier.arguments.*;
@@ -24,15 +15,14 @@ import java.lang.reflect.Field;
 import java.util.Map;
 
 /**
- * Represents the Argument Type Manager Class Tool
+ * Represents the Argument Type Mapper
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.7.0
  * @since 0.0.9
  * <p>
- * This ArgumentTypeManager maps ArgumentTypes to String.
+ * This ArgumentTypeMapper maps ArgumentTypes to String.
  * See https://minecraft.gamepedia.com/Argument_types
- * There is probably a vanilla way to do this but I can't figure it out
  */
 public class ArgumentTypeMapper implements ClassTool<ArgumentType<?>> {
 

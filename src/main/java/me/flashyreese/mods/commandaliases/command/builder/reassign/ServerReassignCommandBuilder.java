@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.reassign;
 
 import com.mojang.brigadier.CommandDispatcher;
@@ -28,7 +19,7 @@ import java.util.Map;
  * <p>
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.7.0
  * @since 0.5.0
  */
 public class ServerReassignCommandBuilder extends AbstractReassignCommandBuilder<ServerCommandSource> {

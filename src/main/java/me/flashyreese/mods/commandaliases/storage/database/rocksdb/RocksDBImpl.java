@@ -5,6 +5,15 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
+import java.io.IOException;
+
+/**
+ * Represents the RocksDB Implementation
+ *
+ * @author FlashyReese
+ * @version 0.7.0
+ * @since 0.7.0
+ */
 public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
 
     static {
@@ -18,13 +27,21 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
         this.path = path;
     }
 
-    public void create() {
+    @Override
+    public void open() {
         try (final Options options = new Options().setCreateIfMissing(true)) {
             try {
                 this.database = RocksDB.open(options, this.path);
             } catch (RocksDBException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    @Override
+    public void close() {
+        if (this.database != null) {
+            this.database.close();
         }
     }
 

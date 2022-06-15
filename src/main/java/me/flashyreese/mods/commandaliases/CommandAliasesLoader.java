@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases;
 
 import com.google.gson.Gson;
@@ -32,7 +23,6 @@ import me.flashyreese.mods.commandaliases.command.builder.reassign.ServerReassig
 import me.flashyreese.mods.commandaliases.command.builder.redirect.CommandRedirectBuilder;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
-import me.flashyreese.mods.commandaliases.storage.database.rocksdb.RocksDBImpl;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -59,7 +49,7 @@ import java.util.Optional;
  * Represents the custom command aliases loader.
  *
  * @author FlashyReese
- * @version 0.6.0
+ * @version 0.7.0
  * @since 0.0.9
  */
 public class CommandAliasesLoader {
@@ -94,8 +84,8 @@ public class CommandAliasesLoader {
             CommandManager.RegistrationEnvironment environment = ((CommandManagerExtended) server.getCommandManager()).getEnvironment();
 
             if (this.serverDatabase == null) {
-                this.serverDatabase = new RocksDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString());
-                this.serverDatabase.create();
+                this.serverDatabase = new LevelDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString());
+                this.serverDatabase.open();
             }
 
             this.registerCommandAliasesCommands(dispatcher, registryAccess);
@@ -107,8 +97,8 @@ public class CommandAliasesLoader {
     public void registerClientSidedCommandAliases() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             if (this.clientDatabase == null) {
-                this.clientDatabase = new RocksDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString());
-                this.clientDatabase.create();
+                this.clientDatabase = new LevelDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString());
+                this.clientDatabase.open();
             }
             this.registerClientCommandAliasesCommands(dispatcher, registryAccess);
             this.loadClientCommandAliases();

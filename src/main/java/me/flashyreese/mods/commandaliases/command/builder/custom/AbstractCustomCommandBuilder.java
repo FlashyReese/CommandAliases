@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.custom;
 
 import com.mojang.brigadier.Command;
@@ -40,7 +31,7 @@ import java.util.function.Function;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.6.0
+ * @version 0.7.0
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
@@ -229,6 +220,15 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         }
     }
 
+    /**
+     * Processes all actions and sub-actions recursively
+     * @param actions List of command actions
+     * @param dispatcher The command dispatcher
+     * @param context The command context
+     * @param currentInputList User input list
+     * @return Command execution state
+     * @throws InterruptedException Will never been thrown unless the thread has been interrupted
+     */
     public int processActions(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) throws InterruptedException {
         int state = 0;
         long start = System.nanoTime();
@@ -237,14 +237,6 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 long startFormat = System.nanoTime();
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());
                 long endFormat = System.nanoTime();
-                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
-                    CommandAliasesMod.getLogger().info("======================================================");
-                    CommandAliasesMod.getLogger().info("Original Action Command: {}", action.getCommand());
-                    CommandAliasesMod.getLogger().info("Original Action Command Type: {}", action.getCommandType());
-                    CommandAliasesMod.getLogger().info("Post Processed Action Command: {}", actionCommand);
-                    CommandAliasesMod.getLogger().info("Process time: " + (endFormat - startFormat) + "ns");
-                    CommandAliasesMod.getLogger().info("======================================================");
-                }
                 try {
                     state = this.dispatcherExecute(action, dispatcher, context, actionCommand);
                 } catch (CommandSyntaxException e) {
@@ -257,6 +249,16 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                         this.sendFeedback(context, output);
                     }
                     e.printStackTrace();
+                }
+                long endExecution = System.nanoTime();
+                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.getLogger().info("======================================================");
+                    CommandAliasesMod.getLogger().info("Original Action Command: {}", action.getCommand());
+                    CommandAliasesMod.getLogger().info("Original Action Command Type: {}", action.getCommandType());
+                    CommandAliasesMod.getLogger().info("Post Processed Action Command: {}", actionCommand);
+                    CommandAliasesMod.getLogger().info("Formatting time: " + (endFormat - startFormat) + "ns");
+                    CommandAliasesMod.getLogger().info("Executing time: " + (endExecution - endFormat) + "ns");
+                    CommandAliasesMod.getLogger().info("======================================================");
                 }
                 if (state != Command.SINGLE_SUCCESS) {
                     if (action.getUnsuccessfulMessage() != null) {
@@ -290,13 +292,27 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
             CommandAliasesMod.getLogger().info("======================================================");
             CommandAliasesMod.getLogger().info("Command Actions");
-            CommandAliasesMod.getLogger().info("Process time: " + (end - start) + "ns");
+            CommandAliasesMod.getLogger().info("Total process time: " + (end - start) + "ns");
             CommandAliasesMod.getLogger().info("======================================================");
         }
         return state;
     }
 
+    /**
+     * Provides feedback to the user executing the command
+     * @param context The command context
+     * @param message The message
+     */
     protected abstract void sendFeedback(CommandContext<S> context, String message);
 
+    /**
+     *
+     * @param action The custom command action
+     * @param dispatcher The command dispatcher
+     * @param context The command context
+     * @param actionCommand The action command after being formatted by {@link #formatString(CommandContext, List, String)}
+     * @return Command execution state
+     * @throws CommandSyntaxException Thrown if action command is invalid
+     */
     protected abstract int dispatcherExecute(CustomCommandAction action, CommandDispatcher<S> dispatcher, CommandContext<S> context, String actionCommand) throws CommandSyntaxException;
 }

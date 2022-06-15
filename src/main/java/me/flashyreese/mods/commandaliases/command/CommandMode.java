@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command;
 
 /**
@@ -17,9 +8,15 @@ package me.flashyreese.mods.commandaliases.command;
  * @since 0.3.0
  */
 public enum CommandMode {
+    /**
+     * @deprecated As of 0.7.0, because format is no longer viable to maintain use {@link me.flashyreese.mods.commandaliases.command.CommandMode#COMMAND_CUSTOM} instead.
+     */
     COMMAND_ALIAS,
     COMMAND_CUSTOM,
     COMMAND_REASSIGN,
+    /**
+     * @deprecated As of 0.7.0, because format is no longer viable to maintain use {@link me.flashyreese.mods.commandaliases.command.CommandMode#COMMAND_REASSIGN_AND_CUSTOM} instead.
+     */
     COMMAND_REASSIGN_AND_ALIAS,
     COMMAND_REASSIGN_AND_CUSTOM,
     COMMAND_REDIRECT,
