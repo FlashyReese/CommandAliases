@@ -18,9 +18,9 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
-import me.flashyreese.mods.commandaliases.classtool.FormattingTypeMap;
+import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
 import me.flashyreese.mods.commandaliases.classtool.exec.MinecraftClassTool;
-import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
+import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.alias.format.AliasCommand;
 import net.minecraft.command.CommandRegistryAccess;
@@ -54,15 +54,15 @@ public class AliasCommandBuilder {
     private final List<AliasHolder> commandAliasesOptionalHolders = new ObjectArrayList<>();
 
     private final Map<String, ClassTool<?>> classToolMap = new Object2ObjectOpenHashMap<>();
-    private final FormattingTypeMap formattingTypeMap;
+    private final FormattingTypeProcessor formattingTypeMap;
 
     public AliasCommandBuilder(AliasCommand command, CommandRegistryAccess registryAccess) {
         this.command = command;
         this.commandAliasesRequiredHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), true));
         this.commandAliasesOptionalHolders.addAll(this.getCommandAliasesHolders(command.getCommand(), false));
-        this.classToolMap.put("arg", new ArgumentTypeManager(registryAccess));
+        this.classToolMap.put("arg", new ArgumentTypeMapper(registryAccess));
         this.classToolMap.put("this", new MinecraftClassTool());
-        this.formattingTypeMap = new FormattingTypeMap();
+        this.formattingTypeMap = new FormattingTypeProcessor();
     }
 
     /**
@@ -378,12 +378,12 @@ public class AliasCommandBuilder {
         for (AliasHolder holder : commandOptionalHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
-                if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
+                if (tool instanceof ArgumentTypeMapper) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
                     if (tool.contains(holder.getMethod())) {
                         if (optionalArguments != null) { //If first argument start building
-                            optionalArguments = optionalArguments.then(CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)));
+                            optionalArguments = optionalArguments.then(CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)));
                         } else {
-                            optionalArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
+                            optionalArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
                         }
                     }
                 }
@@ -396,15 +396,15 @@ public class AliasCommandBuilder {
         for (AliasHolder holder : commandRequiredHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
-                if (tool instanceof ArgumentTypeManager) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
+                if (tool instanceof ArgumentTypeMapper) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
                     if (tool.contains(holder.getMethod())) {
                         if (requiredArguments != null) {
-                            requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).then(requiredArguments);
+                            requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).then(requiredArguments);
                         } else {
                             if (optionalArguments != null) {
-                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)).then(optionalArguments);
+                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)).then(optionalArguments);
                             } else {
-                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeManager) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
+                                requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context));
                             }
                         }
                     }

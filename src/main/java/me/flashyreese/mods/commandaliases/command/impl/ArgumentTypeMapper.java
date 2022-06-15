@@ -7,7 +7,7 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases.classtool.impl.argument;
+package me.flashyreese.mods.commandaliases.command.impl;
 
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.context.CommandContext;
@@ -34,13 +34,13 @@ import java.util.Map;
  * See https://minecraft.gamepedia.com/Argument_types
  * There is probably a vanilla way to do this but I can't figure it out
  */
-public class ArgumentTypeManager implements ClassTool<ArgumentType<?>> {
+public class ArgumentTypeMapper implements ClassTool<ArgumentType<?>> {
 
     private final Map<String, ArgumentType<?>> argumentMap = new Object2ObjectOpenHashMap<>();
 
     private Field commandContextArgumentsField = null;
 
-    public ArgumentTypeManager(CommandRegistryAccess registryAccess) {
+    public ArgumentTypeMapper(CommandRegistryAccess registryAccess) {
         this.registerArgumentTypes(registryAccess);
         try {
             this.commandContextArgumentsField = CommandContext.class.getDeclaredField("arguments");

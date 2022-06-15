@@ -7,9 +7,10 @@
  * see the LICENSE file.
  */
 
-package me.flashyreese.mods.commandaliases.classtool;
+package me.flashyreese.mods.commandaliases.command.impl;
 
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+
 import java.util.Map;
 import java.util.function.Function;
 
@@ -22,16 +23,17 @@ import java.util.function.Function;
  * @version 0.5.0
  * @since 0.1.2
  */
-public class FormattingTypeMap {
+public class FormattingTypeProcessor {
 
-    private final Map<String, Function<String, String>> formatTypeMap = new HashMap<>();
+    private final Map<String, Function<String, String>> formatTypeMap = new Object2ObjectOpenHashMap<>();
 
-    public FormattingTypeMap() {
+    public FormattingTypeProcessor() {
         registerFormatTypes();
     }
 
     private void registerFormatTypes() {
-        this.formatTypeMap.put("jsonString", this::escape);
+        this.formatTypeMap.put("jsonEscape", this::escape);
+        this.formatTypeMap.put("jsonUnescape", this::unescape);
         this.formatTypeMap.put("toLower", String::toLowerCase);
         this.formatTypeMap.put("toUpper", String::toUpperCase);
         this.formatTypeMap.put("removeDoubleQuotes", this::removeDoubleQuotes);
@@ -53,6 +55,18 @@ public class FormattingTypeMap {
         escaped = escaped.replace("\r", "\\r");
         escaped = escaped.replace("\t", "\\t");
         return escaped;
+    }
+
+    private String unescape(String raw) {
+        String unescape = raw;
+        unescape = unescape.replace("\\\\", "\\");
+        unescape = unescape.replace("\\\"", "\"");
+        unescape = unescape.replace("\\b", "\b");
+        unescape = unescape.replace("\\f", "\f");
+        unescape = unescape.replace("\\n", "\n");
+        unescape = unescape.replace("\\r", "\r");
+        unescape = unescape.replace("\\t", "\t");
+        return unescape;
     }
 
     public Map<String, Function<String, String>> getFormatTypeMap() {

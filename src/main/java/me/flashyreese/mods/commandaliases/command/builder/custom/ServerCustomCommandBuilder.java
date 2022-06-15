@@ -19,23 +19,20 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandType;
-import me.flashyreese.mods.commandaliases.command.FunctionMapManager;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
+import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Represents the Server Custom Command Builder
@@ -47,9 +44,10 @@ import java.util.regex.Pattern;
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
-    private final FunctionMapManager functionMapManager = new FunctionMapManager();
+    private final FunctionProcessor functionProcessor;
     public ServerCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
         super(commandAliasParent, registryAccess, database);
+        this.functionProcessor = new FunctionProcessor(database);
     }
 
     /**
@@ -117,10 +115,12 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());
                 long endFormat = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.getLogger().info("======================================================");
                     CommandAliasesMod.getLogger().info("Original Action Command: {}", action.getCommand());
                     CommandAliasesMod.getLogger().info("Original Action Command Type: {}", action.getCommandType());
                     CommandAliasesMod.getLogger().info("Post Processed Action Command: {}", actionCommand);
                     CommandAliasesMod.getLogger().info("Process time: " + (endFormat-startFormat) + "ns");
+                    CommandAliasesMod.getLogger().info("======================================================");
                 }
                 try {
                     if (action.getCommandType() == CommandType.CLIENT) {
@@ -169,7 +169,10 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         }
         long end = System.nanoTime();
         if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+            CommandAliasesMod.getLogger().info("======================================================");
+            CommandAliasesMod.getLogger().info("Command Actions");
             CommandAliasesMod.getLogger().info("Process time: " + (end-start) + "ns");
+            CommandAliasesMod.getLogger().info("======================================================");
         }
         return state;
     }
@@ -186,9 +189,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
     protected String formatString(CommandContext<ServerCommandSource> context, List<String> currentInputList, String string) {
         Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
         //Todo: valid if getInputString returns null and if it does catch it :>
-        currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeManager.getInputString(context, input)));
-        //Functions fixme: more hardcoding
-        string = string.replace("$executor_name()", context.getSource().getName());
+        currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeMapper.getInputString(context, input)));
         //Input Map
         //Todo: track replaced substring indexes to prevent replacing previously replaced
         for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
@@ -203,17 +204,8 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             }
         }
 
-        // Variable Mapping
-        Matcher matcher = Pattern.compile("\\{\\{(?<var>\\w+.*?)}}").matcher(string);
-        while (matcher.find()) {
-            String var = matcher.group("var");
-            byte[] value = this.database.read(var.getBytes(StandardCharsets.UTF_8));
-            if (value != null)
-                string = string.replace("{{" + var + "}}", new String(value, StandardCharsets.UTF_8)); // fixme:
-        }
-
         // Function processor
-        string = this.functionMapManager.processFunctions(string, context.getSource());
+        string = this.functionProcessor.processFunctions(string, context.getSource());
 
         string = string.trim();
         return string;
@@ -266,8 +258,8 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         if (child.getType().equals("literal")) {
             argumentBuilder = this.literal(child.getChild());
         } else if (child.getType().equals("argument")) {
-            if (this.argumentTypeManager.contains(child.getArgumentType())) {
-                argumentBuilder = this.argument(child.getChild(), this.argumentTypeManager.getValue(child.getArgumentType()));
+            if (this.argumentTypeMapper.contains(child.getArgumentType())) {
+                argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getValue(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
                 CommandAliasesMod.getLogger().error("Invalid Argument Type: {}", child.getArgumentType());

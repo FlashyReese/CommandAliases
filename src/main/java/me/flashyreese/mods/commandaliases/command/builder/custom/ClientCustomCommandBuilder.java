@@ -21,7 +21,6 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCo
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
 
 import java.nio.charset.StandardCharsets;
@@ -181,7 +180,7 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
     protected String formatString(CommandContext<FabricClientCommandSource> context, List<String> currentInputList, String string) {
         Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
         //Todo: valid if getInputString returns null and if it does catch it :>
-        currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeManager.getInputString(context, input)));
+        currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeMapper.getInputString(context, input)));
         //Functions fixme: more hardcoding
         string = string.replace("$executor_name()", context.getSource().getPlayer().getName().getString());
         string = string.replace("$executor_pos_x()", String.valueOf(context.getSource().getPlayer().getX()));

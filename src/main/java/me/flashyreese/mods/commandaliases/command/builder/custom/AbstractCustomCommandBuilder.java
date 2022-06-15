@@ -15,8 +15,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.classtool.FormattingTypeMap;
-import me.flashyreese.mods.commandaliases.classtool.impl.argument.ArgumentTypeManager;
+import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
+import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
@@ -39,12 +39,12 @@ import java.util.List;
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
     protected final CustomCommand commandAliasParent;
 
-    protected final ArgumentTypeManager argumentTypeManager;
-    protected final FormattingTypeMap formattingTypeMap = new FormattingTypeMap();
+    protected final ArgumentTypeMapper argumentTypeMapper;
+    protected final FormattingTypeProcessor formattingTypeMap = new FormattingTypeProcessor();
     protected final AbstractDatabase<byte[], byte[]> database;
 
     public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
-        this.argumentTypeManager = new ArgumentTypeManager(registryAccess);
+        this.argumentTypeMapper = new ArgumentTypeMapper(registryAccess);
         this.commandAliasParent = commandAliasParent;
         this.database = database;
     }
@@ -101,8 +101,8 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         if (child.getType().equals("literal")) {
             argumentBuilder = this.literal(child.getChild());
         } else if (child.getType().equals("argument")) {
-            if (this.argumentTypeManager.contains(child.getArgumentType())) {
-                argumentBuilder = this.argument(child.getChild(), this.argumentTypeManager.getValue(child.getArgumentType()));
+            if (this.argumentTypeMapper.contains(child.getArgumentType())) {
+                argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getValue(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
                 CommandAliasesMod.getLogger().warn("Invalid Argument Type: {}", child.getArgumentType());
