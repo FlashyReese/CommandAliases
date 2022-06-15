@@ -241,9 +241,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -266,9 +264,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -291,9 +287,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -316,9 +310,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -341,9 +333,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -500,9 +490,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -525,9 +513,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -550,9 +536,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -575,9 +559,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
@@ -600,9 +582,7 @@ public class CommandAliasesLoader {
                                                                 this.serverDatabase.delete(key);
                                                             }
                                                             this.serverDatabase.write(key, value);
-                                                            if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                                return Command.SINGLE_SUCCESS;
-                                                            return 0;
+                                                            return Command.SINGLE_SUCCESS;
                                                         })
                                                 )
                                         )
