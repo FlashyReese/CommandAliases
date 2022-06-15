@@ -9,23 +9,30 @@
 
 package me.flashyreese.mods.commandaliases.command.builder.custom;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
-import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
+import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
-import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
-import net.minecraft.command.CommandRegistryAccess;
+import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
+import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
+import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
+import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 /**
  * Represents an Abstract Custom Command Builder
@@ -41,12 +48,13 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
 
     protected final ArgumentTypeMapper argumentTypeMapper;
     protected final FormattingTypeProcessor formattingTypeMap = new FormattingTypeProcessor();
-    protected final AbstractDatabase<byte[], byte[]> database;
+
+    protected final FunctionProcessor functionProcessor;
 
     public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
         this.argumentTypeMapper = new ArgumentTypeMapper(registryAccess);
         this.commandAliasParent = commandAliasParent;
-        this.database = database;
+        this.functionProcessor = new FunctionProcessor(database);
     }
 
     /**
@@ -134,9 +142,161 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         return argumentBuilder;
     }
 
-    protected abstract int executeAction(List<CustomCommandAction> actions, String message, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList);
+    /**
+     * Method to format string(command or messages) with user input map.
+     *
+     * @param context          The command context
+     * @param currentInputList User input map with functions
+     * @param string           Input string
+     * @return Formatted string
+     */
+    protected String formatString(CommandContext<S> context, List<String> currentInputList, String string) {
+        Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
+        //Todo: valid if getInputString returns null and if it does catch it :>
+        currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeMapper.getInputString(context, input)));
+        //Input Map
+        //Todo: track replaced substring indexes to prevent replacing previously replaced
+        for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
+            string = string.replace(String.format("{{%s}}", entry.getKey()), entry.getValue());
 
-    protected abstract int executeCommand(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList);
+            for (Map.Entry<String, Function<String, String>> entry2 : this.formattingTypeMap.getFormatTypeMap().entrySet()) {
+                String tempString = String.format("{{%s@%s}}", entry.getKey(), entry2.getKey());
+                if (string.contains(tempString)) {
+                    String newString = entry2.getValue().apply(entry.getValue());
+                    string = string.replace(tempString, newString);
+                }
+            }
+        }
 
-    protected abstract String formatString(CommandContext<S> context, List<String> currentInputList, String string);
+        // Function processor
+        string = this.functionProcessor.processFunctions(string, context.getSource());
+
+        string = string.trim();
+        return string;
+    }
+
+    /**
+     * Executes command in command action
+     *
+     * @param actions          List of command actions
+     * @param dispatcher       The command dispatcher
+     * @param context          The command context
+     * @param currentInputList User input list
+     * @return Command execution state
+     */
+    protected int executeCommand(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
+        AtomicInteger executeState = new AtomicInteger();
+        Thread thread = new Thread(() -> {
+            try {
+                if (actions != null) {
+                    executeState.set(this.processActions(actions, dispatcher, context, currentInputList));
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                String output = e.getLocalizedMessage();
+                this.sendFeedback(context, output);
+            }
+        });
+        thread.setName("Command Aliases");
+        thread.start();
+        return executeState.get();
+    }
+
+    /**
+     * Executes command action
+     *
+     * @param actions          List of command actions
+     * @param message          Message
+     * @param dispatcher       The command dispatcher
+     * @param context          The command context
+     * @param currentInputList User input list
+     * @return Command execution state
+     */
+    protected int executeAction(List<CustomCommandAction> actions, String message, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
+        if (actions == null || actions.isEmpty()) {
+            String formatString = this.formatString(context, currentInputList, message);
+            this.sendFeedback(context, formatString);
+            return Command.SINGLE_SUCCESS;
+        } else {
+            if (message == null || message.isEmpty()) {
+                return this.executeCommand(actions, dispatcher, context, currentInputList);
+            } else {
+                int state = this.executeCommand(actions, dispatcher, context, currentInputList);
+                String formatString = this.formatString(context, currentInputList, message);
+                this.sendFeedback(context, formatString);
+                return state;
+            }
+        }
+    }
+
+    public int processActions(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) throws InterruptedException {
+        int state = 0;
+        long start = System.nanoTime();
+        for (CustomCommandAction action : actions) {
+            if (action.getCommand() != null && action.getCommandType() != null) {
+                long startFormat = System.nanoTime();
+                String actionCommand = this.formatString(context, currentInputList, action.getCommand());
+                long endFormat = System.nanoTime();
+                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.getLogger().info("======================================================");
+                    CommandAliasesMod.getLogger().info("Original Action Command: {}", action.getCommand());
+                    CommandAliasesMod.getLogger().info("Original Action Command Type: {}", action.getCommandType());
+                    CommandAliasesMod.getLogger().info("Post Processed Action Command: {}", actionCommand);
+                    CommandAliasesMod.getLogger().info("Process time: " + (endFormat - startFormat) + "ns");
+                    CommandAliasesMod.getLogger().info("======================================================");
+                }
+                try {
+                    state = this.dispatcherExecute(action, dispatcher, context, actionCommand);
+                } catch (CommandSyntaxException e) {
+                    if (CommandAliasesMod.options().debugSettings.debugMode) {
+                        CommandAliasesMod.getLogger().error("Failed to process command");
+                        CommandAliasesMod.getLogger().error("Original Action Command: {}", action.getCommand());
+                        CommandAliasesMod.getLogger().error("Original Action Command Type: {}", action.getCommandType());
+                        CommandAliasesMod.getLogger().error("Post Processed Action Command: {}", actionCommand);
+                        String output = e.getLocalizedMessage();
+                        this.sendFeedback(context, output);
+                    }
+                    e.printStackTrace();
+                }
+                if (state != Command.SINGLE_SUCCESS) {
+                    if (action.getUnsuccessfulMessage() != null) {
+                        String message = this.formatString(context, currentInputList, action.getUnsuccessfulMessage());
+                        this.sendFeedback(context, message);
+                    }
+                    if (action.getUnsuccessfulActions() != null && !action.getUnsuccessfulActions().isEmpty()) {
+                        state = this.processActions(action.getUnsuccessfulActions(), dispatcher, context, currentInputList);
+                    }
+                    if (action.isRequireSuccess()) {
+                        break;
+                    }
+                } else {
+                    if (action.getSuccessfulMessage() != null) {
+                        String message = this.formatString(context, currentInputList, action.getSuccessfulMessage());
+                        this.sendFeedback(context, message);
+                    }
+                }
+            }
+            if (action.getMessage() != null) {
+                String message = this.formatString(context, currentInputList, action.getMessage());
+                this.sendFeedback(context, message);
+            }
+            if (action.getSleep() != null) {
+                String formattedTime = this.formatString(context, currentInputList, action.getSleep());
+                int time = Integer.parseInt(formattedTime);
+                Thread.sleep(time);
+            }
+        }
+        long end = System.nanoTime();
+        if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+            CommandAliasesMod.getLogger().info("======================================================");
+            CommandAliasesMod.getLogger().info("Command Actions");
+            CommandAliasesMod.getLogger().info("Process time: " + (end - start) + "ns");
+            CommandAliasesMod.getLogger().info("======================================================");
+        }
+        return state;
+    }
+
+    protected abstract void sendFeedback(CommandContext<S> context, String message);
+
+    protected abstract int dispatcherExecute(CustomCommandAction action, CommandDispatcher<S> dispatcher, CommandContext<S> context, String actionCommand) throws CommandSyntaxException;
 }
