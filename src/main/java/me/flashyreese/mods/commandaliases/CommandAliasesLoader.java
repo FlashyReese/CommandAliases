@@ -87,6 +87,12 @@ public class CommandAliasesLoader {
             this.loadCommandAliases();
             this.registerCommands(dispatcher);
         });
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            if (this.serverDatabase != null) {
+                this.serverDatabase.close();
+                this.serverDatabase = null;
+            }
+        });
     }
 
     public void registerClientSidedCommandAliases() {
