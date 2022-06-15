@@ -16,9 +16,8 @@ import org.slf4j.LoggerFactory;
  */
 public class CommandAliasesMod implements ClientModInitializer, ModInitializer {
     private static Logger LOGGER;
-
-    private final CommandAliasesLoader commandManager = new CommandAliasesLoader();
     private static CommandAliasesConfig CONFIG;
+    private final CommandAliasesLoader commandManager = new CommandAliasesLoader();
 
     public static CommandAliasesConfig options() {
         if (CONFIG == null) {
@@ -27,8 +26,16 @@ public class CommandAliasesMod implements ClientModInitializer, ModInitializer {
 
         return CONFIG;
     }
+
     private static CommandAliasesConfig loadConfig() {
         return CommandAliasesConfig.load(FabricLoader.getInstance().getConfigDir().resolve("command-aliases-config.json").toFile());
+    }
+
+    public static Logger logger() {
+        if (LOGGER == null) {
+            LOGGER = LoggerFactory.getLogger("Command Aliases");
+        }
+        return LOGGER;
     }
 
     @Override
@@ -39,12 +46,5 @@ public class CommandAliasesMod implements ClientModInitializer, ModInitializer {
     @Override
     public void onInitialize() {
         this.commandManager.registerCommandAliases();
-    }
-
-    public static Logger getLogger() {
-        if (LOGGER == null) {
-            LOGGER = LoggerFactory.getLogger("Command Aliases");
-        }
-        return LOGGER;
     }
 }

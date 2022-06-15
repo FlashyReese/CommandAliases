@@ -104,7 +104,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getValue(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
-                CommandAliasesMod.getLogger().warn("Invalid Argument Type: {}", child.getArgumentType());
+                CommandAliasesMod.logger().warn("Invalid Argument Type: {}", child.getArgumentType());
                 //fixme: error handle argument types properly
             }
         }
@@ -222,9 +222,10 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
 
     /**
      * Processes all actions and sub-actions recursively
-     * @param actions List of command actions
-     * @param dispatcher The command dispatcher
-     * @param context The command context
+     *
+     * @param actions          List of command actions
+     * @param dispatcher       The command dispatcher
+     * @param context          The command context
      * @param currentInputList User input list
      * @return Command execution state
      * @throws InterruptedException Will never been thrown unless the thread has been interrupted
@@ -241,10 +242,10 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                     state = this.dispatcherExecute(action, dispatcher, context, actionCommand);
                 } catch (CommandSyntaxException e) {
                     if (CommandAliasesMod.options().debugSettings.debugMode) {
-                        CommandAliasesMod.getLogger().error("Failed to process command");
-                        CommandAliasesMod.getLogger().error("Original Action Command: {}", action.getCommand());
-                        CommandAliasesMod.getLogger().error("Original Action Command Type: {}", action.getCommandType());
-                        CommandAliasesMod.getLogger().error("Post Processed Action Command: {}", actionCommand);
+                        CommandAliasesMod.logger().error("Failed to process command");
+                        CommandAliasesMod.logger().error("Original Action Command: {}", action.getCommand());
+                        CommandAliasesMod.logger().error("Original Action Command Type: {}", action.getCommandType());
+                        CommandAliasesMod.logger().error("Post Processed Action Command: {}", actionCommand);
                         String output = e.getLocalizedMessage();
                         this.sendFeedback(context, output);
                     }
@@ -252,13 +253,13 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 }
                 long endExecution = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
-                    CommandAliasesMod.getLogger().info("======================================================");
-                    CommandAliasesMod.getLogger().info("Original Action Command: {}", action.getCommand());
-                    CommandAliasesMod.getLogger().info("Original Action Command Type: {}", action.getCommandType());
-                    CommandAliasesMod.getLogger().info("Post Processed Action Command: {}", actionCommand);
-                    CommandAliasesMod.getLogger().info("Formatting time: " + (endFormat - startFormat) + "ns");
-                    CommandAliasesMod.getLogger().info("Executing time: " + (endExecution - endFormat) + "ns");
-                    CommandAliasesMod.getLogger().info("======================================================");
+                    CommandAliasesMod.logger().info("======================================================");
+                    CommandAliasesMod.logger().info("Original Action Command: {}", action.getCommand());
+                    CommandAliasesMod.logger().info("Original Action Command Type: {}", action.getCommandType());
+                    CommandAliasesMod.logger().info("Post Processed Action Command: {}", actionCommand);
+                    CommandAliasesMod.logger().info("Formatting time: " + (endFormat - startFormat) + "ns");
+                    CommandAliasesMod.logger().info("Executing time: " + (endExecution - endFormat) + "ns");
+                    CommandAliasesMod.logger().info("======================================================");
                 }
                 if (state != Command.SINGLE_SUCCESS) {
                     if (action.getUnsuccessfulMessage() != null) {
@@ -290,26 +291,26 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         }
         long end = System.nanoTime();
         if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
-            CommandAliasesMod.getLogger().info("======================================================");
-            CommandAliasesMod.getLogger().info("Command Actions");
-            CommandAliasesMod.getLogger().info("Total process time: " + (end - start) + "ns");
-            CommandAliasesMod.getLogger().info("======================================================");
+            CommandAliasesMod.logger().info("======================================================");
+            CommandAliasesMod.logger().info("Command Actions");
+            CommandAliasesMod.logger().info("Total process time: " + (end - start) + "ns");
+            CommandAliasesMod.logger().info("======================================================");
         }
         return state;
     }
 
     /**
      * Provides feedback to the user executing the command
+     *
      * @param context The command context
      * @param message The message
      */
     protected abstract void sendFeedback(CommandContext<S> context, String message);
 
     /**
-     *
-     * @param action The custom command action
-     * @param dispatcher The command dispatcher
-     * @param context The command context
+     * @param action        The custom command action
+     * @param dispatcher    The command dispatcher
+     * @param context       The command context
      * @param actionCommand The action command after being formatted by {@link #formatString(CommandContext, List, String)}
      * @return Command execution state
      * @throws CommandSyntaxException Thrown if action command is invalid

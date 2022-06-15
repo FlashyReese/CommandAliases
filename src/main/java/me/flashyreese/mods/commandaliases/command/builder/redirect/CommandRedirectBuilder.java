@@ -52,7 +52,7 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
      */
     private LiteralArgumentBuilder<S> parseCommand(CommandAlias cmd, CommandDispatcher<S> dispatcher) {
         if (cmd.getRedirectCommand() == null) {
-            CommandAliasesMod.getLogger().error("[{}] {} - Skipping redirection, missing declaration!", this.commandType, cmd.getCommandMode());
+            CommandAliasesMod.logger().error("[{}] {} - Skipping redirection, missing declaration!", this.commandType, cmd.getCommandMode());
             return null;
         }
 
@@ -63,7 +63,7 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
 
         CommandNode<S> redirect = dispatcher.findNode(Lists.newArrayList(redirectTo.split(" ")));
         if (redirect == null) {
-            CommandAliasesMod.getLogger().error("[{}] {} - Could not find existing command \"{}\".", this.commandType, cmd.getCommandMode(), redirectTo);
+            CommandAliasesMod.logger().error("[{}] {} - Could not find existing command \"{}\".", this.commandType, cmd.getCommandMode(), redirectTo);
             return null;
         }
 

@@ -12,7 +12,6 @@ import java.util.List;
  * @author FlashyReese
  * @version 0.7.0
  * @since 0.5.0
- *
  * @deprecated As of 0.7.0, because format is no longer viable to maintain use {@link me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand} instead.
  */
 @Deprecated

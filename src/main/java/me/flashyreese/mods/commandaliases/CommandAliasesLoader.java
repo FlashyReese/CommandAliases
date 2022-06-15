@@ -130,10 +130,11 @@ public class CommandAliasesLoader {
     private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         this.serverCommands.forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_ALIAS) {
+                CommandAliasesMod.logger().warn("The command mode \"COMMAND_ALIAS\" is now deprecated and scheduled to remove on version 1.0.0");
+                CommandAliasesMod.logger().warn("Please migrate to command mode \"COMMAND_CUSTOM\", it is more feature packed and receives more support. :)");
                 LiteralArgumentBuilder<ServerCommandSource> command = new AliasCommandBuilder(cmd.getAliasCommand(), registryAccess).buildCommand(dispatcher);
                 if (command != null) {
-                    //Assign permission for alias Fixme: better implementation
-                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), 0));
+                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), true));
                     dispatcher.register(command);
                     this.loadedServerCommands.add(cmd.getAliasCommand().getCommand());
                 }
@@ -152,7 +153,7 @@ public class CommandAliasesLoader {
                 }
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
-                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), 0));
+                    command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), true));
                     dispatcher.register(command);
                     if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                         this.loadedServerCommands.add(cmd.getRedirectCommand().getCommand());
@@ -162,7 +163,7 @@ public class CommandAliasesLoader {
                 }
             }
         });
-        CommandAliasesMod.getLogger().info("Registered/Reloaded all your commands :P, you can now single command nuke!");
+        CommandAliasesMod.logger().info("Registered/Reloaded all your commands :P, you can now single command nuke!");
     }
 
     /**
@@ -193,7 +194,7 @@ public class CommandAliasesLoader {
                 }
             }
         });
-        CommandAliasesMod.getLogger().info("Registered/Reloaded all your client commands :P, you can now single command nuke!");
+        CommandAliasesMod.logger().info("Registered/Reloaded all your client commands :P, you can now single command nuke!");
     }
 
     /**

@@ -9,11 +9,11 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
-import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
 import me.flashyreese.mods.commandaliases.classtool.exec.MinecraftClassTool;
-import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.alias.format.AliasCommand;
+import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
+import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -35,7 +35,6 @@ import java.util.regex.Pattern;
  * @author FlashyReese
  * @version 0.7.0
  * @since 0.1.3
- *
  * @deprecated As of 0.7.0, because format is no longer viable to maintain use {@link me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder} instead.
  */
 @Deprecated
@@ -120,7 +119,7 @@ public class AliasCommandBuilder {
                     }
 
                     if (value == null) {
-                        CommandAliasesMod.getLogger().error("Return value for \"{}\" was null, skipped!", key);
+                        CommandAliasesMod.logger().error("Return value for \"{}\" was null, skipped!", key);
                         if (required) {
                             break;
                         } else {
@@ -132,17 +131,17 @@ public class AliasCommandBuilder {
                         if (this.formattingTypeMap.getFormatTypeMap().containsKey(holder.getFormattingType())) {
                             inputMap.put(key, this.formattingTypeMap.getFormatTypeMap().get(holder.getFormattingType()).apply(value));
                         } else {
-                            CommandAliasesMod.getLogger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
+                            CommandAliasesMod.logger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
                             inputMap.put(key, value);
                         }
                     } else {
                         inputMap.put(key, value);
                     }
                 } else {
-                    CommandAliasesMod.getLogger().error("No method found for \"{}\"", holder.getHolder());
+                    CommandAliasesMod.logger().error("No method found for \"{}\"", holder.getHolder());
                 }
             } else {
-                CommandAliasesMod.getLogger().error("No class tool found for \"{}\"", holder.getHolder());
+                CommandAliasesMod.logger().error("No class tool found for \"{}\"", holder.getHolder());
             }
         }
         return inputMap;
@@ -192,12 +191,12 @@ public class AliasCommandBuilder {
 
                     }
                 } else {
-                    CommandAliasesMod.getLogger().warn("No method found for \"{}\"", holder.getHolder());
+                    CommandAliasesMod.logger().warn("No method found for \"{}\"", holder.getHolder());
                 }
             }
 
             if (value == null) {
-                CommandAliasesMod.getLogger().warn("Unable to find a value for \"{}\", skipping", holder.getHolder());
+                CommandAliasesMod.logger().warn("Unable to find a value for \"{}\", skipping", holder.getHolder());
                 continue;
             }
 
@@ -205,7 +204,7 @@ public class AliasCommandBuilder {
                 if (this.formattingTypeMap.getFormatTypeMap().containsKey(holder.getFormattingType())) {
                     newInputMap.put(holder.getHolder(), this.formattingTypeMap.getFormatTypeMap().get(holder.getFormattingType()).apply(value));
                 } else {
-                    CommandAliasesMod.getLogger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
+                    CommandAliasesMod.logger().warn("No formatting type found for \"{}\", skipping formatting", holder.getHolder());
                     newInputMap.put(holder.getHolder(), value);
                 }
             } else {
@@ -404,7 +403,7 @@ public class AliasCommandBuilder {
                     }
                 }
             } else {
-                CommandAliasesMod.getLogger().error("No class tool found for \"{}\"", holder.getHolder());
+                CommandAliasesMod.logger().error("No class tool found for \"{}\"", holder.getHolder());
             }
         }
         return requiredArguments;

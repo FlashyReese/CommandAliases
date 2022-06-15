@@ -52,7 +52,7 @@ public class FunctionProcessor {
                 return new String(value, StandardCharsets.UTF_8);
             } else {
                 if (CommandAliasesMod.options().debugSettings.debugMode) {
-                    CommandAliasesMod.getLogger().error("Invalid database key: {}", input);
+                    CommandAliasesMod.logger().error("Invalid database key: {}", input);
                 }
             }
             return null;
@@ -217,7 +217,7 @@ public class FunctionProcessor {
                     modified = modified.replace(originalMatch, value);
                 }
             } else {
-                CommandAliasesMod.getLogger().error("Invalid function of `{}` in `{}`", fn, original);
+                CommandAliasesMod.logger().error("Invalid function of `{}` in `{}`", fn, original);
                 break;
             }
             matcher = this.singleArgumentFunction.matcher(modified);

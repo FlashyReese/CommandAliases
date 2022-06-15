@@ -5,8 +5,6 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
-import java.io.IOException;
-
 /**
  * Represents the RocksDB Implementation
  *
@@ -20,8 +18,8 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
         RocksDB.loadLibrary();
     }
 
-    private RocksDB database;
     private final String path;
+    private RocksDB database;
 
     public RocksDBImpl(String path) {
         this.path = path;

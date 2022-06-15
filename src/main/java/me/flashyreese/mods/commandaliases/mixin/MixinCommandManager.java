@@ -19,7 +19,7 @@ public class MixinCommandManager implements CommandManagerExtended {
     private CommandRegistryAccess commandRegistryAccess;
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void clint(CommandManager.RegistrationEnvironment environment, CommandRegistryAccess commandRegistryAccess, CallbackInfo ci){
+    private void clint(CommandManager.RegistrationEnvironment environment, CommandRegistryAccess commandRegistryAccess, CallbackInfo ci) {
         this.environment = environment;
         this.commandRegistryAccess = commandRegistryAccess;
     }

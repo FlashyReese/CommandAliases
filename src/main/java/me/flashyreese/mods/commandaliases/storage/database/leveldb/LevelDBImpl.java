@@ -17,9 +17,8 @@ import java.io.IOException;
  */
 public class LevelDBImpl implements AbstractDatabase<byte[], byte[]> {
 
-    private DB database;
-
     private final String path;
+    private DB database;
 
     public LevelDBImpl(String path) {
         this.path = path;

@@ -26,11 +26,11 @@ import java.util.Map;
  */
 public abstract class AbstractReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
     protected final CommandAlias command;
-    private final Field literalCommandNodeLiteralField;
     protected final Map<String, String> reassignCommandMap;
-    private final CommandType commandType;
     protected final CommandRegistryAccess registryAccess;
     protected final AbstractDatabase<byte[], byte[]> database;
+    private final Field literalCommandNodeLiteralField;
+    private final CommandType commandType;
 
     public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
         this.command = command;
@@ -49,26 +49,28 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
      */
     public LiteralArgumentBuilder<S> buildCommand(CommandDispatcher<S> dispatcher) {
         if (this.command.getReassignCommand() == null) {
-            CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing declaration!", this.commandType, this.command.getCommandMode());
+            CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing declaration!", this.commandType, this.command.getCommandMode());
             return null;
         }
 
         if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS) {
+            CommandAliasesMod.logger().warn("The command mode \"COMMAND_REASSIGN_AND_ALIAS\" is now deprecated and scheduled to remove on version 1.0.0");
+            CommandAliasesMod.logger().warn("Please migrate to command mode \"COMMAND_REASSIGN_AND_CUSTOM\", it is more feature packed and receives more support. :)");
             if (this.command.getAliasCommand() == null) {
-                CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing alias command declaration!", this.commandType, this.command.getCommandMode());
+                CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing alias command declaration!", this.commandType, this.command.getCommandMode());
                 return null;
             }
             if (!this.command.getAliasCommand().getCommand().startsWith(this.command.getReassignCommand().getCommand())) {
-                CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, alias command name and reassign command mismatch!", this.commandType, this.command.getCommandMode());
+                CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, alias command name and reassign command mismatch!", this.commandType, this.command.getCommandMode());
                 return null;
             }
         } else if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
             if (this.command.getCustomCommand() == null) {
-                CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing custom command declaration!", this.commandType, this.command.getCommandMode());
+                CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing custom command declaration!", this.commandType, this.command.getCommandMode());
                 return null;
             }
             if (!this.command.getCustomCommand().getParent().equals(this.command.getReassignCommand().getCommand())) {
-                CommandAliasesMod.getLogger().error("[{}] {} - SSkipping reassignment, custom command parent and reassign command mismatch!", this.commandType, this.command.getCommandMode());
+                CommandAliasesMod.logger().error("[{}] {} - SSkipping reassignment, custom command parent and reassign command mismatch!", this.commandType, this.command.getCommandMode());
                 return null;
             }
         }
@@ -87,7 +89,7 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
      */
     protected boolean reassignCommand(CommandAlias cmd, CommandDispatcher<S> dispatcher) {
         if (cmd.getReassignCommand() == null) {
-            CommandAliasesMod.getLogger().error("[{}] {} - Skipping reassignment, missing declaration!", this.commandType, cmd.getCommandMode());
+            CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing declaration!", this.commandType, cmd.getCommandMode());
             return false;
         }
 
@@ -95,12 +97,12 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
         String reassignTo = cmd.getReassignCommand().getReassignTo().trim();
 
         if (command.contains(" ")) {
-            CommandAliasesMod.getLogger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), command);
+            CommandAliasesMod.logger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), command);
             return false;
         }
 
         if (reassignTo.contains(" ")) {
-            CommandAliasesMod.getLogger().error("[{}] {} - \"reassignTo\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), reassignTo);
+            CommandAliasesMod.logger().error("[{}] {} - \"reassignTo\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), reassignTo);
             return false;
         }
 
@@ -117,13 +119,13 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
                 this.literalCommandNodeLiteralField.set(commandNode, reassignTo);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                CommandAliasesMod.getLogger().error("[{}] {} - Failed to modify command literal \"{}\", skipping.", this.commandType, cmd.getCommandMode(), command);
+                CommandAliasesMod.logger().error("[{}] {} - Failed to modify command literal \"{}\", skipping.", this.commandType, cmd.getCommandMode(), command);
                 return false;
             }
 
             dispatcher.getRoot().addChild(commandNode);
 
-            CommandAliasesMod.getLogger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\"", this.commandType, cmd.getCommandMode(), command, reassignTo);
+            CommandAliasesMod.logger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\"", this.commandType, cmd.getCommandMode(), command, reassignTo);
             return true;
         }
         return false;

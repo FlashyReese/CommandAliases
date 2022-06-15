@@ -48,7 +48,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
     protected void sendFeedback(CommandContext<ServerCommandSource> context, String message) {
         context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
     }
-    
+
     @Override
     protected LiteralArgumentBuilder<ServerCommandSource> buildCommandParent(CommandDispatcher<ServerCommandSource> dispatcher) {
         LiteralArgumentBuilder<ServerCommandSource> argumentBuilder = this.literal(this.commandAliasParent.getParent());
@@ -94,7 +94,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                 argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getValue(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
-                CommandAliasesMod.getLogger().error("Invalid Argument Type: {}", child.getArgumentType());
+                CommandAliasesMod.logger().error("Invalid Argument Type: {}", child.getArgumentType());
             }
         }
         if (argumentBuilder != null) {
