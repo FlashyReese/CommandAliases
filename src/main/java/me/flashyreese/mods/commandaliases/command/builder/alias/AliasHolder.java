@@ -1,12 +1,3 @@
-/*
- * Copyright © 2020-2021 FlashyReese
- *
- * This file is part of CommandAliases.
- *
- * Licensed under the MIT license. For more information,
- * see the LICENSE file.
- */
-
 package me.flashyreese.mods.commandaliases.command.builder.alias;
 
 
@@ -18,18 +9,18 @@ import java.util.regex.Matcher;
  * Represents the Alias Holder for Alias Builder
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.7.0
  * @since 0.5.0
+ * @deprecated As of 0.7.0, because format is no longer viable to maintain use {@link me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder} instead.
  */
+@Deprecated
 public class AliasHolder {
     private final String holder;
-
+    private final boolean required;
     private String classTool;
     private String method;
     private String variableName;
     private String formattingType;
-
-    private final boolean required;
 
     public AliasHolder(String holder, boolean required) {
         this.holder = holder;
@@ -47,7 +38,7 @@ public class AliasHolder {
 
             this.updateVariables(classTool, method, variableName, formattingType);
         } else {
-            CommandAliasesMod.getLogger().error("Invalid Command Aliases Holder: {}", this.holder);
+            CommandAliasesMod.logger().error("Invalid Command Aliases Holder: {}", this.holder);
         }
     }
 
