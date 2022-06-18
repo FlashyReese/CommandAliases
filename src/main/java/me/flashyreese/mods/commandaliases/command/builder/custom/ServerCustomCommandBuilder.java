@@ -112,6 +112,9 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                     return this.executeActions(child.getActions(), child.getMessage(), dispatcher, context, inputs);
                 });
             }
+            if (child.getSuggestionProvider() != null) {
+                argumentBuilder = this.buildSuggestion(new ObjectArrayList<>(inputs), child, argumentBuilder);
+            }
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
                 for (CustomCommandChild subChild : child.getChildren()) {
