@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * @since 0.7.0
  */
 public class FunctionProcessor {
-    private final Pattern singleArgumentFunction = Pattern.compile("\\$(?<fn>\\w+?)\\((?<arg>[+-]?(\\d+([.]\\d*)?|[.]\\d+)?|\\w+.*?)\\)");
+    private final Pattern singleArgumentFunction = Pattern.compile("\\$(?<fn>\\w+?)\\((?<arg>[+-]?(\\d+([.]\\d*)?|[.]\\d+)?|[\\w._]+?)\\)");
 
     private final Map<String, BiFunction<CommandSource, String, String>> functionMap = new HashMap<>();
 
