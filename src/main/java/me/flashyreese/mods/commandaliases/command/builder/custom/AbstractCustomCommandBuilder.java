@@ -11,17 +11,13 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandSuggestionMode;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.*;
 import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
-import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
 import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
+import me.flashyreese.mods.commandaliases.command.impl.InputMapper;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
@@ -29,9 +25,7 @@ import net.minecraft.command.CommandSource;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 /**
  * Represents an Abstract Custom Command Builder
@@ -46,9 +40,8 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     protected final CustomCommand commandAliasParent;
 
     protected final ArgumentTypeMapper argumentTypeMapper;
-    protected final FormattingTypeProcessor formattingTypeMap = new FormattingTypeProcessor();
-
     protected final FunctionProcessor functionProcessor;
+    protected final InputMapper<S> inputMapper;
 
     protected final AbstractDatabase<byte[], byte[]> database;
 
@@ -57,6 +50,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         this.commandAliasParent = commandAliasParent;
         this.functionProcessor = new FunctionProcessor(database);
         this.database = database;
+        this.inputMapper = new InputMapper<>();
     }
 
     /**
@@ -131,7 +125,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 });
             }
             if (child.getSuggestionProvider() != null) {
-                argumentBuilder = this.buildSuggestion(new ObjectArrayList<>(inputs), child, argumentBuilder);
+                argumentBuilder = this.buildCommandChildSuggestion(argumentBuilder, child, new ObjectArrayList<>(inputs));
             }
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
@@ -155,65 +149,72 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @return The argument builder with suggestion provider if specified
      */
     @SuppressWarnings("unchecked")
-    public ArgumentBuilder<S, ?> buildSuggestion(List<String> inputs, CustomCommandChild child, ArgumentBuilder<S, ?> argumentBuilder) {
-        SuggestionProvider<S> SUGGESTION_PROVIDER = null;
-        if (child.getSuggestionProvider().getSuggestionMode() != null) {
-            if (child.getSuggestionProvider().getSuggestion() != null && !child.getSuggestionProvider().getSuggestion().isEmpty()) {
-                if (Arrays.stream(CustomCommandSuggestionMode.values()).filter(value -> child.getSuggestionProvider().getSuggestionMode() == value).count() == 1) {
-                    if (child.getSuggestionProvider().getSuggestionMode() == CustomCommandSuggestionMode.JSON_LIST) {
-                        SUGGESTION_PROVIDER = (context, builder) -> {
-                            long start = System.nanoTime();
-                            String formattedSuggestion = this.formatString(context, inputs, child.getSuggestionProvider().getSuggestion());
-                            List<String> suggestions = new Gson().fromJson(formattedSuggestion, new TypeToken<List<String>>() {
-                            }.getType());
-                            long end = System.nanoTime();
-                            if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
-                                CommandAliasesMod.logger().info("======================================================");
-                                CommandAliasesMod.logger().info("Suggestion Provider: {}", formattedSuggestion);
-                                CommandAliasesMod.logger().info("Processing time: " + (end - start) + "ns");
-                                CommandAliasesMod.logger().info("======================================================");
-                            }
-                            return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
-                        };
-                    } else {
-                        SUGGESTION_PROVIDER = (context, builder) -> {
-                            List<String> suggestions = new ObjectArrayList<>();
-                            long start = System.nanoTime();
-                            String formattedSuggestion = this.formatString(context, inputs, child.getSuggestionProvider().getSuggestion());
-                            this.database.list().forEach((key, value) -> {
-                                String keyString = new String(key, StandardCharsets.UTF_8);
-                                if (!(child.getSuggestionProvider().getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && keyString.startsWith(formattedSuggestion)) &&
-                                        !(child.getSuggestionProvider().getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && keyString.endsWith(formattedSuggestion)) &&
-                                        !(child.getSuggestionProvider().getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && keyString.contains(formattedSuggestion)))
-                                    return;
+    public ArgumentBuilder<S, ?> buildCommandChildSuggestion(ArgumentBuilder<S, ?> argumentBuilder, CustomCommandChild child, List<String> inputs) {
+        if (!(argumentBuilder instanceof RequiredArgumentBuilder))
+            return argumentBuilder;
 
-                                String valueString = new String(value, StandardCharsets.UTF_8);
-                                suggestions.add(valueString);
-                            });
-                            long end = System.nanoTime();
-                            if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
-                                CommandAliasesMod.logger().info("======================================================");
-                                CommandAliasesMod.logger().info("Suggestion Provider: {}", formattedSuggestion);
-                                CommandAliasesMod.logger().info("Processing time: " + (end - start) + "ns");
-                                CommandAliasesMod.logger().info("======================================================");
-                            }
-                            return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
-                        };
-                    }
-                } else {
-                    CommandAliasesMod.logger().error("Invalid suggestion mode in \"{}\"", child.getChild());
+        SuggestionProvider<S> SUGGESTION_PROVIDER;
+
+        CustomCommandSuggestionProvider suggestionProvider = child.getSuggestionProvider();
+
+        if (suggestionProvider.getSuggestionMode() == null) {
+            CommandAliasesMod.logger().info("Missing suggestion mode in \"{}\"", child.getChild());
+            return argumentBuilder;
+        }
+
+        if (suggestionProvider.getSuggestion() == null || suggestionProvider.getSuggestion().isEmpty()) {
+            CommandAliasesMod.logger().info("Missing suggestion in \"{}\"", child.getChild());
+            return argumentBuilder;
+        }
+
+        if (Arrays.stream(CustomCommandSuggestionMode.values()).filter(value -> suggestionProvider.getSuggestionMode() == value).count() != 1) {
+            CommandAliasesMod.logger().info("Invalid suggestion mode \"{}\"", suggestionProvider.getSuggestionMode());
+            return argumentBuilder;
+        }
+
+        if (suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.JSON_LIST) {
+            SUGGESTION_PROVIDER = (context, builder) -> {
+                long start = System.nanoTime();
+                String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
+                List<String> suggestions = new Gson().fromJson(formattedSuggestion, new TypeToken<List<String>>() {
+                }.getType());
+                long end = System.nanoTime();
+                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.logger().info("======================================================");
+                    CommandAliasesMod.logger().info("Suggestion Provider: {}", formattedSuggestion);
+                    CommandAliasesMod.logger().info("Processing time: " + (end - start) + "ns");
+                    CommandAliasesMod.logger().info("======================================================");
                 }
-            } else {
-                CommandAliasesMod.logger().error("Missing suggestion provider in \"{}\"", child.getChild());
-            }
+                return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
+            };
         } else {
-            CommandAliasesMod.logger().error("Missing suggestion mode in \"{}\"", child.getChild());
+            SUGGESTION_PROVIDER = (context, builder) -> {
+                List<String> suggestions = new ObjectArrayList<>();
+                long start = System.nanoTime();
+                String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
+                this.database.list().forEach((key, value) -> {
+                    String keyString = new String(key, StandardCharsets.UTF_8);
+                    if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && keyString.startsWith(formattedSuggestion)) &&
+                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && keyString.endsWith(formattedSuggestion)) &&
+                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && keyString.contains(formattedSuggestion)))
+                        return;
+
+                    String valueString = new String(value, StandardCharsets.UTF_8);
+                    suggestions.add(valueString);
+                });
+                long end = System.nanoTime();
+                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.logger().info("======================================================");
+                    CommandAliasesMod.logger().info("Suggestion Provider: {}", formattedSuggestion);
+                    CommandAliasesMod.logger().info("Processing time: " + (end - start) + "ns");
+                    CommandAliasesMod.logger().info("======================================================");
+                }
+                return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
+            };
         }
 
-        if (SUGGESTION_PROVIDER != null && argumentBuilder instanceof RequiredArgumentBuilder requiredArgumentBuilder) {
-            return requiredArgumentBuilder.suggests(SUGGESTION_PROVIDER);
-        }
-        return argumentBuilder;
+        RequiredArgumentBuilder<S, ?> requiredArgumentBuilder = (RequiredArgumentBuilder<S, ?>) argumentBuilder;
+        return requiredArgumentBuilder.suggests(SUGGESTION_PROVIDER);
     }
 
     /**
@@ -225,47 +226,8 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @return Formatted string
      */
     protected String formatString(CommandContext<S> context, List<String> currentInputList, String string) {
-        /* Maps child to command inputs
-
-         "child": "name",
-         "type": "argument",
-         "argumentType": "minecraft:word",
-
-         Command Syntax: /test <name>
-         Executed Command: /test helloWorld
-         Mapped Entry -> "name":"helloWorld"
-         */
-        Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
-        currentInputList.forEach(input -> {
-            String getInputString = this.argumentTypeMapper.getInputString(context, input);
-            if (getInputString != null) {
-                resolvedInputMap.put(input, getInputString);
-            }
-        });
-
-        /* Maps resolved inputs to placeholders
-
-            {
-              "message": "{{name}} tested!"
-            }
-            
-            Remaps string
-            {
-              "message": "helloWorld tested!"
-            }
-         */
-        //Todo: track replaced substring indexes to prevent replacing previously replaced
-        for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
-            string = string.replace(String.format("{{%s}}", entry.getKey()), entry.getValue());
-
-            for (Map.Entry<String, Function<String, String>> entry2 : this.formattingTypeMap.getFormatTypeMap().entrySet()) {
-                String tempString = String.format("{{%s@%s}}", entry.getKey(), entry2.getKey());
-                if (string.contains(tempString)) {
-                    String newString = entry2.getValue().apply(entry.getValue());
-                    string = string.replace(tempString, newString);
-                }
-            }
-        }
+        // Input mapping and formatting
+        string = this.inputMapper.formatAndMapInputs(string, context, currentInputList, this.argumentTypeMapper);
 
         // Function processor
         string = this.functionProcessor.processFunctions(string, context.getSource());
