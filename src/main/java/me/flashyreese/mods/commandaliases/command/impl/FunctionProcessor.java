@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  * Applies function to argument passed toward the function
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.7.0
  */
 public class FunctionProcessor {
@@ -210,11 +210,9 @@ public class FunctionProcessor {
             String fn = matcher.group("fn");
             String arg = matcher.group("arg");
             if (this.functionMap.containsKey(fn)) {
-                boolean argNull = arg == null;
-                String originalMatch = "$" + fn + "(" + (argNull ? "" : arg) + ")"; //fixme: looks terrible
                 String value = this.functionMap.get(fn).apply(commandSource, arg);
                 if (value != null) {
-                    modified = modified.replace(originalMatch, value);
+                    modified = modified.replace(matcher.group(), value);
                 }
             } else {
                 CommandAliasesMod.logger().error("Invalid function of `{}` in `{}`", fn, original);
