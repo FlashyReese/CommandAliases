@@ -329,7 +329,7 @@ public class AliasCommandBuilder {
                     commandBuilder = CommandManager.literal(literal).executes(context -> this.executeCommandAliases(command, dispatcher, context));
                 }
             }
-        } else if (newCommand.contains(" ") && allHolders.size() != 0) { //If holders are found and contains spaces, parse json literals plus arguments at the end. Fixme: make sure arguments are located in the end or bad time
+        } else if (newCommand.contains(" ") && allHolders.size() != 0) {
             ArgumentBuilder<ServerCommandSource, ?> arguments = this.parseArguments(command, dispatcher);
             List<String> literals = Arrays.asList(newCommand.split(" "));
             Collections.reverse(literals);
@@ -371,7 +371,7 @@ public class AliasCommandBuilder {
         for (AliasHolder holder : commandOptionalHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
-                if (tool instanceof ArgumentTypeMapper) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
+                if (tool instanceof ArgumentTypeMapper) {
                     if (tool.contains(holder.getMethod())) {
                         if (optionalArguments != null) { //If first argument start building
                             optionalArguments = optionalArguments.then(CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).executes(context -> this.executeCommandAliases(commandAlias, dispatcher, context)));
@@ -389,7 +389,7 @@ public class AliasCommandBuilder {
         for (AliasHolder holder : commandRequiredHolders) {
             if (this.classToolMap.containsKey(holder.getClassTool())) {
                 ClassTool<?> tool = this.classToolMap.get(holder.getClassTool());
-                if (tool instanceof ArgumentTypeMapper) { //Fixme: Casting dangerous, ClassTools Types should solve this, brain stop working still no idea why I wrote this
+                if (tool instanceof ArgumentTypeMapper) {
                     if (tool.contains(holder.getMethod())) {
                         if (requiredArguments != null) {
                             requiredArguments = CommandManager.argument(holder.getVariableName(), ((ArgumentTypeMapper) tool).getValue(holder.getMethod())).then(requiredArguments);
