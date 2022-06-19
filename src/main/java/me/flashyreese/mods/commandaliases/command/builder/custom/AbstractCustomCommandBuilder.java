@@ -1,11 +1,16 @@
 package me.flashyreese.mods.commandaliases.command.builder.custom;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
@@ -13,12 +18,15 @@ import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandSuggestionMode;
 import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
 import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
 import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandSource;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,10 +49,13 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
 
     protected final FunctionProcessor functionProcessor;
 
+    protected final AbstractDatabase<byte[], byte[]> database;
+
     public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, AbstractDatabase<byte[], byte[]> database) {
         this.argumentTypeMapper = new ArgumentTypeMapper();
         this.commandAliasParent = commandAliasParent;
         this.functionProcessor = new FunctionProcessor(database);
+        this.database = database;
     }
 
     /**
@@ -118,6 +129,9 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                     return this.executeActions(child.getActions(), child.getMessage(), dispatcher, context, inputs);
                 });
             }
+            if (child.getSuggestionProvider() != null) {
+                argumentBuilder = this.buildSuggestion(new ObjectArrayList<>(inputs), child, argumentBuilder);
+            }
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
                 for (CustomCommandChild subChild : child.getChildren()) {
@@ -127,6 +141,76 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                     }
                 }
             }
+        }
+        return argumentBuilder;
+    }
+
+    /**
+     * Builds suggestion provider for child components using argument types and has a specified suggestion provider.
+     *
+     * @param inputs User input list
+     * @param child The child component
+     * @param argumentBuilder The argument builder
+     * @return The argument builder with suggestion provider if specified
+     */
+    @SuppressWarnings("unchecked")
+    public ArgumentBuilder<S, ?> buildSuggestion(List<String> inputs, CustomCommandChild child, ArgumentBuilder<S, ?> argumentBuilder) {
+        SuggestionProvider<S> SUGGESTION_PROVIDER = null;
+        if (child.getSuggestionProvider().getSuggestionMode() != null) {
+            if (child.getSuggestionProvider().getSuggestion() != null && !child.getSuggestionProvider().getSuggestion().isEmpty()) {
+                if (Arrays.stream(CustomCommandSuggestionMode.values()).filter(value -> child.getSuggestionProvider().getSuggestionMode() == value).count() == 1) {
+                    if (child.getSuggestionProvider().getSuggestionMode() == CustomCommandSuggestionMode.JSON_LIST) {
+                        SUGGESTION_PROVIDER = (context, builder) -> {
+                            long start = System.nanoTime();
+                            String formattedSuggestion = this.formatString(context, inputs, child.getSuggestionProvider().getSuggestion());
+                            List<String> suggestions = new Gson().fromJson(formattedSuggestion, new TypeToken<List<String>>() {
+                            }.getType());
+                            long end = System.nanoTime();
+                            if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                                CommandAliasesMod.logger().info("======================================================");
+                                CommandAliasesMod.logger().info("Suggestion Provider: {}", formattedSuggestion);
+                                CommandAliasesMod.logger().info("Processing time: " + (end - start) + "ns");
+                                CommandAliasesMod.logger().info("======================================================");
+                            }
+                            return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
+                        };
+                    } else {
+                        SUGGESTION_PROVIDER = (context, builder) -> {
+                            List<String> suggestions = new ObjectArrayList<>();
+                            long start = System.nanoTime();
+                            String formattedSuggestion = this.formatString(context, inputs, child.getSuggestionProvider().getSuggestion());
+                            this.database.list().forEach((key, value) -> {
+                                String keyString = new String(key, StandardCharsets.UTF_8);
+                                if (!(child.getSuggestionProvider().getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && keyString.startsWith(formattedSuggestion)) &&
+                                        !(child.getSuggestionProvider().getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && keyString.endsWith(formattedSuggestion)) &&
+                                        !(child.getSuggestionProvider().getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && keyString.contains(formattedSuggestion)))
+                                    return;
+
+                                String valueString = new String(value, StandardCharsets.UTF_8);
+                                suggestions.add(valueString);
+                            });
+                            long end = System.nanoTime();
+                            if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                                CommandAliasesMod.logger().info("======================================================");
+                                CommandAliasesMod.logger().info("Suggestion Provider: {}", formattedSuggestion);
+                                CommandAliasesMod.logger().info("Processing time: " + (end - start) + "ns");
+                                CommandAliasesMod.logger().info("======================================================");
+                            }
+                            return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
+                        };
+                    }
+                } else {
+                    CommandAliasesMod.logger().error("Invalid suggestion mode in \"{}\"", child.getChild());
+                }
+            } else {
+                CommandAliasesMod.logger().error("Missing suggestion provider in \"{}\"", child.getChild());
+            }
+        } else {
+            CommandAliasesMod.logger().error("Missing suggestion mode in \"{}\"", child.getChild());
+        }
+
+        if (SUGGESTION_PROVIDER != null && argumentBuilder instanceof RequiredArgumentBuilder requiredArgumentBuilder) {
+            return requiredArgumentBuilder.suggests(SUGGESTION_PROVIDER);
         }
         return argumentBuilder;
     }
@@ -151,7 +235,12 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
          Mapped Entry -> "name":"helloWorld"
          */
         Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
-        currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeMapper.getInputString(context, input)));
+        currentInputList.forEach(input -> {
+            String getInputString = this.argumentTypeMapper.getInputString(context, input);
+            if (getInputString != null) {
+                resolvedInputMap.put(input, getInputString);
+            }
+        });
 
         /* Maps resolved inputs to placeholders
 
