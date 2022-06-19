@@ -13,6 +13,7 @@ public class CustomCommandChild {
     private String child;
     private String type;
     private String argumentType;
+    private CustomCommandSuggestionProvider suggestionProvider;
     private int permission;
     private List<CustomCommandAction> actions;
     private List<CustomCommandChild> children;
@@ -28,6 +29,10 @@ public class CustomCommandChild {
 
     public String getArgumentType() {
         return argumentType;
+    }
+
+    public CustomCommandSuggestionProvider getSuggestionProvider() {
+        return suggestionProvider;
     }
 
     public int getPermission() {
