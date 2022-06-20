@@ -62,7 +62,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         if (this.commandAliasParent.isOptional()) {
             argumentBuilder = argumentBuilder.executes(context -> {
                 //Execution action here
-                return this.executeActions(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new ObjectArrayList<>());
+                return this.executeCommand(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new ObjectArrayList<>());
             });
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
@@ -109,7 +109,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             if (child.isOptional()) {
                 argumentBuilder = argumentBuilder.executes(context -> {
                     //Execution action here
-                    return this.executeActions(child.getActions(), child.getMessage(), dispatcher, context, inputs);
+                    return this.executeCommand(child.getActions(), child.getMessage(), dispatcher, context, inputs);
                 });
             }
             if (child.getSuggestionProvider() != null) {
