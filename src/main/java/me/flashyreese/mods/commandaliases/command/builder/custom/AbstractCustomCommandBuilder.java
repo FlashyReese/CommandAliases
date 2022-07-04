@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {

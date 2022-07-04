@@ -13,7 +13,7 @@ import java.util.Map;
  * Represents the RocksDB Implementation
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.7.0
  */
 public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
