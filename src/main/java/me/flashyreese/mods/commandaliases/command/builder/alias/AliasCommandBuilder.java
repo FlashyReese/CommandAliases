@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.1.3
  * @deprecated As of 0.7.0, because format is no longer viable to maintain use {@link me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder} instead.
  */

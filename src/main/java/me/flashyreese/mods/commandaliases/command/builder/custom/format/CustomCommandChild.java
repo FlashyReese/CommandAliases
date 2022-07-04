@@ -6,7 +6,7 @@ import java.util.List;
  * Represents a custom command child component
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.8.0
  * @since 0.4.0
  */
 public class CustomCommandChild {
