@@ -1,10 +1,12 @@
 package me.flashyreese.mods.commandaliases.storage.database;
 
+import java.util.Map;
+
 /**
  * Represents the Abstract Database
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.7.0
  */
 public interface AbstractDatabase<K, V> {
@@ -17,4 +19,6 @@ public interface AbstractDatabase<K, V> {
     V read(K key);
 
     void delete(K key);
+
+    Map<K, V> list();
 }

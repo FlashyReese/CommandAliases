@@ -21,7 +21,7 @@ import java.util.Map;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.3.0
  */
 public abstract class AbstractReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
@@ -113,11 +113,11 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
                 node.getName().equals(reassignTo)).findFirst().orElse(null);
 
         if (commandNode != null && commandReassignNode == null) {
-            dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(command));
-            // Fixme: Fallback if failed below
+            dispatcher.getRoot().getChildren().remove(commandNode);
             try {
                 this.literalCommandNodeLiteralField.set(commandNode, reassignTo);
             } catch (IllegalAccessException e) {
+                dispatcher.getRoot().addChild(commandNode);
                 e.printStackTrace();
                 CommandAliasesMod.logger().error("[{}] {} - Failed to modify command literal \"{}\", skipping.", this.commandType, cmd.getCommandMode(), command);
                 return false;
