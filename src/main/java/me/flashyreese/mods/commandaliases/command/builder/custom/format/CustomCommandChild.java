@@ -6,13 +6,14 @@ import java.util.List;
  * Represents a custom command child component
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 0.8.0
  * @since 0.4.0
  */
 public class CustomCommandChild {
     private String child;
     private String type;
     private String argumentType;
+    private CustomCommandSuggestionProvider suggestionProvider;
     private int permission;
     private List<CustomCommandAction> actions;
     private List<CustomCommandChild> children;
@@ -28,6 +29,10 @@ public class CustomCommandChild {
 
     public String getArgumentType() {
         return argumentType;
+    }
+
+    public CustomCommandSuggestionProvider getSuggestionProvider() {
+        return suggestionProvider;
     }
 
     public int getPermission() {
