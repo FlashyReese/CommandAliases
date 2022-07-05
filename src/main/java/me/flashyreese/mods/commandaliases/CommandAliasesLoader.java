@@ -1,5 +1,10 @@
 package me.flashyreese.mods.commandaliases;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.dataformat.toml.TomlMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.mojang.brigadier.Command;
@@ -37,24 +42,36 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.WorldSavePath;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
  * Represents the custom command aliases loader.
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.9.0
  * @since 0.0.9
  */
 public class CommandAliasesLoader {
 
     private final Gson gson = new Gson();
+    private final JsonMapper jsonMapper = new JsonMapper(JsonFactory.builder().enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+            .enable(JsonReadFeature.ALLOW_TRAILING_COMMA).enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+            .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER).enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
+            .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS).enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
+            //.enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS).enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS) todo: enable for jackson 2.14
+            .build());
+    private final TomlMapper tomlMapper = new TomlMapper();
+    private final YAMLMapper yamlMapper = new YAMLMapper();
     private final List<CommandAlias> serverCommands = new ObjectArrayList<>();
     private final List<CommandAlias> clientCommands = new ObjectArrayList<>();
     private final List<String> loadedServerCommands = new ObjectArrayList<>();
@@ -118,6 +135,7 @@ public class CommandAliasesLoader {
     private void loadCommandAliases() {
         this.serverCommands.clear();
         this.serverCommands.addAll(this.loadCommandAliases(new File("config/commandaliases.json")));
+        this.serverCommands.addAll(this.loadCommandAliasesFromDirectory(new File("config/commandaliases")));
     }
 
     /**
@@ -126,6 +144,7 @@ public class CommandAliasesLoader {
     private void loadClientCommandAliases() {
         this.clientCommands.clear();
         this.clientCommands.addAll(this.loadCommandAliases(new File("config/commandaliases-client.json")));
+        this.clientCommands.addAll(this.loadCommandAliasesFromDirectory(new File("config/commandaliases-client")));
     }
 
     /**
@@ -754,29 +773,67 @@ public class CommandAliasesLoader {
     }
 
     /**
+     * Reads directory for command aliases files and serializes them to a List of CommandAliases
+     *
+     * @param file Directory File Path
+     * @return List of CommandAliases
+     */
+    private @NotNull List<CommandAlias> loadCommandAliasesFromDirectory(File file) {
+        List<CommandAlias> commandAliases = new ObjectArrayList<>();
+
+        if (file.exists()) {
+            for (File file1 : Objects.requireNonNull(file.listFiles())) {
+                if (file1.isFile()) {
+                    try (FileReader reader = new FileReader(file1)) {
+                        if (file1.getAbsolutePath().endsWith(".toml")) {
+                            commandAliases.add(this.tomlMapper.readerFor(CommandAlias.class).readValue(reader));
+                        } else if (file1.getAbsolutePath().endsWith(".json")) {
+                            commandAliases.add(this.gson.fromJson(reader, CommandAlias.class));
+                        } else if (file1.getAbsolutePath().endsWith(".json5")) {
+                            commandAliases.add(this.jsonMapper.readerFor(CommandAlias.class).readValue(reader));
+                            CommandAliasesMod.logger().warn("JSON5 isn't fully supported!");
+                        } else if (file1.getAbsolutePath().endsWith(".yaml")) {
+                            commandAliases.add(this.yamlMapper.readerFor(CommandAlias.class).readValue(reader));
+                        } else {
+                            CommandAliasesMod.logger().error("Unsupported data format type \"{}\"", file1.getName());
+                            continue;
+                        }
+                        CommandAliasesMod.logger().info("Successfully loaded \"{}\"", file1.getName());
+                    } catch (IOException e) {
+                        CommandAliasesMod.logger().error("Could not read file at \"{}\" throws {}", file1.getAbsolutePath(), e);
+                    }
+                }
+            }
+        } else {
+            if (file.mkdir()) {
+                CommandAliasesMod.logger().info("Command Aliases directory created at \"{}\"", file.getAbsolutePath());
+            } else {
+                CommandAliasesMod.logger().error("Could not create directory for Command Aliases at \"{}\"", file.getAbsolutePath());
+            }
+        }
+
+        return commandAliases;
+    }
+
+    /**
      * Reads JSON file and serializes them to a List of CommandAliases
      *
      * @param file JSON file path
      * @return List of CommandAliases
      */
+    @Deprecated
     private List<CommandAlias> loadCommandAliases(File file) {
         List<CommandAlias> commandAliases = new ObjectArrayList<>();
 
-        if (file.exists()) {
+        if (file.exists() && file.isFile()) {
             try (FileReader reader = new FileReader(file)) {
                 commandAliases = gson.fromJson(reader, new TypeToken<List<CommandAlias>>() {
                 }.getType());
             } catch (IOException e) {
                 throw new RuntimeException("Could not parse CommandAliases File", e);
             }
-        } else {
-            try (Writer writer = new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8)) {
-                String json = gson.toJson(new ObjectArrayList<>());
-                writer.write(json);
-                writer.flush();
-            } catch (IOException e) {
-                throw new RuntimeException("Could not write CommandAliases File", e);
-            }
+            CommandAliasesMod.logger().warn("The command mode \"{}\" is now deprecated and scheduled to remove on version 1.0.0", file.getName());
+            CommandAliasesMod.logger().warn("Please migrate to directory of command aliases. :)");
         }
 
         return commandAliases;
