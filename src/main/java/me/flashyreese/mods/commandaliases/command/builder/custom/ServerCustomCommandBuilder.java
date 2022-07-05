@@ -24,7 +24,7 @@ import java.util.List;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
@@ -61,7 +61,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         if (this.commandAliasParent.isOptional()) {
             argumentBuilder = argumentBuilder.executes(context -> {
                 //Execution action here
-                return this.executeActions(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new ObjectArrayList<>());
+                return this.executeCommand(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new ObjectArrayList<>());
             });
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
@@ -108,8 +108,11 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
             if (child.isOptional()) {
                 argumentBuilder = argumentBuilder.executes(context -> {
                     //Execution action here
-                    return this.executeActions(child.getActions(), child.getMessage(), dispatcher, context, inputs);
+                    return this.executeCommand(child.getActions(), child.getMessage(), dispatcher, context, inputs);
                 });
+            }
+            if (child.getSuggestionProvider() != null) {
+                argumentBuilder = this.buildCommandChildSuggestion(argumentBuilder, child, new ObjectArrayList<>(inputs));
             }
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
