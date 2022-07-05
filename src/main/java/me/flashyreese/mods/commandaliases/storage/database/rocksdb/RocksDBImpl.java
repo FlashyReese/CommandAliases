@@ -1,15 +1,19 @@
 package me.flashyreese.mods.commandaliases.storage.database.rocksdb;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksIterator;
+
+import java.util.Map;
 
 /**
  * Represents the RocksDB Implementation
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.7.0
  */
 public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
@@ -69,5 +73,15 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
         } catch (RocksDBException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Map<byte[], byte[]> list() {
+        Map<byte[], byte[]> map = new Object2ObjectOpenHashMap<>();
+        RocksIterator iterator = this.database.newIterator();
+        for (iterator.seekToLast(); iterator.isValid(); iterator.next()) {
+            map.put(iterator.key(), iterator.value());
+        }
+        return map;
     }
 }

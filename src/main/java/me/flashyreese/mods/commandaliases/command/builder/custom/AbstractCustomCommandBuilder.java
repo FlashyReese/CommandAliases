@@ -1,28 +1,30 @@
 package me.flashyreese.mods.commandaliases.command.builder.custom;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
-import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.*;
 import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
-import me.flashyreese.mods.commandaliases.command.impl.FormattingTypeProcessor;
 import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
+import me.flashyreese.mods.commandaliases.command.impl.InputMapper;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandSource;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 /**
  * Represents an Abstract Custom Command Builder
@@ -30,21 +32,24 @@ import java.util.function.Function;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.8.0
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
     protected final CustomCommand commandAliasParent;
 
     protected final ArgumentTypeMapper argumentTypeMapper;
-    protected final FormattingTypeProcessor formattingTypeMap = new FormattingTypeProcessor();
-
     protected final FunctionProcessor functionProcessor;
+    protected final InputMapper<S> inputMapper;
+
+    protected final AbstractDatabase<byte[], byte[]> database;
 
     public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, AbstractDatabase<byte[], byte[]> database) {
         this.argumentTypeMapper = new ArgumentTypeMapper();
         this.commandAliasParent = commandAliasParent;
         this.functionProcessor = new FunctionProcessor(database);
+        this.database = database;
+        this.inputMapper = new InputMapper<>();
     }
 
     /**
@@ -72,7 +77,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         if (this.commandAliasParent.isOptional()) {
             argumentBuilder = argumentBuilder.executes(context -> {
                 //Execution action here
-                return this.executeActions(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new ObjectArrayList<>());
+                return this.executeCommand(this.commandAliasParent.getActions(), this.commandAliasParent.getMessage(), dispatcher, context, new ObjectArrayList<>());
             });
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
@@ -115,8 +120,11 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             if (child.isOptional()) {
                 argumentBuilder = argumentBuilder.executes(context -> {
                     //Execution action here
-                    return this.executeActions(child.getActions(), child.getMessage(), dispatcher, context, inputs);
+                    return this.executeCommand(child.getActions(), child.getMessage(), dispatcher, context, inputs);
                 });
+            }
+            if (child.getSuggestionProvider() != null) {
+                argumentBuilder = this.buildCommandChildSuggestion(argumentBuilder, child, new ObjectArrayList<>(inputs));
             }
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
@@ -132,56 +140,106 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     }
 
     /**
-     * Method to format string(command or messages) with user input map.
+     * Executes command action
      *
+     * @param actions          List of command actions
+     * @param message          Message
+     * @param dispatcher       The command dispatcher
      * @param context          The command context
-     * @param currentInputList User input map with functions
-     * @param string           Input string
-     * @return Formatted string
+     * @param currentInputList User input list
+     * @return Command execution state
      */
-    protected String formatString(CommandContext<S> context, List<String> currentInputList, String string) {
-        /* Maps child to command inputs
+    protected int executeCommand(List<CustomCommandAction> actions, String message, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
+        int state = Command.SINGLE_SUCCESS;
+        if (actions != null && !actions.isEmpty())
+            state = this.performActions(actions, dispatcher, context, currentInputList);
 
-         "child": "name",
-         "type": "argument",
-         "argumentType": "minecraft:word",
+        if (message != null && !message.isEmpty()) {
+            String formatString = this.formatString(context, currentInputList, message);
+            this.sendFeedback(context, formatString);
+        }
+        return state;
+    }
 
-         Command Syntax: /test <name>
-         Executed Command: /test helloWorld
-         Mapped Entry -> "name":"helloWorld"
-         */
-        Map<String, String> resolvedInputMap = new Object2ObjectOpenHashMap<>();
-        currentInputList.forEach(input -> resolvedInputMap.put(input, this.argumentTypeMapper.getInputString(context, input)));
+    /**
+     * Builds suggestion provider for child components using argument types and has a specified suggestion provider.
+     *
+     * @param inputs          User input list
+     * @param child           The child component
+     * @param argumentBuilder The argument builder
+     * @return The argument builder with suggestion provider if specified
+     */
+    @SuppressWarnings("unchecked")
+    public ArgumentBuilder<S, ?> buildCommandChildSuggestion(ArgumentBuilder<S, ?> argumentBuilder, CustomCommandChild child, List<String> inputs) {
+        if (!(argumentBuilder instanceof RequiredArgumentBuilder))
+            return argumentBuilder;
 
-        /* Maps resolved inputs to placeholders
+        SuggestionProvider<S> SUGGESTION_PROVIDER;
 
-            {
-              "message": "{{name}} tested!"
-            }
-            
-            Remaps string
-            {
-              "message": "helloWorld tested!"
-            }
-         */
-        //Todo: track replaced substring indexes to prevent replacing previously replaced
-        for (Map.Entry<String, String> entry : resolvedInputMap.entrySet()) { //fixme: A bit of hardcoding here
-            string = string.replace(String.format("{{%s}}", entry.getKey()), entry.getValue());
+        CustomCommandSuggestionProvider suggestionProvider = child.getSuggestionProvider();
 
-            for (Map.Entry<String, Function<String, String>> entry2 : this.formattingTypeMap.getFormatTypeMap().entrySet()) {
-                String tempString = String.format("{{%s@%s}}", entry.getKey(), entry2.getKey());
-                if (string.contains(tempString)) {
-                    String newString = entry2.getValue().apply(entry.getValue());
-                    string = string.replace(tempString, newString);
-                }
-            }
+        if (suggestionProvider.getSuggestionMode() == null) {
+            CommandAliasesMod.logger().info("Missing suggestion mode in \"{}\"", child.getChild());
+            return argumentBuilder;
         }
 
-        // Function processor
-        string = this.functionProcessor.processFunctions(string, context.getSource());
+        if (suggestionProvider.getSuggestion() == null || suggestionProvider.getSuggestion().isEmpty()) {
+            CommandAliasesMod.logger().info("Missing suggestion in \"{}\"", child.getChild());
+            return argumentBuilder;
+        }
 
-        string = string.trim();
-        return string;
+        if (Arrays.stream(CustomCommandSuggestionMode.values()).filter(value -> suggestionProvider.getSuggestionMode() == value).count() != 1) {
+            CommandAliasesMod.logger().info("Invalid suggestion mode \"{}\"", suggestionProvider.getSuggestionMode());
+            return argumentBuilder;
+        }
+
+        if (suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.JSON_LIST) {
+            SUGGESTION_PROVIDER = (context, builder) -> {
+                long start = System.nanoTime();
+                String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
+                List<String> suggestions = new Gson().fromJson(formattedSuggestion, new TypeToken<List<String>>() {
+                }.getType());
+                long end = System.nanoTime();
+                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.logger().info("""
+                                    \n\t======================================================
+                                    \tSuggestion Provider: {}
+                                    \t"Processing time: {}ms
+                                    \t======================================================""",
+                            formattedSuggestion, (end - start) / 1000000.0);
+                }
+                return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
+            };
+        } else {
+            SUGGESTION_PROVIDER = (context, builder) -> {
+                List<String> suggestions = new ObjectArrayList<>();
+                long start = System.nanoTime();
+                String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
+                this.database.list().forEach((key, value) -> {
+                    String keyString = new String(key, StandardCharsets.UTF_8);
+                    if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && keyString.startsWith(formattedSuggestion)) &&
+                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && keyString.endsWith(formattedSuggestion)) &&
+                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && keyString.contains(formattedSuggestion)))
+                        return;
+
+                    String valueString = new String(value, StandardCharsets.UTF_8);
+                    suggestions.add(valueString);
+                });
+                long end = System.nanoTime();
+                if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
+                    CommandAliasesMod.logger().info("""
+                                    \n\t======================================================
+                                    \tSuggestion Provider: {}
+                                    \t"Processing time: {}ms
+                                    \t======================================================""",
+                            formattedSuggestion, (end - start) / 1000000.0);
+                }
+                return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
+            };
+        }
+
+        RequiredArgumentBuilder<S, ?> requiredArgumentBuilder = (RequiredArgumentBuilder<S, ?>) argumentBuilder;
+        return requiredArgumentBuilder.suggests(SUGGESTION_PROVIDER);
     }
 
     /**
@@ -193,13 +251,11 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @param currentInputList User input list
      * @return Command execution state
      */
-    protected int executeCommand(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
+    protected int performActions(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
         AtomicInteger executeState = new AtomicInteger();
         Thread thread = new Thread(() -> {
             try {
-                if (actions != null) {
-                    executeState.set(this.processActions(actions, dispatcher, context, currentInputList));
-                }
+                executeState.set(this.prepareAndPerformActions(actions, dispatcher, context, currentInputList));
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 String output = e.getLocalizedMessage();
@@ -212,33 +268,6 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     }
 
     /**
-     * Executes command action
-     *
-     * @param actions          List of command actions
-     * @param message          Message
-     * @param dispatcher       The command dispatcher
-     * @param context          The command context
-     * @param currentInputList User input list
-     * @return Command execution state
-     */
-    protected int executeActions(List<CustomCommandAction> actions, String message, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
-        if (actions == null || actions.isEmpty()) {
-            String formatString = this.formatString(context, currentInputList, message);
-            this.sendFeedback(context, formatString);
-            return Command.SINGLE_SUCCESS;
-        } else {
-            if (message == null || message.isEmpty()) {
-                return this.executeCommand(actions, dispatcher, context, currentInputList);
-            } else {
-                int state = this.executeCommand(actions, dispatcher, context, currentInputList);
-                String formatString = this.formatString(context, currentInputList, message);
-                this.sendFeedback(context, formatString);
-                return state;
-            }
-        }
-    }
-
-    /**
      * Processes all actions and sub-actions recursively
      *
      * @param actions          List of command actions
@@ -248,7 +277,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @return Command execution state
      * @throws InterruptedException Will never been thrown unless the thread has been interrupted
      */
-    public int processActions(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) throws InterruptedException {
+    public int prepareAndPerformActions(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) throws InterruptedException {
         int state = 0;
         long start = System.nanoTime();
         for (CustomCommandAction action : actions) {
@@ -260,10 +289,13 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                     state = this.dispatcherExecute(action, dispatcher, context, actionCommand);
                 } catch (CommandSyntaxException e) {
                     if (CommandAliasesMod.options().debugSettings.debugMode) {
-                        CommandAliasesMod.logger().error("Failed to process command");
-                        CommandAliasesMod.logger().error("Original Action Command: {}", action.getCommand());
-                        CommandAliasesMod.logger().error("Original Action Command Type: {}", action.getCommandType());
-                        CommandAliasesMod.logger().error("Post Processed Action Command: {}", actionCommand);
+                        CommandAliasesMod.logger().error("""
+                                \n\t======================================================
+                                \tFailed to process command
+                                \tOriginal Action Command: {}
+                                \tOriginal Action Command Type: {}
+                                \tPost Processed Action Command: {}
+                                \t======================================================""", action.getCommand(), action.getCommandType(), actionCommand);
                         String output = e.getLocalizedMessage();
                         this.sendFeedback(context, output);
                     }
@@ -271,13 +303,15 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 }
                 long endExecution = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
-                    CommandAliasesMod.logger().info("======================================================");
-                    CommandAliasesMod.logger().info("Original Action Command: {}", action.getCommand());
-                    CommandAliasesMod.logger().info("Original Action Command Type: {}", action.getCommandType());
-                    CommandAliasesMod.logger().info("Post Processed Action Command: {}", actionCommand);
-                    CommandAliasesMod.logger().info("Formatting time: " + (endFormat - startFormat) + "ns");
-                    CommandAliasesMod.logger().info("Executing time: " + (endExecution - endFormat) + "ns");
-                    CommandAliasesMod.logger().info("======================================================");
+                    CommandAliasesMod.logger().info("""
+                                    \n\t======================================================
+                                    \tOriginal Action Command: {}
+                                    \tOriginal Action Command Type: {}
+                                    \tPost Processed Action Command: {}
+                                    \tFormatting time: {}ms
+                                    \tExecuting time: {}ms
+                                    \t======================================================""",
+                            action.getCommand(), action.getCommandType(), actionCommand, (endFormat - startFormat) / 1000000.0, (endExecution - endFormat) / 1000000.0);
                 }
                 if (state != Command.SINGLE_SUCCESS) {
                     if (action.getUnsuccessfulMessage() != null) {
@@ -285,7 +319,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                         this.sendFeedback(context, message);
                     }
                     if (action.getUnsuccessfulActions() != null && !action.getUnsuccessfulActions().isEmpty()) {
-                        state = this.processActions(action.getUnsuccessfulActions(), dispatcher, context, currentInputList);
+                        state = this.prepareAndPerformActions(action.getUnsuccessfulActions(), dispatcher, context, currentInputList);
                     }
                     if (action.isRequireSuccess()) {
                         break;
@@ -309,12 +343,33 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         }
         long end = System.nanoTime();
         if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
-            CommandAliasesMod.logger().info("======================================================");
-            CommandAliasesMod.logger().info("Command Actions");
-            CommandAliasesMod.logger().info("Total process time: " + (end - start) + "ns");
-            CommandAliasesMod.logger().info("======================================================");
+            CommandAliasesMod.logger().info("""
+                            \n\t======================================================
+                            \tCommand Actions
+                            \tTotal process time: {}ms
+                            \t======================================================""",
+                    (end - start) / 1000000.0);
         }
         return state;
+    }
+
+    /**
+     * Method to format string(command or messages) with user input map.
+     *
+     * @param context          The command context
+     * @param currentInputList User input map with functions
+     * @param string           Input string
+     * @return Formatted string
+     */
+    protected String formatString(CommandContext<S> context, List<String> currentInputList, String string) {
+        // Input mapping and formatting
+        string = this.inputMapper.formatAndMapInputs(string, context, currentInputList, this.argumentTypeMapper);
+
+        // Function processor
+        string = this.functionProcessor.processFunctions(string, context.getSource());
+
+        string = string.trim();
+        return string;
     }
 
     /**
