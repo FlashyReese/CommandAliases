@@ -7,6 +7,7 @@ import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandRegistryAccess;
@@ -29,16 +30,18 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
     protected final Map<String, String> reassignCommandMap;
     protected final CommandRegistryAccess registryAccess;
     protected final AbstractDatabase<byte[], byte[]> database;
+    protected final Scheduler scheduler;
     private final Field literalCommandNodeLiteralField;
     private final CommandType commandType;
 
-    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
+    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.reassignCommandMap = reassignCommandMap;
         this.commandType = commandType;
         this.registryAccess = registryAccess;
         this.database = database;
+        this.scheduler = scheduler;
     }
 
     /**

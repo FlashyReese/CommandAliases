@@ -9,6 +9,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.flashyreese.mods.commandaliases.command.CommandManagerExtended;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ClientCustomCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder;
@@ -20,7 +21,9 @@ import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.command.CommandRegistryAccess;
@@ -71,6 +74,10 @@ public class CommandAliasesLoader {
                 this.serverCommandAliasesProvider.getDatabase().open();
             }
 
+            if (this.serverCommandAliasesProvider.getScheduler() == null) {
+                this.serverCommandAliasesProvider.setScheduler(new Scheduler());
+            }
+
             this.registerCommandAliasesCommands(dispatcher, registryAccess);
             this.serverCommandAliasesProvider.loadCommandAliases();
             this.registerCommands(dispatcher, registryAccess);
@@ -79,6 +86,14 @@ public class CommandAliasesLoader {
             if (this.serverCommandAliasesProvider.getDatabase() != null) {
                 this.serverCommandAliasesProvider.getDatabase().close();
                 this.serverCommandAliasesProvider.setDatabase(null);
+            }
+            if (this.serverCommandAliasesProvider.getScheduler() != null) {
+                this.serverCommandAliasesProvider.setScheduler(null);
+            }
+        });
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            if (this.serverCommandAliasesProvider.getScheduler() != null) {
+                this.serverCommandAliasesProvider.getScheduler().processEvents();
             }
         });
     }
@@ -89,9 +104,17 @@ public class CommandAliasesLoader {
                 this.clientCommandAliasesProvider.setDatabase(new LevelDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString()));
                 this.clientCommandAliasesProvider.getDatabase().open();
             }
+            if (this.clientCommandAliasesProvider.getScheduler() == null) {
+                this.clientCommandAliasesProvider.setScheduler(new Scheduler());
+            }
             this.registerClientCommandAliasesCommands(dispatcher, registryAccess);
             this.clientCommandAliasesProvider.loadCommandAliases();
             this.registerClientCommands(dispatcher, registryAccess);
+        });
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (this.clientCommandAliasesProvider.getScheduler() != null) {
+                this.clientCommandAliasesProvider.getScheduler().processEvents();
+            }
         });
     }
 
@@ -112,7 +135,7 @@ public class CommandAliasesLoader {
                     this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getAliasCommand().getCommand());
                 }
             } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.serverCommandAliasesProvider.getDatabase()).buildCommand(dispatcher);
+                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getCustomCommand().getParent());
@@ -122,7 +145,7 @@ public class CommandAliasesLoader {
                 if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                     command = new CommandRedirectBuilder<ServerCommandSource>(cmd, CommandType.SERVER).buildCommand(dispatcher);
                 } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.serverCommandAliasesProvider.getReassignedCommandMap(), registryAccess, this.serverCommandAliasesProvider.getDatabase()).buildCommand(dispatcher);
+                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.serverCommandAliasesProvider.getReassignedCommandMap(), registryAccess, this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
                 }
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
@@ -145,7 +168,7 @@ public class CommandAliasesLoader {
     private void registerClientCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         this.clientCommandAliasesProvider.getCommands().forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.clientCommandAliasesProvider.getDatabase()).buildCommand(dispatcher);
+                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.clientCommandAliasesProvider.getLoadedCommands().add(cmd.getCustomCommand().getParent());
@@ -155,7 +178,7 @@ public class CommandAliasesLoader {
                 if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                     command = new CommandRedirectBuilder<FabricClientCommandSource>(cmd, CommandType.CLIENT).buildCommand(dispatcher);
                 } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.clientCommandAliasesProvider.getReassignedCommandMap(), registryAccess, this.clientCommandAliasesProvider.getDatabase()).buildCommand(dispatcher);
+                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.clientCommandAliasesProvider.getReassignedCommandMap(), registryAccess, this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
                 }
                 if (command != null) {
                     dispatcher.register(command);

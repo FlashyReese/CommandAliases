@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
@@ -24,8 +25,8 @@ import java.util.Map;
  */
 public class ServerReassignCommandBuilder extends AbstractReassignCommandBuilder<ServerCommandSource> {
 
-    public ServerReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database) {
-        super(command, literalCommandNodeLiteralField, reassignCommandMap, CommandType.SERVER, registryAccess, database);
+    public ServerReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
+        super(command, literalCommandNodeLiteralField, reassignCommandMap, CommandType.SERVER, registryAccess, database, scheduler);
     }
 
     @Override
@@ -38,7 +39,7 @@ public class ServerReassignCommandBuilder extends AbstractReassignCommandBuilder
             if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS) {
                 return new AliasCommandBuilder(this.command.getAliasCommand(), this.registryAccess).buildCommand(dispatcher);
             } else if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-                return new ServerCustomCommandBuilder(this.command.getCustomCommand(), this.registryAccess, this.database).buildCommand(dispatcher);
+                return new ServerCustomCommandBuilder(this.command.getCustomCommand(), this.registryAccess, this.database, this.scheduler).buildCommand(dispatcher);
             }
         }
         return null;
