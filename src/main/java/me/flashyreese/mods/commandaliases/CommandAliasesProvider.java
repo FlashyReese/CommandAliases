@@ -119,7 +119,7 @@ public class CommandAliasesProvider {
                         } else if (file1.getAbsolutePath().endsWith(".json5")) {
                             commandAliases.add(this.jsonMapper.readerFor(CommandAlias.class).readValue(reader));
                             CommandAliasesMod.logger().warn("JSON5 isn't fully supported!");
-                        } else if (file1.getAbsolutePath().endsWith(".yaml")) {
+                        } else if (file1.getAbsolutePath().endsWith(".yml")) {
                             commandAliases.add(this.yamlMapper.readerFor(CommandAlias.class).readValue(reader));
                         } else {
                             CommandAliasesMod.logger().error("Unsupported data format type \"{}\"", file1.getName());
