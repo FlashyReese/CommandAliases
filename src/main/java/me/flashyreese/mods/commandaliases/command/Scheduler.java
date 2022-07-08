@@ -1,12 +1,18 @@
 package me.flashyreese.mods.commandaliases.command;
 
 import java.util.Comparator;
-import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.stream.Stream;
 
+/**
+ * Represents an event scheduler.
+ *
+ * @author FlashyReese
+ * @version 0.9.0
+ * @since 0.9.0
+ */
 public class Scheduler {
-
     private final Queue<Event> events = new PriorityQueue<>(Comparator.comparingLong(Event::getTriggerTime));
 
     public void processEvents() {
@@ -25,9 +31,13 @@ public class Scheduler {
         this.events.add(event);
     }
 
-    public void remove(String name) {
-        Optional<Event> optionalEvent = this.events.stream().filter(event -> event.getName().equals(name)).findFirst();
-        optionalEvent.ifPresent(this.events::remove);
+    public boolean remove(String name) {
+        Stream<Event> eventStream = this.events.stream().filter(event -> event.getName().equals(name));
+        return this.events.removeAll(eventStream.toList());
+    }
+
+    public boolean contains(String name) {
+        return this.events.stream().anyMatch(event -> event.getName().equals(name));
     }
 
     public static class Event {

@@ -21,7 +21,7 @@ import java.util.Objects;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.9.0
  * @since 0.5.0
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {

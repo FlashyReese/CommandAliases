@@ -8,10 +8,11 @@ import java.util.List;
  * Represents a custom command Action
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.9.0
  * @since 0.4.0
  */
 public class CustomCommandAction {
+    private String id;
     private String command;
     private CommandType commandType;
     private String sleep;
@@ -20,6 +21,10 @@ public class CustomCommandAction {
     private String unsuccessfulMessage;
     private String successfulMessage;
     private List<CustomCommandAction> unsuccessfulActions;
+
+    public String getId() {
+        return id;
+    }
 
     public String getCommand() {
         return command;
