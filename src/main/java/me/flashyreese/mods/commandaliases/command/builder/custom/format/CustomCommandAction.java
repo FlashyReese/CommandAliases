@@ -12,6 +12,7 @@ import java.util.List;
  * @since 0.4.0
  */
 public class CustomCommandAction {
+    private String triggerTime;
     private String id;
     private String command;
     private CommandType commandType;
@@ -21,6 +22,11 @@ public class CustomCommandAction {
     private String unsuccessfulMessage;
     private String successfulMessage;
     private List<CustomCommandAction> unsuccessfulActions;
+    private List<CustomCommandAction> successfulActions;
+
+    public String getTriggerTime() {
+        return triggerTime;
+    }
 
     public String getId() {
         return id;
@@ -56,5 +62,9 @@ public class CustomCommandAction {
 
     public List<CustomCommandAction> getUnsuccessfulActions() {
         return unsuccessfulActions;
+    }
+
+    public List<CustomCommandAction> getSuccessfulActions() {
+        return successfulActions;
     }
 }
