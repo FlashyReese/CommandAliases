@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.8.0
+ * @version 0.9.0
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
@@ -279,7 +279,11 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             return Command.SINGLE_SUCCESS;
 
         CustomCommandAction action = customCommandActionQueue.poll();
-        this.scheduler.addEvent(new Scheduler.Event(triggerTime, action.getCommand(), () -> {
+        String eventName = "generic";
+        if (action.getId() != null && !action.getId().isEmpty())
+            eventName = this.formatString(context, currentInputList, action.getId());
+
+        this.scheduler.addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
             if (action.getCommand() != null && action.getCommandType() != null) {
                 long startFormat = System.nanoTime();
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());

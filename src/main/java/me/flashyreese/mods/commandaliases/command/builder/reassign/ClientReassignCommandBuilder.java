@@ -18,7 +18,7 @@ import java.util.Map;
  * <p>
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.9.0
  * @since 0.5.0
  */
 public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder<FabricClientCommandSource> {
