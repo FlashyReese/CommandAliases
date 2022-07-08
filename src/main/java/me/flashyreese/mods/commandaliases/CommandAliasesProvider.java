@@ -12,6 +12,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandSource;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +50,7 @@ public class CommandAliasesProvider {
     private final Path commandsDirectory;
     private final Field literalCommandNodeLiteralField;
     private AbstractDatabase<byte[], byte[]> database;
+    private Scheduler scheduler;
 
     public CommandAliasesProvider(Path commandsDirectory, Field literalCommandNodeLiteralField) {
         this.commandsDirectory = commandsDirectory;
@@ -186,5 +188,13 @@ public class CommandAliasesProvider {
 
     public void setDatabase(AbstractDatabase<byte[], byte[]> database) {
         this.database = database;
+    }
+
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    public void setScheduler(Scheduler scheduler) {
+        this.scheduler = scheduler;
     }
 }
