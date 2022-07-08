@@ -283,6 +283,11 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         if (action.getId() != null && !action.getId().isEmpty())
             eventName = this.formatString(context, currentInputList, action.getId());
 
+        if (action.getTriggerTime() != null && !action.getTriggerTime().isEmpty()) {
+            String time = this.formatString(context, currentInputList, action.getTriggerTime());
+            triggerTime = System.currentTimeMillis() + Long.parseLong(time);
+        }
+
         this.scheduler.addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
             if (action.getCommand() != null && action.getCommandType() != null) {
                 long startFormat = System.nanoTime();
@@ -333,6 +338,10 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                         String message = this.formatString(context, currentInputList, action.getSuccessfulMessage());
                         this.sendFeedback(context, message);
                     }
+                    if (action.getSuccessfulActions() != null && !action.getSuccessfulActions().isEmpty()) {
+                        Queue<CustomCommandAction> successfulActionsQueue = new LinkedList<>(action.getSuccessfulActions());
+                        state.set(this.scheduleAction(successfulActionsQueue, System.currentTimeMillis(), dispatcher, context, currentInputList));
+                    }
                 }
             }
             if (action.getMessage() != null) {
@@ -342,7 +351,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             long newTime = System.currentTimeMillis();
             if (action.getSleep() != null) {
                 String formattedTime = this.formatString(context, currentInputList, action.getSleep());
-                newTime = System.currentTimeMillis() + Integer.parseInt(formattedTime);
+                newTime = System.currentTimeMillis() + Long.parseLong(formattedTime);
             }
             state.set(this.scheduleAction(customCommandActionQueue, newTime, dispatcher, context, currentInputList));
         }));
