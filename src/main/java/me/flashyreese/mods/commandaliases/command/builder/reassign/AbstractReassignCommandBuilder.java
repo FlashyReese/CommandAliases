@@ -22,7 +22,7 @@ import java.util.Map;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.8.0
+ * @version 0.9.0
  * @since 0.3.0
  */
 public abstract class AbstractReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {

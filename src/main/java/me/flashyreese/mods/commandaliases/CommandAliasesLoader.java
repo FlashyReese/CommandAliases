@@ -208,6 +208,18 @@ public class CommandAliasesLoader {
 
                     return Command.SINGLE_SUCCESS;
                 })
+                .then(CommandManager.literal("scheduler")
+                        .then(CommandManager.literal("remove")
+                                .then(CommandManager.argument("eventName", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            String eventName = StringArgumentType.getString(context, "eventName");
+                                            if (this.serverCommandAliasesProvider.getScheduler().contains(eventName) && this.serverCommandAliasesProvider.getScheduler().remove(eventName))
+                                                return Command.SINGLE_SUCCESS;
+                                            return 0;
+                                        })
+                                )
+                        )
+                )
                 .then(CommandManager.literal("compute").requires(Permissions.require("commandaliases.compute", 4))
                         .then(CommandManager.literal("equals").requires(Permissions.require("commandaliases.compute.equals", 4))
                                 .then(CommandManager.argument("value1", StringArgumentType.string())
@@ -457,6 +469,18 @@ public class CommandAliasesLoader {
 
                     return Command.SINGLE_SUCCESS;
                 })
+                .then(ClientCommandManager.literal("scheduler")
+                        .then(ClientCommandManager.literal("remove")
+                                .then(ClientCommandManager.argument("eventName", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            String eventName = StringArgumentType.getString(context, "eventName");
+                                            if (this.clientCommandAliasesProvider.getScheduler().contains(eventName) && this.clientCommandAliasesProvider.getScheduler().remove(eventName))
+                                                return Command.SINGLE_SUCCESS;
+                                            return 0;
+                                        })
+                                )
+                        )
+                )
                 .then(ClientCommandManager.literal("compute")
                         .then(ClientCommandManager.literal("equals")
                                 .then(ClientCommandManager.argument("value1", StringArgumentType.string())
