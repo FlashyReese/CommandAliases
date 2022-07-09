@@ -1,5 +1,6 @@
 package me.flashyreese.mods.commandaliases.command.builder.custom;
 
+import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.mojang.brigadier.Command;
@@ -11,6 +12,7 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
+import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
@@ -130,7 +132,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 });
             }
             if (child.getSuggestionProvider() != null) {
-                argumentBuilder = this.buildCommandChildSuggestion(argumentBuilder, child, new ObjectArrayList<>(inputs));
+                argumentBuilder = this.buildCommandChildSuggestion(dispatcher, argumentBuilder, child, new ObjectArrayList<>(inputs));
             }
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
@@ -170,13 +172,14 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     /**
      * Builds suggestion provider for child components using argument types and has a specified suggestion provider.
      *
-     * @param inputs          User input list
-     * @param child           The child component
+     * @param dispatcher
      * @param argumentBuilder The argument builder
+     * @param child           The child component
+     * @param inputs          User input list
      * @return The argument builder with suggestion provider if specified
      */
     @SuppressWarnings("unchecked")
-    public ArgumentBuilder<S, ?> buildCommandChildSuggestion(ArgumentBuilder<S, ?> argumentBuilder, CustomCommandChild child, List<String> inputs) {
+    public ArgumentBuilder<S, ?> buildCommandChildSuggestion(CommandDispatcher<S> dispatcher, ArgumentBuilder<S, ?> argumentBuilder, CustomCommandChild child, List<String> inputs) {
         if (!(argumentBuilder instanceof RequiredArgumentBuilder))
             return argumentBuilder;
 
@@ -185,21 +188,29 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         CustomCommandSuggestionProvider suggestionProvider = child.getSuggestionProvider();
 
         if (suggestionProvider.getSuggestionMode() == null) {
-            CommandAliasesMod.logger().info("Missing suggestion mode in \"{}\"", child.getChild());
+            CommandAliasesMod.logger().warn("Missing suggestion mode in \"{}\"", child.getChild());
             return argumentBuilder;
         }
 
         if (suggestionProvider.getSuggestion() == null || suggestionProvider.getSuggestion().isEmpty()) {
-            CommandAliasesMod.logger().info("Missing suggestion in \"{}\"", child.getChild());
+            CommandAliasesMod.logger().warn("Missing suggestion in \"{}\"", child.getChild());
             return argumentBuilder;
         }
 
         if (Arrays.stream(CustomCommandSuggestionMode.values()).filter(value -> suggestionProvider.getSuggestionMode() == value).count() != 1) {
-            CommandAliasesMod.logger().info("Invalid suggestion mode \"{}\"", suggestionProvider.getSuggestionMode());
+            CommandAliasesMod.logger().error("Invalid suggestion mode \"{}\"", suggestionProvider.getSuggestionMode());
             return argumentBuilder;
         }
 
-        if (suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.JSON_LIST) {
+        if (suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.COMMAND_LIST_LOOKUP) {
+            CommandNode<S> redirect = dispatcher.findNode(Lists.newArrayList(suggestionProvider.getSuggestion().split(" ")));
+            if (redirect != null && redirect.createBuilder() instanceof RequiredArgumentBuilder requiredArgumentBuilder) {
+                SUGGESTION_PROVIDER = requiredArgumentBuilder.getSuggestionsProvider();
+            } else {
+                CommandAliasesMod.logger().error("Invalid suggestion \"{}\"", suggestionProvider.getSuggestion());
+                return argumentBuilder;
+            }
+        } else if (suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.JSON_LIST) {
             SUGGESTION_PROVIDER = (context, builder) -> {
                 long start = System.nanoTime();
                 String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
