@@ -14,6 +14,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.util.TreeNode;
 import net.minecraft.command.CommandSource;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,9 +23,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Represents the command aliases provider.
@@ -109,28 +108,8 @@ public class CommandAliasesProvider {
         List<CommandAlias> commandAliases = new ObjectArrayList<>();
 
         if (file.exists()) {
-            for (File file1 : Objects.requireNonNull(file.listFiles())) {
-                if (file1.isFile()) {
-                    try (FileReader reader = new FileReader(file1)) {
-                        if (file1.getAbsolutePath().endsWith(".toml")) {
-                            commandAliases.add(this.tomlMapper.readerFor(CommandAlias.class).readValue(reader));
-                        } else if (file1.getAbsolutePath().endsWith(".json")) {
-                            commandAliases.add(this.gson.fromJson(reader, CommandAlias.class));
-                        } else if (file1.getAbsolutePath().endsWith(".json5")) {
-                            commandAliases.add(this.jsonMapper.readerFor(CommandAlias.class).readValue(reader));
-                            CommandAliasesMod.logger().warn("JSON5 isn't fully supported!");
-                        } else if (file1.getAbsolutePath().endsWith(".yml")) {
-                            commandAliases.add(this.yamlMapper.readerFor(CommandAlias.class).readValue(reader));
-                        } else {
-                            CommandAliasesMod.logger().error("Unsupported data format type \"{}\"", file1.getName());
-                            continue;
-                        }
-                        CommandAliasesMod.logger().info("Successfully loaded \"{}\"", file1.getName());
-                    } catch (IOException e) {
-                        CommandAliasesMod.logger().error("Could not read file at \"{}\" throws {}", file1.getAbsolutePath(), e);
-                    }
-                }
-            }
+            String output = "\n" + loadAndRenderDirectoryTree(this.createDirectoryTree(file), commandAliases);
+            CommandAliasesMod.logger().info(output);
         } else {
             if (file.mkdir()) {
                 CommandAliasesMod.logger().info("Command Aliases directory created at \"{}\"", file.getAbsolutePath());
@@ -140,6 +119,74 @@ public class CommandAliasesProvider {
         }
 
         return commandAliases;
+    }
+
+    private TreeNode<File> createDirectoryTree(File directory) {
+        if (!directory.isDirectory())
+            throw new RuntimeException("Not a directory " + directory.getAbsolutePath());
+        TreeNode<File> rootTree = new TreeNode<>(directory);
+        File[] files = Objects.requireNonNull(directory.listFiles());
+        for (File file : files) {
+            if (file.isDirectory()) {
+                rootTree.addChildTreeNode(this.createDirectoryTree(file));
+            } else if (file.isFile()) {
+                rootTree.addChild(file);
+            }
+        }
+        return rootTree;
+    }
+
+    public String loadAndRenderDirectoryTree(TreeNode<File> tree, List<CommandAlias> commandAliases) {
+        List<StringBuilder> lines = loadAndRenderDirectoryTreeLines(tree, commandAliases);
+        String newline = System.getProperty("line.separator");
+        StringBuilder sb = new StringBuilder();
+        for (StringBuilder line : lines) {
+            sb.append(line);
+            sb.append(newline);
+        }
+        return sb.toString();
+    }
+
+    public List<StringBuilder> loadAndRenderDirectoryTreeLines(TreeNode<File> tree, List<CommandAlias> commandAliases) {
+        List<StringBuilder> result = new ArrayList<>();
+        String state = "";
+        if (tree.getData().isFile()) {
+            File file = tree.getData();
+            try (FileReader reader = new FileReader(file)) {
+                state = " - Successfully loaded";
+                if (file.getAbsolutePath().endsWith(".toml")) {
+                    commandAliases.add(this.tomlMapper.readerFor(CommandAlias.class).readValue(reader));
+                } else if (file.getAbsolutePath().endsWith(".json")) {
+                    commandAliases.add(this.gson.fromJson(reader, CommandAlias.class));
+                } else if (file.getAbsolutePath().endsWith(".json5")) {
+                    commandAliases.add(this.jsonMapper.readerFor(CommandAlias.class).readValue(reader));
+                } else if (file.getAbsolutePath().endsWith(".yml")) {
+                    commandAliases.add(this.yamlMapper.readerFor(CommandAlias.class).readValue(reader));
+                } else {
+                    state = " - Unsupported data format type";
+                }
+            } catch (IOException e) {
+                state = " - " + e;
+            }
+        }
+        result.add(new StringBuilder().append(tree.getData().getName()).append(state));
+        Iterator<TreeNode<File>> iterator = tree.getChildren().iterator();
+        while (iterator.hasNext()) {
+            List<StringBuilder> subtree = loadAndRenderDirectoryTreeLines(iterator.next(), commandAliases);
+            Iterator<StringBuilder> iteratorSB = subtree.iterator();
+            if (iterator.hasNext()) {
+                result.add(iteratorSB.next().insert(0, "├── "));
+                while (iteratorSB.hasNext()) {
+                    result.add(iteratorSB.next().insert(0, "│   "));
+                }
+            } else {
+                result.add(iteratorSB.next().insert(0, "└── "));
+                while (iteratorSB.hasNext()) {
+                    result.add(iteratorSB.next().insert(0, "    "));
+                }
+            }
+        }
+        return result;
     }
 
     /**
