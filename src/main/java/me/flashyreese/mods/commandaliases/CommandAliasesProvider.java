@@ -142,7 +142,9 @@ public class CommandAliasesProvider {
         StringBuilder sb = new StringBuilder();
         for (StringBuilder line : lines) {
             sb.append(line);
-            sb.append(newline);
+            if (lines.get(lines.size() - 1) != line) {
+                sb.append(newline);
+            }
         }
         return sb.toString();
     }
@@ -160,13 +162,15 @@ public class CommandAliasesProvider {
                     commandAliases.add(this.gson.fromJson(reader, CommandAlias.class));
                 } else if (file.getAbsolutePath().endsWith(".json5")) {
                     commandAliases.add(this.jsonMapper.readerFor(CommandAlias.class).readValue(reader));
+                    CommandAliasesMod.logger().warn("JSON5 not fully supported yet! \"{}\"", file.getAbsolutePath());
                 } else if (file.getAbsolutePath().endsWith(".yml")) {
                     commandAliases.add(this.yamlMapper.readerFor(CommandAlias.class).readValue(reader));
                 } else {
                     state = " - Unsupported data format type";
                 }
             } catch (IOException e) {
-                state = " - " + e;
+                state = " - Failed to load";
+                CommandAliasesMod.logger().error("Failed to load file at \"{}\" throws {}", file.getAbsolutePath(), e);
             }
         }
         result.add(new StringBuilder().append(tree.getData().getName()).append(state));
