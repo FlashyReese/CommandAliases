@@ -12,9 +12,11 @@ import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ClientCustomCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder;
-import me.flashyreese.mods.commandaliases.command.builder.reassign.ClientReassignCommandBuilder;
-import me.flashyreese.mods.commandaliases.command.builder.reassign.ServerReassignCommandBuilder;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
+import me.flashyreese.mods.commandaliases.command.builder.reassign.ReassignCommandBuilder;
+import me.flashyreese.mods.commandaliases.command.builder.reassign.format.ReassignCommand;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.CommandRedirectBuilder;
+import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
 import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
@@ -66,7 +68,7 @@ public class CommandAliasesLoader {
             //CommandRegistrationCallback won't work here because it gets called before the server even starts.
             CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
             CommandRegistryAccess registryAccess = ((CommandManagerExtended) server.getCommandManager()).getCommandRegistryAccess();
-            CommandManager.RegistrationEnvironment environment = ((CommandManagerExtended) server.getCommandManager()).getEnvironment();
+            //CommandManager.RegistrationEnvironment environment = ((CommandManagerExtended) server.getCommandManager()).getEnvironment();
 
             if (this.serverCommandAliasesProvider.getDatabase() == null) {
                 this.serverCommandAliasesProvider.setDatabase(new LevelDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString()));
@@ -124,28 +126,22 @@ public class CommandAliasesLoader {
      */
     private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         this.serverCommandAliasesProvider.getCommands().forEach(cmd -> {
-            if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+            if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM && cmd instanceof CustomCommand customCommand) {
+                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(customCommand, registryAccess, this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
-                    this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getCustomCommand().getParent());
+                    this.serverCommandAliasesProvider.getLoadedCommands().add(customCommand.getCommand());
                 }
-            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                LiteralArgumentBuilder<ServerCommandSource> command = null;
-                if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                    command = new CommandRedirectBuilder<ServerCommandSource>(cmd, CommandType.SERVER).buildCommand(dispatcher);
-                } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.serverCommandAliasesProvider.getReassignedCommandMap(), registryAccess, this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
-                }
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN && cmd instanceof ReassignCommand reassignCommand) {
+                new ReassignCommandBuilder<ServerCommandSource>(reassignCommand, this.literalCommandNodeLiteralField, this.serverCommandAliasesProvider.getReassignedCommandMap(), CommandType.SERVER).buildCommand(dispatcher);
+                this.serverCommandAliasesProvider.getLoadedCommands().add(reassignCommand.getCommand());
+            } else if ((cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) && cmd instanceof RedirectCommand redirectCommand) {
+                LiteralArgumentBuilder<ServerCommandSource> command = new CommandRedirectBuilder<ServerCommandSource>(redirectCommand, CommandType.SERVER).buildCommand(dispatcher);
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
                     command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), true));
                     dispatcher.register(command);
-                    if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                        this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getRedirectCommand().getCommand());
-                    } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-                        this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getReassignCommand().getCommand());
-                    }
+                    this.serverCommandAliasesProvider.getLoadedCommands().add(redirectCommand.getCommand());
                 }
             }
         });
@@ -157,26 +153,20 @@ public class CommandAliasesLoader {
      */
     private void registerClientCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         this.clientCommandAliasesProvider.getCommands().forEach(cmd -> {
-            if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+            if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM && cmd instanceof CustomCommand customCommand) {
+                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(customCommand, registryAccess, this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
-                    this.clientCommandAliasesProvider.getLoadedCommands().add(cmd.getCustomCommand().getParent());
+                    this.clientCommandAliasesProvider.getLoadedCommands().add(customCommand.getCommand());
                 }
-            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                LiteralArgumentBuilder<FabricClientCommandSource> command = null;
-                if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                    command = new CommandRedirectBuilder<FabricClientCommandSource>(cmd, CommandType.CLIENT).buildCommand(dispatcher);
-                } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.clientCommandAliasesProvider.getReassignedCommandMap(), registryAccess, this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
-                }
+            } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN && cmd instanceof ReassignCommand reassignCommand) {
+                new ReassignCommandBuilder<FabricClientCommandSource>(reassignCommand, this.literalCommandNodeLiteralField, this.clientCommandAliasesProvider.getReassignedCommandMap(), CommandType.CLIENT).buildCommand(dispatcher);
+                this.clientCommandAliasesProvider.getLoadedCommands().add(reassignCommand.getCommand());
+            } else if ((cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) && cmd instanceof RedirectCommand redirectCommand) {
+                LiteralArgumentBuilder<FabricClientCommandSource> command = new CommandRedirectBuilder<FabricClientCommandSource>(redirectCommand, CommandType.CLIENT).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
-                    if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                        this.clientCommandAliasesProvider.getLoadedCommands().add(cmd.getRedirectCommand().getCommand());
-                    } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-                        this.clientCommandAliasesProvider.getLoadedCommands().add(cmd.getReassignCommand().getCommand());
-                    }
+                    this.serverCommandAliasesProvider.getLoadedCommands().add(redirectCommand.getCommand());
                 }
             }
         });

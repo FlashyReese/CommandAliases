@@ -14,24 +14,14 @@ import me.flashyreese.mods.commandaliases.command.builder.redirect.format.Redire
  * @since 0.0.9
  */
 public class CommandAlias {
+    private int schemaVersion;
     private CommandMode commandMode;
-    private CustomCommand customCommand;
-    private ReassignCommand reassignCommand;
-    private RedirectCommand redirectCommand;
+
+    public int getSchemaVersion() {
+        return schemaVersion;
+    }
 
     public CommandMode getCommandMode() {
         return commandMode;
-    }
-
-    public CustomCommand getCustomCommand() {
-        return customCommand;
-    }
-
-    public ReassignCommand getReassignCommand() {
-        return reassignCommand;
-    }
-
-    public RedirectCommand getRedirectCommand() {
-        return redirectCommand;
     }
 }

@@ -2,23 +2,28 @@ package me.flashyreese.mods.commandaliases;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.google.gson.Gson;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
+import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
+import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
+import me.flashyreese.mods.commandaliases.command.builder.reassign.format.ReassignCommand;
+import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.util.Atomic;
 import me.flashyreese.mods.commandaliases.util.TreeNode;
 import net.minecraft.command.CommandSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
@@ -32,15 +37,15 @@ import java.util.*;
  * @since 0.9.0
  */
 public class CommandAliasesProvider {
-    private final Gson gson = new Gson();
-    private final JsonMapper jsonMapper = new JsonMapper(JsonFactory.builder().enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+    private final ObjectMapper jsonMapper = new JsonMapper();
+    private final ObjectMapper json5Mapper = new JsonMapper(JsonFactory.builder().enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
             .enable(JsonReadFeature.ALLOW_TRAILING_COMMA).enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
             .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER).enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
             .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS).enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
             //.enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS).enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS) todo: enable for jackson 2.14
             .build());
-    private final TomlMapper tomlMapper = new TomlMapper();
-    private final YAMLMapper yamlMapper = new YAMLMapper();
+    private final ObjectMapper tomlMapper = new TomlMapper();
+    private final ObjectMapper yamlMapper = new YAMLMapper();
 
     private final List<CommandAlias> commands = new ObjectArrayList<>();
     private final List<String> loadedCommands = new ObjectArrayList<>();
@@ -147,31 +152,63 @@ public class CommandAliasesProvider {
         return sb.toString();
     }
 
+    private Class<? extends CommandAlias> getCommandModeClass(CommandMode commandMode) {
+        if (commandMode == CommandMode.COMMAND_CUSTOM) {
+            return CustomCommand.class;
+        } else if (commandMode == CommandMode.COMMAND_REASSIGN) {
+            return ReassignCommand.class;
+        } else if (commandMode == CommandMode.COMMAND_REDIRECT_NOARG || commandMode == CommandMode.COMMAND_REDIRECT) {
+            return RedirectCommand.class;
+        }
+        return null;
+    }
+
+    private List<CommandAlias> objectMapDataFormat(ObjectMapper objectMapper, File file, Atomic<String> state) throws IOException {
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        List<CommandAlias> commandAliases = new ArrayList<>();
+        CommandAlias commandAlias = objectMapper.readerFor(CommandAlias.class).readValue(file);
+        if (commandAlias.getSchemaVersion() == 1) {
+            if (commandAlias.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
+                commandAliases.add(objectMapper.readerFor(ReassignCommand.class).readValue(file));
+                commandAliases.add(objectMapper.readerFor(CustomCommand.class).readValue(file));
+            } else {
+                objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+                Class<? extends CommandAlias> commandModeClass = this.getCommandModeClass(commandAlias.getCommandMode());
+                if (commandModeClass != null) {
+                    commandAliases.add(objectMapper.readerFor(commandModeClass).readValue(file));
+                }
+            }
+            state.set(" - Successfully loaded");
+        } else {
+            state.set(" - Unsupported schema version");
+        }
+        return commandAliases;
+    }
+
     public List<StringBuilder> loadAndRenderDirectoryTreeLines(TreeNode<File> tree, List<CommandAlias> commandAliases) {
         List<StringBuilder> result = new ArrayList<>();
-        String state = "";
+        Atomic<String> state = new Atomic<>("");
         if (tree.getData().isFile()) {
             File file = tree.getData();
-            try (FileReader reader = new FileReader(file)) {
-                state = " - Successfully loaded";
+            try {
                 if (file.getAbsolutePath().endsWith(".toml")) {
-                    commandAliases.add(this.tomlMapper.readerFor(CommandAlias.class).readValue(reader));
+                    commandAliases.addAll(this.objectMapDataFormat(this.tomlMapper, file, state));
                 } else if (file.getAbsolutePath().endsWith(".json")) {
-                    commandAliases.add(this.gson.fromJson(reader, CommandAlias.class));
+                    commandAliases.addAll(this.objectMapDataFormat(this.jsonMapper, file, state));
                 } else if (file.getAbsolutePath().endsWith(".json5")) {
-                    commandAliases.add(this.jsonMapper.readerFor(CommandAlias.class).readValue(reader));
+                    commandAliases.addAll(this.objectMapDataFormat(this.json5Mapper, file, state));
                     CommandAliasesMod.logger().warn("JSON5 not fully supported yet! \"{}\"", file.getAbsolutePath());
                 } else if (file.getAbsolutePath().endsWith(".yml")) {
-                    commandAliases.add(this.yamlMapper.readerFor(CommandAlias.class).readValue(reader));
+                    commandAliases.addAll(this.objectMapDataFormat(this.yamlMapper, file, state));
                 } else {
-                    state = " - Unsupported data format type";
+                    state.set(" - Unsupported data format type");
                 }
             } catch (IOException e) {
-                state = " - Failed to load";
+                state.set(" - Failed to load");
                 CommandAliasesMod.logger().error("Failed to load file at \"{}\" throws {}", file.getAbsolutePath(), e);
             }
         }
-        result.add(new StringBuilder().append(tree.getData().getName()).append(state));
+        result.add(new StringBuilder().append(tree.getData().getName()).append(state.get()));
         Iterator<TreeNode<File>> iterator = tree.getChildren().iterator();
         while (iterator.hasNext()) {
             List<StringBuilder> subtree = loadAndRenderDirectoryTreeLines(iterator.next(), commandAliases);

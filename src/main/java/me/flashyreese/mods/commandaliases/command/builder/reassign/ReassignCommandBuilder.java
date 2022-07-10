@@ -4,13 +4,9 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.command.CommandAlias;
-import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
-import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
-import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
-import net.minecraft.command.CommandRegistryAccess;
+import me.flashyreese.mods.commandaliases.command.builder.reassign.format.ReassignCommand;
 import net.minecraft.command.CommandSource;
 
 import java.lang.reflect.Field;
@@ -25,23 +21,17 @@ import java.util.Map;
  * @version 1.0.0
  * @since 0.3.0
  */
-public abstract class AbstractReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
-    protected final CommandAlias command;
+public class ReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+    protected final ReassignCommand command;
     protected final Map<String, String> reassignCommandMap;
-    protected final CommandRegistryAccess registryAccess;
-    protected final AbstractDatabase<byte[], byte[]> database;
-    protected final Scheduler scheduler;
     private final Field literalCommandNodeLiteralField;
     private final CommandType commandType;
 
-    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
+    public ReassignCommandBuilder(ReassignCommand command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType) {
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.reassignCommandMap = reassignCommandMap;
         this.commandType = commandType;
-        this.registryAccess = registryAccess;
-        this.database = database;
-        this.scheduler = scheduler;
     }
 
     /**
@@ -51,26 +41,13 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
      * @return Command
      */
     public LiteralArgumentBuilder<S> buildCommand(CommandDispatcher<S> dispatcher) {
-        if (this.command.getReassignCommand() == null) {
-            CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing declaration!", this.commandType, this.command.getCommandMode());
-            return null;
+        if (this.reassignCommand(this.command, dispatcher)) {
+            String command = this.command.getCommand().trim();
+            String reassignTo = this.command.getReassignTo().trim();
+            this.reassignCommandMap.put(command, reassignTo);
         }
-
-        if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-            if (this.command.getCustomCommand() == null) {
-                CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing custom command declaration!", this.commandType, this.command.getCommandMode());
-                return null;
-            }
-            if (!this.command.getCustomCommand().getParent().equals(this.command.getReassignCommand().getCommand())) {
-                CommandAliasesMod.logger().error("[{}] {} - SSkipping reassignment, custom command parent and reassign command mismatch!", this.commandType, this.command.getCommandMode());
-                return null;
-            }
-        }
-
-        return this.reassignCommand(dispatcher);
+        return null;
     }
-
-    protected abstract LiteralArgumentBuilder<S> reassignCommand(CommandDispatcher<S> dispatcher);
 
     /**
      * Try to reassign a command name to another command name.
@@ -79,14 +56,9 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
      * @param dispatcher CommandDispatcher
      * @return If {@code true} then it was successful, else if {@code false} failed.
      */
-    protected boolean reassignCommand(CommandAlias cmd, CommandDispatcher<S> dispatcher) {
-        if (cmd.getReassignCommand() == null) {
-            CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing declaration!", this.commandType, cmd.getCommandMode());
-            return false;
-        }
-
-        String command = cmd.getReassignCommand().getCommand().trim();
-        String reassignTo = cmd.getReassignCommand().getReassignTo().trim();
+    protected boolean reassignCommand(ReassignCommand cmd, CommandDispatcher<S> dispatcher) {
+        String command = cmd.getCommand().trim();
+        String reassignTo = cmd.getReassignTo().trim();
 
         if (command.contains(" ")) {
             CommandAliasesMod.logger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), command);
