@@ -7,6 +7,7 @@ import com.mojang.brigadier.context.StringRange;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
+import net.minecraft.SharedConstants;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;
 
@@ -87,6 +88,12 @@ public class ArgumentTypeMapper implements ClassTool<ArgumentType<?>> {
         this.argumentMap.put("minecraft:entity_summon", EntitySummonArgumentType.entitySummon());
         this.argumentMap.put("minecraft:dimension", DimensionArgumentType.dimension());
         this.argumentMap.put("minecraft:time", TimeArgumentType.time());
+
+        if (!SharedConstants.isDevelopment) {
+            this.argumentMap.put("minecraft:test_argument", TestFunctionArgumentType.testFunction());
+            this.argumentMap.put("minecraft:test_class", TestClassArgumentType.testClass());
+        }
+
         this.argumentMap.put("minecraft:uuid", UuidArgumentType.uuid());
 
         this.argumentMap.put("brigadier:bool", BoolArgumentType.bool());
@@ -115,6 +122,10 @@ public class ArgumentTypeMapper implements ClassTool<ArgumentType<?>> {
     @Override
     public String getValue(CommandContext<ServerCommandSource> context, AliasHolder holder) {
         return this.getInputString(context, holder.getVariableName());
+    }
+
+    public Map<String, ArgumentType<?>> getArgumentMap() {
+        return argumentMap;
     }
 
     public <S> String getInputString(CommandContext<S> commandContext, String name) {
