@@ -52,12 +52,12 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
 
     @Override
     protected LiteralArgumentBuilder<ServerCommandSource> buildCommandParent(CommandDispatcher<ServerCommandSource> dispatcher) {
-        LiteralArgumentBuilder<ServerCommandSource> argumentBuilder = this.literal(this.commandAliasParent.getParent());
+        LiteralArgumentBuilder<ServerCommandSource> argumentBuilder = this.literal(this.commandAliasParent.getCommand());
 
         if (this.commandAliasParent.getPermission() > 0 && this.commandAliasParent.getPermission() <= 4) {
-            argumentBuilder = argumentBuilder.requires(Permissions.require(this.commandAliasParent.getParent(), this.commandAliasParent.getPermission()));
+            argumentBuilder = argumentBuilder.requires(Permissions.require(this.commandAliasParent.getCommand(), this.commandAliasParent.getPermission()));
         } else {
-            argumentBuilder = argumentBuilder.requires(Permissions.require(this.commandAliasParent.getParent(), true));
+            argumentBuilder = argumentBuilder.requires(Permissions.require(this.commandAliasParent.getCommand(), true));
         }
 
         if (this.commandAliasParent.isOptional()) {
@@ -68,7 +68,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
             for (CustomCommandChild child : this.commandAliasParent.getChildren()) {
-                ArgumentBuilder<ServerCommandSource, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new ObjectArrayList<>(), this.commandAliasParent.getParent());
+                ArgumentBuilder<ServerCommandSource, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new ObjectArrayList<>(), this.commandAliasParent.getCommand());
                 if (subArgumentBuilder != null) {
                     argumentBuilder = argumentBuilder.then(subArgumentBuilder);
                 }

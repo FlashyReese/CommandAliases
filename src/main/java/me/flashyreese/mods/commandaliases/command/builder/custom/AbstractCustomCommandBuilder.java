@@ -78,7 +78,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @return ArgumentBuilder
      */
     protected LiteralArgumentBuilder<S> buildCommandParent(CommandDispatcher<S> dispatcher) {
-        LiteralArgumentBuilder<S> argumentBuilder = this.literal(this.commandAliasParent.getParent());
+        LiteralArgumentBuilder<S> argumentBuilder = this.literal(this.commandAliasParent.getCommand());
         if (this.commandAliasParent.getPermission() > 0 && this.commandAliasParent.getPermission() <= 4) {
             argumentBuilder = argumentBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(this.commandAliasParent.getPermission()));
         }

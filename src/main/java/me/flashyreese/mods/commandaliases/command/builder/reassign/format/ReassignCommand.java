@@ -1,15 +1,17 @@
 package me.flashyreese.mods.commandaliases.command.builder.reassign.format;
 
+import me.flashyreese.mods.commandaliases.command.CommandAlias;
+
 /**
  * Represents a reassignment command
  * <p>
- * JSON Serialization Template
+ * Serialization Template
  *
  * @author FlashyReese
  * @version 0.5.0
  * @since 0.5.0
  */
-public class ReassignCommand {
+public class ReassignCommand extends CommandAlias {
     private String command;
     private String reassignTo;
 
