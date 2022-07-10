@@ -37,7 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.9.0
+ * @version 1.0.0
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
@@ -112,8 +112,8 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         if (child.getType().equals("literal")) {
             argumentBuilder = this.literal(child.getChild());
         } else if (child.getType().equals("argument")) {
-            if (this.argumentTypeMapper.contains(child.getArgumentType())) {
-                argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getValue(child.getArgumentType()));
+            if (this.argumentTypeMapper.getArgumentMap().containsKey(child.getArgumentType())) {
+                argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getArgumentMap().get(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
                 CommandAliasesMod.logger().error("Invalid Argument Type: {}", child.getArgumentType());
