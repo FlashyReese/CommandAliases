@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -29,7 +28,7 @@ import java.util.*;
  * Represents the command aliases provider.
  *
  * @author FlashyReese
- * @version 0.9.0
+ * @version 1.0.0
  * @since 0.9.0
  */
 public class CommandAliasesProvider {
@@ -61,7 +60,6 @@ public class CommandAliasesProvider {
      */
     protected void loadCommandAliases() {
         this.commands.clear();
-        this.commands.addAll(this.loadCommandAliases(new File(this.commandsDirectory.toFile().getAbsolutePath() + ".json")));
         this.commands.addAll(this.loadCommandAliasesFromDirectory(this.commandsDirectory.toFile()));
     }
 
@@ -191,30 +189,6 @@ public class CommandAliasesProvider {
             }
         }
         return result;
-    }
-
-    /**
-     * Reads JSON file and serializes them to a List of CommandAliases
-     *
-     * @param file JSON file path
-     * @return List of CommandAliases
-     */
-    @Deprecated
-    private List<CommandAlias> loadCommandAliases(File file) {
-        List<CommandAlias> commandAliases = new ObjectArrayList<>();
-
-        if (file.exists() && file.isFile()) {
-            try (FileReader reader = new FileReader(file)) {
-                commandAliases = gson.fromJson(reader, new TypeToken<List<CommandAlias>>() {
-                }.getType());
-            } catch (IOException e) {
-                throw new RuntimeException("Could not parse CommandAliases File", e);
-            }
-            CommandAliasesMod.logger().warn("The command mode \"{}\" is now deprecated and scheduled to remove on version 1.0.0", file.getName());
-            CommandAliasesMod.logger().warn("Please migrate to directory of command aliases. :)");
-        }
-
-        return commandAliases;
     }
 
     public List<CommandAlias> getCommands() {

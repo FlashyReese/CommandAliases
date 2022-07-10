@@ -5,12 +5,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.context.StringRange;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import me.flashyreese.mods.commandaliases.classtool.ClassTool;
-import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
 import net.minecraft.SharedConstants;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.*;
-import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.registry.Registry;
 
 import java.lang.reflect.Field;
@@ -20,13 +17,13 @@ import java.util.Map;
  * Represents the Argument Type Mapper
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 1.0.0
  * @since 0.0.9
  * <p>
  * This ArgumentTypeMapper maps ArgumentTypes to String.
- * See https://minecraft.gamepedia.com/Argument_types
+ * See <a href="https://minecraft.gamepedia.com/Argument_types">...</a>
  */
-public class ArgumentTypeMapper implements ClassTool<ArgumentType<?>> {
+public class ArgumentTypeMapper {
 
     private final Map<String, ArgumentType<?>> argumentMap = new Object2ObjectOpenHashMap<>();
 
@@ -116,26 +113,6 @@ public class ArgumentTypeMapper implements ClassTool<ArgumentType<?>> {
         this.argumentMap.put("brigadier:integer", IntegerArgumentType.integer());
         this.argumentMap.put("brigadier:long", LongArgumentType.longArg());
         this.argumentMap.put("brigadier:string", StringArgumentType.string());
-    }
-
-    @Override
-    public String getName() {
-        return "arg";
-    }
-
-    @Override
-    public boolean contains(String key) {
-        return this.argumentMap.containsKey(key);
-    }
-
-    @Override
-    public ArgumentType<?> getValue(String key) {
-        return this.argumentMap.get(key);
-    }
-
-    @Override
-    public String getValue(CommandContext<ServerCommandSource> context, AliasHolder holder) {
-        return this.getInputString(context, holder.getVariableName());
     }
 
     public Map<String, ArgumentType<?>> getArgumentMap() {
