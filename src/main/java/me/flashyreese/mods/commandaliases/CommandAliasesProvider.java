@@ -168,16 +168,8 @@ public class CommandAliasesProvider {
         List<CommandAlias> commandAliases = new ArrayList<>();
         CommandAlias commandAlias = objectMapper.readerFor(CommandAlias.class).readValue(file);
         if (commandAlias.getSchemaVersion() == 1) {
-            if (commandAlias.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-                commandAliases.add(objectMapper.readerFor(ReassignCommand.class).readValue(file));
-                commandAliases.add(objectMapper.readerFor(CustomCommand.class).readValue(file));
-            } else {
-                objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-                Class<? extends CommandAlias> commandModeClass = this.getCommandModeClass(commandAlias.getCommandMode());
-                if (commandModeClass != null) {
-                    commandAliases.add(objectMapper.readerFor(commandModeClass).readValue(file));
-                }
-            }
+            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+            commandAliases.add(objectMapper.readerFor(this.getCommandModeClass(commandAlias.getCommandMode())).readValue(file));
             state.set(" - Successfully loaded");
         } else {
             state.set(" - Unsupported schema version");
