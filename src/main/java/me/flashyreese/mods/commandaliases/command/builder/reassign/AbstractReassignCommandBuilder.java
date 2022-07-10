@@ -21,7 +21,7 @@ import java.util.Map;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.9.0
+ * @version 1.0.0
  * @since 0.3.0
  */
 public abstract class AbstractReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
@@ -53,18 +53,7 @@ public abstract class AbstractReassignCommandBuilder<S extends CommandSource> im
             return null;
         }
 
-        if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS) {
-            CommandAliasesMod.logger().warn("The command mode \"COMMAND_REASSIGN_AND_ALIAS\" is now deprecated and scheduled to remove on version 1.0.0");
-            CommandAliasesMod.logger().warn("Please migrate to command mode \"COMMAND_REASSIGN_AND_CUSTOM\", it is more feature packed and receives more support. :)");
-            if (this.command.getAliasCommand() == null) {
-                CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing alias command declaration!", this.commandType, this.command.getCommandMode());
-                return null;
-            }
-            if (!this.command.getAliasCommand().getCommand().startsWith(this.command.getReassignCommand().getCommand())) {
-                CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, alias command name and reassign command mismatch!", this.commandType, this.command.getCommandMode());
-                return null;
-            }
-        } else if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
+        if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
             if (this.command.getCustomCommand() == null) {
                 CommandAliasesMod.logger().error("[{}] {} - Skipping reassignment, missing custom command declaration!", this.commandType, this.command.getCommandMode());
                 return null;
