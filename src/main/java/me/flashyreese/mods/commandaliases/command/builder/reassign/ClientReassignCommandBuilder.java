@@ -5,6 +5,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ClientCustomCommandBuilder;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
@@ -17,13 +18,13 @@ import java.util.Map;
  * <p>
  *
  * @author FlashyReese
- * @version 0.7.0
+ * @version 0.9.0
  * @since 0.5.0
  */
 public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder<FabricClientCommandSource> {
 
-    public ClientReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignClientCommandMap, AbstractDatabase<byte[], byte[]> database) {
-        super(command, literalCommandNodeLiteralField, reassignClientCommandMap, CommandType.CLIENT, database);
+    public ClientReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignClientCommandMap, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
+        super(command, literalCommandNodeLiteralField, reassignClientCommandMap, CommandType.CLIENT, database, scheduler);
     }
 
     @Override
@@ -34,7 +35,7 @@ public class ClientReassignCommandBuilder extends AbstractReassignCommandBuilder
             this.reassignCommandMap.put(command, reassignTo);
 
             if (this.command.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM) {
-                return new ClientCustomCommandBuilder(this.command.getCustomCommand(), this.database).buildCommand(dispatcher);
+                return new ClientCustomCommandBuilder(this.command.getCustomCommand(), this.database, this.scheduler).buildCommand(dispatcher);
             }
         }
         return null;

@@ -7,8 +7,10 @@ import com.mojang.brigadier.context.StringRange;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.classtool.ClassTool;
 import me.flashyreese.mods.commandaliases.command.builder.alias.AliasHolder;
+import net.minecraft.SharedConstants;
 import net.minecraft.command.argument.*;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.util.registry.Registry;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -87,6 +89,19 @@ public class ArgumentTypeMapper implements ClassTool<ArgumentType<?>> {
         this.argumentMap.put("minecraft:entity_summon", EntitySummonArgumentType.entitySummon());
         this.argumentMap.put("minecraft:dimension", DimensionArgumentType.dimension());
         this.argumentMap.put("minecraft:time", TimeArgumentType.time());
+
+        // Todo: Allow entire registry keys by creating registry map
+        this.argumentMap.put("minecraft:resource_or_tag.biome_key", RegistryPredicateArgumentType.registryPredicate(Registry.BIOME_KEY));
+        this.argumentMap.put("minecraft:resource_or_tag.poi_type_key", RegistryPredicateArgumentType.registryPredicate(Registry.POINT_OF_INTEREST_TYPE_KEY));
+        this.argumentMap.put("minecraft:resource.attribute_key", RegistryKeyArgumentType.registryKey(Registry.ATTRIBUTE_KEY));
+        this.argumentMap.put("minecraft:resource.configured_feature_key", RegistryKeyArgumentType.registryKey(Registry.CONFIGURED_FEATURE_KEY));
+        this.argumentMap.put("minecraft:resource.structure_pool_key", RegistryKeyArgumentType.registryKey(Registry.STRUCTURE_POOL_KEY));
+
+        if (!SharedConstants.isDevelopment) {
+            this.argumentMap.put("minecraft:test_argument", TestFunctionArgumentType.testFunction());
+            this.argumentMap.put("minecraft:test_class", TestClassArgumentType.testClass());
+        }
+
         this.argumentMap.put("minecraft:uuid", UuidArgumentType.uuid());
 
         this.argumentMap.put("brigadier:bool", BoolArgumentType.bool());
@@ -115,6 +130,10 @@ public class ArgumentTypeMapper implements ClassTool<ArgumentType<?>> {
     @Override
     public String getValue(CommandContext<ServerCommandSource> context, AliasHolder holder) {
         return this.getInputString(context, holder.getVariableName());
+    }
+
+    public Map<String, ArgumentType<?>> getArgumentMap() {
+        return argumentMap;
     }
 
     public <S> String getInputString(CommandContext<S> commandContext, String name) {

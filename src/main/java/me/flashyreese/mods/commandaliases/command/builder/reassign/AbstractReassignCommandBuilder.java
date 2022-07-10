@@ -7,6 +7,7 @@ import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandSource;
@@ -20,22 +21,24 @@ import java.util.Map;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.8.0
+ * @version 0.9.0
  * @since 0.3.0
  */
 public abstract class AbstractReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
     protected final CommandAlias command;
     protected final Map<String, String> reassignCommandMap;
     protected final AbstractDatabase<byte[], byte[]> database;
+    protected final Scheduler scheduler;
     private final Field literalCommandNodeLiteralField;
     private final CommandType commandType;
 
-    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType, AbstractDatabase<byte[], byte[]> database) {
+    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.reassignCommandMap = reassignCommandMap;
         this.commandType = commandType;
         this.database = database;
+        this.scheduler = scheduler;
     }
 
     /**

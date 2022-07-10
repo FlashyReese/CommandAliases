@@ -8,6 +8,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
@@ -24,12 +25,12 @@ import java.util.List;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.8.0
+ * @version 0.9.0
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
-    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, AbstractDatabase<byte[], byte[]> database) {
-        super(commandAliasParent, database);
+    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
+        super(commandAliasParent, database, scheduler);
     }
 
     @Override
@@ -112,7 +113,7 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
                 });
             }
             if (child.getSuggestionProvider() != null) {
-                argumentBuilder = this.buildCommandChildSuggestion(argumentBuilder, child, new ObjectArrayList<>(inputs));
+                argumentBuilder = this.buildCommandChildSuggestion(dispatcher, argumentBuilder, child, new ObjectArrayList<>(inputs));
             }
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
