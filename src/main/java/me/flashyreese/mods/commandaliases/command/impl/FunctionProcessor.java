@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -46,53 +47,44 @@ public class FunctionProcessor {
             }
             return null;
         });
-        this.functionMap.put("get_database_first_suggestion_starts_with", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
-                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
-                if (keyString.startsWith(input)) {
-                    return new String(entry.getValue(), StandardCharsets.UTF_8);
+        this.functionMap.put("random", (commandSource, input) -> {
+            if (input != null) {
+                try {
+                    long seed = Long.parseLong(input);
+                    return String.valueOf(new Random(seed).nextInt());
+                }catch (NumberFormatException e) {
+                    if (CommandAliasesMod.options().debugSettings.debugMode) {
+                        CommandAliasesMod.logger().error("Parsing exception: {}", e.getMessage());
+                    }
                 }
             }
-            if (CommandAliasesMod.options().debugSettings.debugMode) {
-                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+            return String.valueOf(new Random().nextInt());
+        });
+        this.functionMap.put("get_time", (commandSource, input) -> {
+            if (commandSource instanceof ServerCommandSource serverCommandSource) {
+                return String.valueOf(serverCommandSource.getWorld().getTime());
+            } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
+                return String.valueOf(clientCommandSource.getWorld().getTime());
             }
             return null;
         });
-        this.functionMap.put("get_database_first_suggestion_ends_with", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
-                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
-                if (keyString.endsWith(input)) {
-                    return new String(entry.getValue(), StandardCharsets.UTF_8);
-                }
-            }
-            if (CommandAliasesMod.options().debugSettings.debugMode) {
-                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+        this.functionMap.put("get_time_of_day", (commandSource, input) -> {
+            if (commandSource instanceof ServerCommandSource serverCommandSource) {
+                return String.valueOf(serverCommandSource.getWorld().getTimeOfDay());
+            } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
+                return String.valueOf(clientCommandSource.getWorld().getTimeOfDay());
             }
             return null;
         });
-        this.functionMap.put("get_database_first_suggestion_contains", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
-                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
-                if (keyString.contains(input)) {
-                    return new String(entry.getValue(), StandardCharsets.UTF_8);
-                }
-            }
-            if (CommandAliasesMod.options().debugSettings.debugMode) {
-                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+        this.functionMap.put("get_lunar_time", (commandSource, input) -> {
+            if (commandSource instanceof ServerCommandSource serverCommandSource) {
+                return String.valueOf(serverCommandSource.getWorld().getLunarTime());
+            } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
+                return String.valueOf(clientCommandSource.getWorld().getLunarTime());
             }
             return null;
         });
-        this.functionMap.put("get_database_value", (commandSource, input) -> {
-            byte[] value = this.database.read(input.getBytes(StandardCharsets.UTF_8));
-            if (value != null) {
-                return new String(value, StandardCharsets.UTF_8);
-            } else {
-                if (CommandAliasesMod.options().debugSettings.debugMode) {
-                    CommandAliasesMod.logger().error("Invalid database key: {}", input);
-                }
-            }
-            return null;
-        });
+
         this.functionMap.put("get_dimension", (commandSource, input) -> {
             if (commandSource instanceof ServerCommandSource serverCommandSource) {
                 Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
@@ -233,6 +225,64 @@ public class FunctionProcessor {
                         .filter(clientPlayerEntity -> clientPlayerEntity.getEntityName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getZ());
+                }
+            }
+            return null;
+        });
+
+        // Database related
+        this.functionMap.put("get_database_contains", (commandSource, input) -> {
+            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
+                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
+                if (keyString.contains(input)) {
+                    return "true";
+                }
+            }
+            return "false";
+        });
+        this.functionMap.put("get_database_first_starts_with", (commandSource, input) -> {
+            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
+                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
+                if (keyString.startsWith(input)) {
+                    return new String(entry.getValue(), StandardCharsets.UTF_8);
+                }
+            }
+            if (CommandAliasesMod.options().debugSettings.debugMode) {
+                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+            }
+            return null;
+        });
+        this.functionMap.put("get_database_first_ends_with", (commandSource, input) -> {
+            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
+                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
+                if (keyString.endsWith(input)) {
+                    return new String(entry.getValue(), StandardCharsets.UTF_8);
+                }
+            }
+            if (CommandAliasesMod.options().debugSettings.debugMode) {
+                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+            }
+            return null;
+        });
+        this.functionMap.put("get_database_first_contains", (commandSource, input) -> {
+            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
+                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
+                if (keyString.contains(input)) {
+                    return new String(entry.getValue(), StandardCharsets.UTF_8);
+                }
+            }
+            if (CommandAliasesMod.options().debugSettings.debugMode) {
+                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+            }
+            return null;
+        });
+        this.functionMap.put("get_database_value", (commandSource, input) -> {
+            byte[] value = this.database.read(input.getBytes(StandardCharsets.UTF_8));
+            if (value != null) {
+                return new String(value, StandardCharsets.UTF_8);
+            } else {
+                if (CommandAliasesMod.options().debugSettings.debugMode) {
+                    CommandAliasesMod.logger().error("Invalid database key: {}", input);
                 }
             }
             return null;

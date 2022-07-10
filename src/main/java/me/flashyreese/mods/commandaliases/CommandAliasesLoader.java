@@ -384,7 +384,7 @@ public class CommandAliasesLoader {
                                         })
                                 )
                         )
-                        .then(CommandManager.literal("contains").requires(Permissions.require("commandaliases.database.contains", 4))
+                        .then(CommandManager.literal("match").requires(Permissions.require("commandaliases.database.match", 4))
                                 .then(CommandManager.argument("key", StringArgumentType.string())
                                         .executes(context -> {
                                             String originalKey = StringArgumentType.getString(context, "key");
@@ -645,7 +645,7 @@ public class CommandAliasesLoader {
                                         })
                                 )
                         )
-                        .then(ClientCommandManager.literal("contains")
+                        .then(ClientCommandManager.literal("match")
                                 .then(ClientCommandManager.argument("key", StringArgumentType.string())
                                         .executes(context -> {
                                             String originalKey = StringArgumentType.getString(context, "key");
