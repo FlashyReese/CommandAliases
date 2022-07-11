@@ -11,6 +11,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -247,9 +248,7 @@ public class FunctionProcessor {
             String arg = matcher.group("arg");
             if (this.functionMap.containsKey(fn)) {
                 String value = this.functionMap.get(fn).apply(commandSource, arg);
-                if (value != null) {
-                    modified = modified.replace(matcher.group(), value);
-                }
+                modified = modified.replace(matcher.group(), Objects.requireNonNullElse(value, "null"));
             } else {
                 CommandAliasesMod.logger().error("Invalid function of `{}` in `{}`", fn, original);
                 break;
