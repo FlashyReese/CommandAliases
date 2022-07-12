@@ -49,7 +49,7 @@ public class FunctionProcessor {
             return null;
         });
         this.functionMap.put("random", (commandSource, input) -> {
-            if (input != null) {
+            if (input != null && !input.isEmpty()) {
                 try {
                     long seed = Long.parseLong(input);
                     return String.valueOf(new Random(seed).nextInt());
@@ -60,6 +60,14 @@ public class FunctionProcessor {
                 }
             }
             return String.valueOf(new Random().nextInt());
+        });
+        this.functionMap.put("is_online", (commandSource, input) -> {
+            if (commandSource instanceof ServerCommandSource serverCommandSource) {
+                return String.valueOf(serverCommandSource.getWorld().getPlayers().stream().anyMatch(serverPlayerEntity -> serverPlayerEntity.getEntityName().equals(input)));
+            } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
+                return String.valueOf(clientCommandSource.getWorld().getPlayers().stream().anyMatch(serverPlayerEntity -> serverPlayerEntity.getEntityName().equals(input)));
+            }
+            return "false";
         });
         this.functionMap.put("get_time", (commandSource, input) -> {
             if (commandSource instanceof ServerCommandSource serverCommandSource) {
@@ -85,7 +93,6 @@ public class FunctionProcessor {
             }
             return null;
         });
-
         this.functionMap.put("get_dimension", (commandSource, input) -> {
             if (commandSource instanceof ServerCommandSource serverCommandSource) {
                 Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
@@ -249,7 +256,7 @@ public class FunctionProcessor {
                 }
             }
             if (CommandAliasesMod.options().debugSettings.debugMode) {
-                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+                CommandAliasesMod.logger().error("Empty result: {}", input);
             }
             return null;
         });
@@ -261,7 +268,7 @@ public class FunctionProcessor {
                 }
             }
             if (CommandAliasesMod.options().debugSettings.debugMode) {
-                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+                CommandAliasesMod.logger().error("Empty result: {}", input);
             }
             return null;
         });
@@ -273,7 +280,7 @@ public class FunctionProcessor {
                 }
             }
             if (CommandAliasesMod.options().debugSettings.debugMode) {
-                CommandAliasesMod.logger().error("Invalid empty suggestions: {}", input);
+                CommandAliasesMod.logger().error("Empty result: {}", input);
             }
             return null;
         });

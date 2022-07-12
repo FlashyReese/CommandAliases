@@ -10,7 +10,7 @@ import java.util.List;
  * Serialization Template
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 1.0.0
  * @since 0.4.0
  */
 public class CustomCommand extends CommandAlias {
