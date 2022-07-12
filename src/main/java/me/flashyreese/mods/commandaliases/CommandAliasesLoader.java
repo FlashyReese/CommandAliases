@@ -23,6 +23,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
@@ -64,12 +65,12 @@ public class CommandAliasesLoader {
     }
 
     public void registerCommandAliases() {
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            this.registerCommandAliasesCommands(dispatcher, registryAccess);
+            this.serverCommandAliasesProvider.loadCommandAliases();
+            this.registerCommands(dispatcher, registryAccess);
+        });
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-            //CommandRegistrationCallback won't work here because it gets called before the server even starts.
-            CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
-            CommandRegistryAccess registryAccess = ((CommandManagerExtended) server.getCommandManager()).getCommandRegistryAccess();
-            //CommandManager.RegistrationEnvironment environment = ((CommandManagerExtended) server.getCommandManager()).getEnvironment();
-
             if (this.serverCommandAliasesProvider.getDatabase() == null) {
                 this.serverCommandAliasesProvider.setDatabase(new LevelDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString()));
                 this.serverCommandAliasesProvider.getDatabase().open();
@@ -78,10 +79,6 @@ public class CommandAliasesLoader {
             if (this.serverCommandAliasesProvider.getScheduler() == null) {
                 this.serverCommandAliasesProvider.setScheduler(new Scheduler());
             }
-
-            this.registerCommandAliasesCommands(dispatcher, registryAccess);
-            this.serverCommandAliasesProvider.loadCommandAliases();
-            this.registerCommands(dispatcher, registryAccess);
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             if (this.serverCommandAliasesProvider.getDatabase() != null) {
