@@ -4,17 +4,15 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
+import me.flashyreese.mods.commandaliases.CommandAliasesProvider;
 import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
-import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
-import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
 
 import java.lang.reflect.Field;
-import java.util.Map;
 
 /**
  * Represents the CommandAliases Reassign Builder
@@ -27,21 +25,17 @@ import java.util.Map;
  */
 public abstract class AbstractReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
     protected final CommandAlias command;
-    protected final Map<String, String> reassignCommandMap;
+    protected final CommandAliasesProvider commandAliasesProvider;
     protected final CommandRegistryAccess registryAccess;
-    protected final AbstractDatabase<byte[], byte[]> database;
-    protected final Scheduler scheduler;
     private final Field literalCommandNodeLiteralField;
     private final CommandType commandType;
 
-    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
+    public AbstractReassignCommandBuilder(CommandAlias command, Field literalCommandNodeLiteralField, CommandAliasesProvider commandAliasesProvider, CommandType commandType, CommandRegistryAccess registryAccess) {
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
-        this.reassignCommandMap = reassignCommandMap;
+        this.commandAliasesProvider = commandAliasesProvider;
         this.commandType = commandType;
         this.registryAccess = registryAccess;
-        this.database = database;
-        this.scheduler = scheduler;
     }
 
     /**

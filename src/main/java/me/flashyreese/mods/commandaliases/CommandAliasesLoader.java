@@ -6,7 +6,6 @@ import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import me.flashyreese.mods.commandaliases.command.CommandManagerExtended;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
@@ -64,12 +63,7 @@ public class CommandAliasesLoader {
     }
 
     public void registerCommandAliases() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            this.registerCommandAliasesCommands(dispatcher, registryAccess);
-            this.serverCommandAliasesProvider.loadCommandAliases();
-            this.registerCommands(dispatcher, registryAccess);
-        });
-        ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+        ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             if (this.serverCommandAliasesProvider.getDatabase() == null) {
                 this.serverCommandAliasesProvider.setDatabase(new LevelDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString()));
                 this.serverCommandAliasesProvider.getDatabase().open();
@@ -78,6 +72,11 @@ public class CommandAliasesLoader {
             if (this.serverCommandAliasesProvider.getScheduler() == null) {
                 this.serverCommandAliasesProvider.setScheduler(new Scheduler());
             }
+        });
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            this.registerCommandAliasesCommands(dispatcher, registryAccess);
+            this.serverCommandAliasesProvider.loadCommandAliases();
+            this.registerCommands(dispatcher, registryAccess);
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             if (this.serverCommandAliasesProvider.getDatabase() != null) {
@@ -132,7 +131,7 @@ public class CommandAliasesLoader {
                     this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getAliasCommand().getCommand());
                 }
             } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), this.serverCommandAliasesProvider, registryAccess).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getCustomCommand().getParent());
@@ -142,7 +141,7 @@ public class CommandAliasesLoader {
                 if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                     command = new CommandRedirectBuilder<ServerCommandSource>(cmd, CommandType.SERVER).buildCommand(dispatcher);
                 } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.serverCommandAliasesProvider.getReassignedCommandMap(), registryAccess, this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.serverCommandAliasesProvider, registryAccess).buildCommand(dispatcher);
                 }
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
@@ -165,7 +164,7 @@ public class CommandAliasesLoader {
     private void registerClientCommands(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
         this.clientCommandAliasesProvider.getCommands().forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), registryAccess, this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), this.clientCommandAliasesProvider, registryAccess).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.clientCommandAliasesProvider.getLoadedCommands().add(cmd.getCustomCommand().getParent());
@@ -175,7 +174,7 @@ public class CommandAliasesLoader {
                 if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                     command = new CommandRedirectBuilder<FabricClientCommandSource>(cmd, CommandType.CLIENT).buildCommand(dispatcher);
                 } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.clientCommandAliasesProvider.getReassignedCommandMap(), registryAccess, this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.clientCommandAliasesProvider, registryAccess).buildCommand(dispatcher);
                 }
                 if (command != null) {
                     dispatcher.register(command);
