@@ -1,7 +1,7 @@
 package me.flashyreese.mods.commandaliases.command.impl;
 
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
+import me.flashyreese.mods.commandaliases.CommandAliasesProvider;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.command.CommandSource;
@@ -9,11 +9,7 @@ import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,10 +28,10 @@ public class FunctionProcessor {
 
     private final Map<String, BiFunction<CommandSource, String, String>> functionMap = new HashMap<>();
 
-    private final AbstractDatabase<byte[], byte[]> database;
+    private final CommandAliasesProvider commandAliasesProvider;
 
-    public FunctionProcessor(AbstractDatabase<byte[], byte[]> database) {
-        this.database = database;
+    public FunctionProcessor(CommandAliasesProvider commandAliasesProvider) {
+        this.commandAliasesProvider = commandAliasesProvider;
         this.registerFunctions();
     }
 
@@ -53,7 +49,7 @@ public class FunctionProcessor {
                 try {
                     long seed = Long.parseLong(input);
                     return String.valueOf(new Random(seed).nextInt());
-                }catch (NumberFormatException e) {
+                } catch (NumberFormatException e) {
                     if (CommandAliasesMod.options().debugSettings.debugMode) {
                         CommandAliasesMod.logger().error("Parsing exception: {}", e.getMessage());
                     }
@@ -240,7 +236,7 @@ public class FunctionProcessor {
 
         // Database related
         this.functionMap.put("get_database_contains", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
+            for (Map.Entry<byte[], byte[]> entry : this.commandAliasesProvider.getDatabase().list().entrySet()) {
                 String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
                 if (keyString.contains(input)) {
                     return "true";
@@ -249,7 +245,7 @@ public class FunctionProcessor {
             return "false";
         });
         this.functionMap.put("get_database_first_starts_with", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
+            for (Map.Entry<byte[], byte[]> entry : this.commandAliasesProvider.getDatabase().list().entrySet()) {
                 String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
                 if (keyString.startsWith(input)) {
                     return new String(entry.getValue(), StandardCharsets.UTF_8);
@@ -261,7 +257,7 @@ public class FunctionProcessor {
             return null;
         });
         this.functionMap.put("get_database_first_ends_with", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
+            for (Map.Entry<byte[], byte[]> entry : this.commandAliasesProvider.getDatabase().list().entrySet()) {
                 String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
                 if (keyString.endsWith(input)) {
                     return new String(entry.getValue(), StandardCharsets.UTF_8);
@@ -273,7 +269,7 @@ public class FunctionProcessor {
             return null;
         });
         this.functionMap.put("get_database_first_contains", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.database.list().entrySet()) {
+            for (Map.Entry<byte[], byte[]> entry : this.commandAliasesProvider.getDatabase().list().entrySet()) {
                 String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
                 if (keyString.contains(input)) {
                     return new String(entry.getValue(), StandardCharsets.UTF_8);
@@ -285,7 +281,7 @@ public class FunctionProcessor {
             return null;
         });
         this.functionMap.put("get_database_value", (commandSource, input) -> {
-            byte[] value = this.database.read(input.getBytes(StandardCharsets.UTF_8));
+            byte[] value = this.commandAliasesProvider.getDatabase().read(input.getBytes(StandardCharsets.UTF_8));
             if (value != null) {
                 return new String(value, StandardCharsets.UTF_8);
             } else {

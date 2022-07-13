@@ -132,7 +132,7 @@ public class CommandAliasesLoader {
         // Load other commands
         this.serverCommandAliasesProvider.getCommands().stream().filter(cmd -> cmd.getCommandMode() != CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM && cmd instanceof CustomCommand customCommand) {
-                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(customCommand, registryAccess, this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(customCommand, this.serverCommandAliasesProvider, registryAccess).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.serverCommandAliasesProvider.getLoadedCommands().add(customCommand.getCommand());
@@ -164,7 +164,7 @@ public class CommandAliasesLoader {
         // Load other commands
         this.clientCommandAliasesProvider.getCommands().stream().filter(cmd -> cmd.getCommandMode() != CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM && cmd instanceof CustomCommand customCommand) {
-                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(customCommand, registryAccess, this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(customCommand, this.clientCommandAliasesProvider, registryAccess).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.clientCommandAliasesProvider.getLoadedCommands().add(customCommand.getCommand());

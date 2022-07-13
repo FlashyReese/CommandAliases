@@ -15,13 +15,13 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
+import me.flashyreese.mods.commandaliases.CommandAliasesProvider;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.*;
 import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
 import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
 import me.flashyreese.mods.commandaliases.command.impl.InputMapper;
-import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
 
@@ -48,16 +48,13 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     protected final FunctionProcessor functionProcessor;
     protected final InputMapper<S> inputMapper;
 
-    protected final AbstractDatabase<byte[], byte[]> database;
+    protected final CommandAliasesProvider commandAliasesProvider;
 
-    protected final Scheduler scheduler;
-
-    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandRegistryAccess registryAccess, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
+    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandAliasesProvider commandAliasesProvider, CommandRegistryAccess registryAccess) {
         this.argumentTypeMapper = new ArgumentTypeMapper(registryAccess);
         this.commandAliasParent = commandAliasParent;
-        this.functionProcessor = new FunctionProcessor(database);
-        this.database = database;
-        this.scheduler = scheduler;
+        this.commandAliasesProvider = commandAliasesProvider;
+        this.functionProcessor = new FunctionProcessor(commandAliasesProvider);
         this.inputMapper = new InputMapper<>();
     }
 
@@ -173,7 +170,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     /**
      * Builds suggestion provider for child components using argument types and has a specified suggestion provider.
      *
-     * @param dispatcher
+     * @param dispatcher      The command dispatcher
      * @param argumentBuilder The argument builder
      * @param child           The child component
      * @param inputs          User input list
@@ -233,7 +230,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 List<String> suggestions = new ObjectArrayList<>();
                 long start = System.nanoTime();
                 String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
-                this.database.list().forEach((key, value) -> {
+                this.commandAliasesProvider.getDatabase().list().forEach((key, value) -> {
                     String keyString = new String(key, StandardCharsets.UTF_8);
                     if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && keyString.startsWith(formattedSuggestion)) &&
                             !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && keyString.endsWith(formattedSuggestion)) &&
@@ -300,7 +297,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             triggerTime = System.currentTimeMillis() + Long.parseLong(time);
         }
 
-        this.scheduler.addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
+        this.commandAliasesProvider.getScheduler().addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
             if (action.getCommand() != null && action.getCommandType() != null) {
                 long startFormat = System.nanoTime();
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());
