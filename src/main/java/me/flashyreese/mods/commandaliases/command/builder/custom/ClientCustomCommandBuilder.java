@@ -4,14 +4,12 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import me.flashyreese.mods.commandaliases.CommandAliasesProvider;
 import me.flashyreese.mods.commandaliases.command.CommandType;
-import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
-import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
 import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
 
 import java.util.Objects;
 
@@ -26,8 +24,8 @@ import java.util.Objects;
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {
 
-    public ClientCustomCommandBuilder(CustomCommand commandAliasParent, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
-        super(commandAliasParent, database, scheduler);
+    public ClientCustomCommandBuilder(CustomCommand commandAliasParent, CommandAliasesProvider commandAliasesProvider) {
+        super(commandAliasParent, commandAliasesProvider);
     }
 
     @Override
