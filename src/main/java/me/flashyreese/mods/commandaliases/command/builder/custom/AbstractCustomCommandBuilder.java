@@ -16,6 +16,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.CommandAliasesProvider;
+import me.flashyreese.mods.commandaliases.command.Permissions;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.*;
@@ -77,7 +78,9 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     protected LiteralArgumentBuilder<S> buildCommandParent(CommandDispatcher<S> dispatcher) {
         LiteralArgumentBuilder<S> argumentBuilder = this.literal(this.commandAliasParent.getCommand());
         if (this.commandAliasParent.getPermission() > 0 && this.commandAliasParent.getPermission() <= 4) {
-            argumentBuilder = argumentBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(this.commandAliasParent.getPermission()));
+            argumentBuilder = argumentBuilder.requires(Permissions.require(this.commandAliasParent.getCommand(), this.commandAliasParent.getPermission()));
+        } else {
+            argumentBuilder = argumentBuilder.requires(Permissions.require(this.commandAliasParent.getCommand(), true));
         }
 
         if (this.commandAliasParent.isOptional()) {
@@ -88,7 +91,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
             for (CustomCommandChild child : this.commandAliasParent.getChildren()) {
-                ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new ObjectArrayList<>());
+                ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new ObjectArrayList<>(), this.commandAliasParent.getCommand());
                 if (subArgumentBuilder != null) {
                     argumentBuilder = argumentBuilder.then(subArgumentBuilder);
                 }
@@ -105,7 +108,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @param inputs     User input list
      * @return ArgumentBuilder
      */
-    protected ArgumentBuilder<S, ?> buildCommandChild(CustomCommandChild child, CommandDispatcher<S> dispatcher, List<String> inputs) {
+    protected ArgumentBuilder<S, ?> buildCommandChild(CustomCommandChild child, CommandDispatcher<S> dispatcher, List<String> inputs, String permission) {
         ArgumentBuilder<S, ?> argumentBuilder = null;
         if (child.getType().equals("literal")) {
             argumentBuilder = this.literal(child.getChild());
@@ -118,9 +121,12 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             }
         }
         if (argumentBuilder != null) {
+            String permissionString = permission + "." + child.getChild();
             // Assign permission
             if (child.getPermission() > 0 && child.getPermission() <= 4) {
-                argumentBuilder = argumentBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(child.getPermission()));
+                argumentBuilder = argumentBuilder.requires(Permissions.require(permissionString, child.getPermission()));
+            } else {
+                argumentBuilder = argumentBuilder.requires(Permissions.require(permissionString, true));
             }
 
             if (child.isOptional()) {
@@ -135,7 +141,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
                 for (CustomCommandChild subChild : child.getChildren()) {
-                    ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new ObjectArrayList<>(inputs));
+                    ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new ObjectArrayList<>(inputs), permissionString);
                     if (subArgumentBuilder != null) {
                         argumentBuilder = argumentBuilder.then(subArgumentBuilder);
                     }

@@ -6,9 +6,9 @@ import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.LiteralCommandNode;
-import me.flashyreese.mods.commandaliases.command.CommandManagerExtended;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
+import me.flashyreese.mods.commandaliases.command.Permissions;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ClientCustomCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder;
@@ -18,7 +18,6 @@ import me.flashyreese.mods.commandaliases.command.builder.reassign.format.Reassi
 import me.flashyreese.mods.commandaliases.command.builder.redirect.CommandRedirectBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
 import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
-import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
