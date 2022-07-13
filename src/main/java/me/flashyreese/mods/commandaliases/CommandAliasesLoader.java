@@ -98,9 +98,9 @@ public class CommandAliasesLoader {
             this.clientCommandAliasesProvider.setDatabase(new LevelDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString()));
             this.clientCommandAliasesProvider.getDatabase().open();
         }
-            if (this.clientCommandAliasesProvider.getScheduler() == null) {
-                this.clientCommandAliasesProvider.setScheduler(new Scheduler());
-            }
+        if (this.clientCommandAliasesProvider.getScheduler() == null) {
+            this.clientCommandAliasesProvider.setScheduler(new Scheduler());
+        }
         this.registerClientCommandAliasesCommands(dispatcher);
         this.clientCommandAliasesProvider.loadCommandAliases();
         this.registerClientCommands(dispatcher);
@@ -128,7 +128,7 @@ public class CommandAliasesLoader {
                     this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getAliasCommand().getCommand());
                 }
             } else if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                LiteralArgumentBuilder<ServerCommandSource> command = new ServerCustomCommandBuilder(cmd.getCustomCommand(), this.serverCommandAliasesProvider).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.serverCommandAliasesProvider.getLoadedCommands().add(cmd.getCustomCommand().getParent());
@@ -138,7 +138,7 @@ public class CommandAliasesLoader {
                 if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                     command = new CommandRedirectBuilder<ServerCommandSource>(cmd, CommandType.SERVER).buildCommand(dispatcher);
                 } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.serverCommandAliasesProvider.getReassignedCommandMap(), this.serverCommandAliasesProvider.getDatabase(), this.serverCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                    command = new ServerReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.serverCommandAliasesProvider).buildCommand(dispatcher);
                 }
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
@@ -161,7 +161,7 @@ public class CommandAliasesLoader {
     private void registerClientCommands(CommandDispatcher<FabricClientCommandSource> dispatcher) {
         this.clientCommandAliasesProvider.getCommands().forEach(cmd -> {
             if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM) {
-                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                LiteralArgumentBuilder<FabricClientCommandSource> command = new ClientCustomCommandBuilder(cmd.getCustomCommand(), this.clientCommandAliasesProvider).buildCommand(dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.clientCommandAliasesProvider.getLoadedCommands().add(cmd.getCustomCommand().getParent());
@@ -171,7 +171,7 @@ public class CommandAliasesLoader {
                 if (cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
                     command = new CommandRedirectBuilder<FabricClientCommandSource>(cmd, CommandType.CLIENT).buildCommand(dispatcher);
                 } else if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_ALIAS || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN_AND_CUSTOM || cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN) {
-                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.clientCommandAliasesProvider.getReassignedCommandMap(), this.clientCommandAliasesProvider.getDatabase(), this.clientCommandAliasesProvider.getScheduler()).buildCommand(dispatcher);
+                    command = new ClientReassignCommandBuilder(cmd, this.literalCommandNodeLiteralField, this.clientCommandAliasesProvider).buildCommand(dispatcher);
                 }
                 if (command != null) {
                     dispatcher.register(command);

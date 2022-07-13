@@ -7,12 +7,11 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
+import me.flashyreese.mods.commandaliases.CommandAliasesProvider;
 import me.flashyreese.mods.commandaliases.command.CommandType;
-import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandChild;
-import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.LiteralText;
@@ -29,8 +28,8 @@ import java.util.List;
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
-    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, AbstractDatabase<byte[], byte[]> database, Scheduler scheduler) {
-        super(commandAliasParent, database, scheduler);
+    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, CommandAliasesProvider commandAliasesProvider) {
+        super(commandAliasParent, commandAliasesProvider);
     }
 
     @Override
