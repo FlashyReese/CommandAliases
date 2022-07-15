@@ -43,6 +43,9 @@ dependencies {
 	include(implementation("org.iq80.leveldb:leveldb:0.12"))
 	include(implementation("org.iq80.leveldb:leveldb-api:0.12"))
 
+	// MySQL
+	include(implementation("mysql:mysql-connector-java:8.0.28"))
+
 	// Parsing Libraries
 	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3"))
 	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3"))

@@ -10,15 +10,15 @@ import java.util.Map;
  * @since 0.7.0
  */
 public interface AbstractDatabase<K, V> {
-    void open();
+    boolean open();
 
-    void close();
+    boolean close();
 
-    void write(K key, V value);
+    boolean write(K key, V value);
 
     V read(K key);
 
-    void delete(K key);
+    boolean delete(K key);
 
     Map<K, V> list();
 }

@@ -15,7 +15,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.CommandAliasesProvider;
+import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import me.flashyreese.mods.commandaliases.command.Permissions;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
@@ -46,16 +46,16 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     protected final CustomCommand commandAliasParent;
 
     protected final ArgumentTypeMapper argumentTypeMapper;
-    protected final FunctionProcessor functionProcessor;
+    protected final FunctionProcessor<S> functionProcessor;
     protected final InputMapper<S> inputMapper;
 
-    protected final CommandAliasesProvider commandAliasesProvider;
+    protected final AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider;
 
-    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandAliasesProvider commandAliasesProvider, CommandRegistryAccess registryAccess) {
+    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
         this.argumentTypeMapper = new ArgumentTypeMapper(registryAccess);
         this.commandAliasParent = commandAliasParent;
-        this.commandAliasesProvider = commandAliasesProvider;
-        this.functionProcessor = new FunctionProcessor(commandAliasesProvider);
+        this.abstractCommandAliasesProvider = abstractCommandAliasesProvider;
+        this.functionProcessor = new FunctionProcessor<>(abstractCommandAliasesProvider);
         this.inputMapper = new InputMapper<>();
     }
 
@@ -236,7 +236,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 List<String> suggestions = new ObjectArrayList<>();
                 long start = System.nanoTime();
                 String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
-                this.commandAliasesProvider.getDatabase().list().forEach((key, value) -> {
+                this.abstractCommandAliasesProvider.getDatabase().list().forEach((key, value) -> {
                     String keyString = new String(key, StandardCharsets.UTF_8);
                     if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && keyString.startsWith(formattedSuggestion)) &&
                             !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && keyString.endsWith(formattedSuggestion)) &&
@@ -303,7 +303,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             triggerTime = System.currentTimeMillis() + Long.parseLong(time);
         }
 
-        this.commandAliasesProvider.getScheduler().addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
+        this.abstractCommandAliasesProvider.getScheduler().addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
             if (action.getCommand() != null && action.getCommandType() != null) {
                 long startFormat = System.nanoTime();
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());

@@ -1,6 +1,7 @@
 package me.flashyreese.mods.commandaliases.storage.database.rocksdb;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
@@ -30,30 +31,37 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public void open() {
+    public boolean open() {
         try (final Options options = new Options().setCreateIfMissing(true)) {
             try {
                 this.database = RocksDB.open(options, this.path);
+                return true;
             } catch (RocksDBException e) {
+                CommandAliasesMod.logger().error(e.getMessage());
                 e.printStackTrace();
             }
         }
+        return false;
     }
 
     @Override
-    public void close() {
+    public boolean close() {
         if (this.database != null) {
             this.database.close();
         }
+        return true;
     }
 
     @Override
-    public void write(byte[] key, byte[] value) {
+    public boolean write(byte[] key, byte[] value) {
         try {
             this.database.put(key, value);
+            return true;
         } catch (RocksDBException e) {
+            CommandAliasesMod.logger().error(e.getMessage());
             e.printStackTrace();
         }
+        return false;
     }
 
     @Override
@@ -61,18 +69,22 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
         try {
             return this.database.get(key);
         } catch (RocksDBException e) {
+            CommandAliasesMod.logger().error(e.getMessage());
             e.printStackTrace();
         }
         return null;
     }
 
     @Override
-    public void delete(byte[] key) {
+    public boolean delete(byte[] key) {
         try {
             this.database.delete(key);
+            return true;
         } catch (RocksDBException e) {
+            CommandAliasesMod.logger().error(e.getMessage());
             e.printStackTrace();
         }
+        return false;
     }
 
     @Override
