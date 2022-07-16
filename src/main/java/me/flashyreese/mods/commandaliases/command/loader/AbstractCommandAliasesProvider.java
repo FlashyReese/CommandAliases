@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.fathzer.soft.javaluator.DoubleEvaluator;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -26,6 +25,7 @@ import me.flashyreese.mods.commandaliases.command.builder.reassign.format.Reassi
 import me.flashyreese.mods.commandaliases.command.builder.redirect.CommandRedirectBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
 import me.flashyreese.mods.commandaliases.math.ExtendedDoubleEvaluator;
+import me.flashyreese.mods.commandaliases.math.SimpleBooleanEvaluator;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import me.flashyreese.mods.commandaliases.util.Atomic;
 import me.flashyreese.mods.commandaliases.util.TreeNode;
@@ -146,6 +146,33 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                                     if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
                                                         return Command.SINGLE_SUCCESS;
                                                     return 0;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(this.literal("boolean").requires(Permissions.require("commandaliases.compute.boolean", 4))
+                                .then(this.argument("expression", StringArgumentType.string())
+                                        .executes(context -> {
+                                            if (new SimpleBooleanEvaluator().evaluate(StringArgumentType.getString(context, "expression")))
+                                                return Command.SINGLE_SUCCESS;
+                                            return 0;
+                                        })
+                                )
+                                .then(this.argument("key", StringArgumentType.string())
+                                        .then(this.argument("expression", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String originalKey = StringArgumentType.getString(context, "key");
+                                                    String expression = StringArgumentType.getString(context, "expression");
+
+                                                    boolean finalValue = new SimpleBooleanEvaluator().evaluate(expression);
+
+                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                    byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                    if (this.getDatabase().read(key) != null) {
+                                                        this.getDatabase().delete(key);
+                                                    }
+                                                    this.getDatabase().write(key, value);
+                                                    return Command.SINGLE_SUCCESS;
                                                 })
                                         )
                                 )
