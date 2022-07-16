@@ -7,10 +7,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import com.fathzer.soft.javaluator.DoubleEvaluator;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -25,6 +25,7 @@ import me.flashyreese.mods.commandaliases.command.builder.reassign.ReassignComma
 import me.flashyreese.mods.commandaliases.command.builder.reassign.format.ReassignCommand;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.CommandRedirectBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
+import me.flashyreese.mods.commandaliases.math.ExtendedDoubleEvaluator;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import me.flashyreese.mods.commandaliases.util.Atomic;
 import me.flashyreese.mods.commandaliases.util.TreeNode;
@@ -149,118 +150,23 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                         )
                                 )
                         )
-                        .then(this.literal("addition").requires(Permissions.require("commandaliases.compute.addition", 4))
+                        .then(this.literal("evaluate").requires(Permissions.require("commandaliases.compute.evaluate", 4))
                                 .then(this.argument("key", StringArgumentType.string())
-                                        .then(this.argument("value1", FloatArgumentType.floatArg())
-                                                .then(this.argument("value2", FloatArgumentType.floatArg())
-                                                        .executes(context -> {
-                                                            String originalKey = StringArgumentType.getString(context, "key");
-                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
-                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
+                                        .then(this.argument("expression", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String originalKey = StringArgumentType.getString(context, "key");
+                                                    String expression = StringArgumentType.getString(context, "expression");
 
-                                                            float finalValue = originalValue1 + originalValue2;
+                                                    double finalValue = new ExtendedDoubleEvaluator().evaluate(expression);
 
-                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
-                                                            if (this.getDatabase().read(key) != null) {
-                                                                this.getDatabase().delete(key);
-                                                            }
-                                                            this.getDatabase().write(key, value);
-                                                            return Command.SINGLE_SUCCESS;
-                                                        })
-                                                )
-                                        )
-                                )
-                        )
-                        .then(this.literal("subtraction").requires(Permissions.require("commandaliases.compute.subtraction", 4))
-                                .then(this.argument("key", StringArgumentType.string())
-                                        .then(this.argument("value1", FloatArgumentType.floatArg())
-                                                .then(this.argument("value2", FloatArgumentType.floatArg())
-                                                        .executes(context -> {
-                                                            String originalKey = StringArgumentType.getString(context, "key");
-                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
-                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
-
-                                                            float finalValue = originalValue1 - originalValue2;
-
-                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
-                                                            if (this.getDatabase().read(key) != null) {
-                                                                this.getDatabase().delete(key);
-                                                            }
-                                                            this.getDatabase().write(key, value);
-                                                            return Command.SINGLE_SUCCESS;
-                                                        })
-                                                )
-                                        )
-                                )
-                        )
-                        .then(this.literal("multiplication").requires(Permissions.require("commandaliases.compute.multiplication", 4))
-                                .then(this.argument("key", StringArgumentType.string())
-                                        .then(this.argument("value1", FloatArgumentType.floatArg())
-                                                .then(this.argument("value2", FloatArgumentType.floatArg())
-                                                        .executes(context -> {
-                                                            String originalKey = StringArgumentType.getString(context, "key");
-                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
-                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
-
-                                                            float finalValue = originalValue1 * originalValue2;
-
-                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
-                                                            if (this.getDatabase().read(key) != null) {
-                                                                this.getDatabase().delete(key);
-                                                            }
-                                                            this.getDatabase().write(key, value);
-                                                            return Command.SINGLE_SUCCESS;
-                                                        })
-                                                )
-                                        )
-                                )
-                        )
-                        .then(this.literal("division").requires(Permissions.require("commandaliases.compute.division", 4))
-                                .then(this.argument("key", StringArgumentType.string())
-                                        .then(this.argument("value1", FloatArgumentType.floatArg())
-                                                .then(this.argument("value2", FloatArgumentType.floatArg())
-                                                        .executes(context -> {
-                                                            String originalKey = StringArgumentType.getString(context, "key");
-                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
-                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
-
-                                                            float finalValue = originalValue1 / originalValue2;
-
-                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
-                                                            if (this.getDatabase().read(key) != null) {
-                                                                this.getDatabase().delete(key);
-                                                            }
-                                                            this.getDatabase().write(key, value);
-                                                            return Command.SINGLE_SUCCESS;
-                                                        })
-                                                )
-                                        )
-                                )
-                        )
-                        .then(this.literal("modulus").requires(Permissions.require("commandaliases.compute.modulus", 4))
-                                .then(this.argument("key", StringArgumentType.string())
-                                        .then(this.argument("value1", FloatArgumentType.floatArg())
-                                                .then(this.argument("value2", FloatArgumentType.floatArg())
-                                                        .executes(context -> {
-                                                            String originalKey = StringArgumentType.getString(context, "key");
-                                                            float originalValue1 = FloatArgumentType.getFloat(context, "value1");
-                                                            float originalValue2 = FloatArgumentType.getFloat(context, "value2");
-
-                                                            float finalValue = originalValue1 % originalValue2;
-
-                                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                                            byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
-                                                            if (this.getDatabase().read(key) != null) {
-                                                                this.getDatabase().delete(key);
-                                                            }
-                                                            this.getDatabase().write(key, value);
-                                                            return Command.SINGLE_SUCCESS;
-                                                        })
-                                                )
+                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                                    byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
+                                                    if (this.getDatabase().read(key) != null) {
+                                                        this.getDatabase().delete(key);
+                                                    }
+                                                    this.getDatabase().write(key, value);
+                                                    return Command.SINGLE_SUCCESS;
+                                                })
                                         )
                                 )
                         )
