@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -68,7 +67,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
     private final Path commandsDirectory;
     private final Field literalCommandNodeLiteralField;
     private final String rootCommand;
-    private AbstractDatabase<byte[], byte[]> database;
+    private AbstractDatabase<String, String> database;
     private Scheduler scheduler;
 
     public AbstractCommandAliasesProvider(Path commandsDirectory, Field literalCommandNodeLiteralField, String rootCommand) {
@@ -151,27 +150,15 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                 )
                         )
                         .then(this.literal("boolean").requires(Permissions.require("commandaliases.compute.boolean", 4))
-                                .then(this.argument("expression", StringArgumentType.string())
-                                        .executes(context -> {
-                                            if (new SimpleBooleanEvaluator().evaluate(StringArgumentType.getString(context, "expression")))
-                                                return Command.SINGLE_SUCCESS;
-                                            return 0;
-                                        })
-                                )
                                 .then(this.argument("key", StringArgumentType.string())
                                         .then(this.argument("expression", StringArgumentType.string())
                                                 .executes(context -> {
-                                                    String originalKey = StringArgumentType.getString(context, "key");
+                                                    String key = StringArgumentType.getString(context, "key");
                                                     String expression = StringArgumentType.getString(context, "expression");
 
-                                                    boolean finalValue = new SimpleBooleanEvaluator().evaluate(expression);
+                                                    boolean value = new SimpleBooleanEvaluator().evaluate(expression);
 
-                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                                    byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
-                                                    if (this.getDatabase().read(key) != null) {
-                                                        this.getDatabase().delete(key);
-                                                    }
-                                                    this.getDatabase().write(key, value);
+                                                    this.getDatabase().write(key, String.valueOf(value));
                                                     return Command.SINGLE_SUCCESS;
                                                 })
                                         )
@@ -181,17 +168,12 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                 .then(this.argument("key", StringArgumentType.string())
                                         .then(this.argument("expression", StringArgumentType.string())
                                                 .executes(context -> {
-                                                    String originalKey = StringArgumentType.getString(context, "key");
+                                                    String key = StringArgumentType.getString(context, "key");
                                                     String expression = StringArgumentType.getString(context, "expression");
 
-                                                    double finalValue = new ExtendedDoubleEvaluator().evaluate(expression);
+                                                    double value = new ExtendedDoubleEvaluator().evaluate(expression);
 
-                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                                    byte[] value = String.valueOf(finalValue).getBytes(StandardCharsets.UTF_8);
-                                                    if (this.getDatabase().read(key) != null) {
-                                                        this.getDatabase().delete(key);
-                                                    }
-                                                    this.getDatabase().write(key, value);
+                                                    this.getDatabase().write(key, String.valueOf(value));
                                                     return Command.SINGLE_SUCCESS;
                                                 })
                                         )
@@ -203,14 +185,8 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                 .then(this.argument("key", StringArgumentType.string())
                                         .then(this.argument("value", StringArgumentType.greedyString())
                                                 .executes(context -> {
-                                                    String originalKey = StringArgumentType.getString(context, "key");
-                                                    String originalValue = StringArgumentType.getString(context, "value");
-
-                                                    byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                                    byte[] value = originalValue.getBytes(StandardCharsets.UTF_8);
-                                                    if (this.getDatabase().read(key) != null) {
-                                                        this.getDatabase().delete(key);
-                                                    }
+                                                    String key = StringArgumentType.getString(context, "key");
+                                                    String value = StringArgumentType.getString(context, "value");
                                                     this.getDatabase().write(key, value);
                                                     return Command.SINGLE_SUCCESS;
                                                 })
@@ -220,9 +196,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                         .then(this.literal("delete").requires(Permissions.require("commandaliases.database.delete", 4))
                                 .then(this.argument("key", StringArgumentType.string())
                                         .executes(context -> {
-                                            String originalKey = StringArgumentType.getString(context, "key");
-
-                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
+                                            String key = StringArgumentType.getString(context, "key");
                                             if (this.getDatabase().read(key) != null) {
                                                 this.getDatabase().delete(key);
                                             }
@@ -233,10 +207,8 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                         .then(this.literal("match").requires(Permissions.require("commandaliases.database.match", 4))
                                 .then(this.argument("key", StringArgumentType.string())
                                         .executes(context -> {
-                                            String originalKey = StringArgumentType.getString(context, "key");
-
-                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                            byte[] value = this.getDatabase().read(key);
+                                            String key = StringArgumentType.getString(context, "key");
+                                            String value = this.getDatabase().read(key);
                                             if (value != null) {
                                                 return Command.SINGLE_SUCCESS;
                                             }
@@ -247,12 +219,10 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                         .then(this.literal("get").requires(Permissions.require("commandaliases.database.get", 4))
                                 .then(this.argument("key", StringArgumentType.string())
                                         .executes(context -> {
-                                            String originalKey = StringArgumentType.getString(context, "key");
-
-                                            byte[] key = originalKey.getBytes(StandardCharsets.UTF_8);
-                                            byte[] value = this.getDatabase().read(key);
+                                            String key = StringArgumentType.getString(context, "key");
+                                            String value = this.getDatabase().read(key);
                                             if (value != null) {
-                                                this.sendFeedback(context.getSource(), Text.literal(new String(value, StandardCharsets.UTF_8)));
+                                                this.sendFeedback(context.getSource(), Text.literal(value));
                                             }
                                             return Command.SINGLE_SUCCESS;
                                         })
@@ -465,11 +435,11 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         return commandsDirectory;
     }
 
-    public AbstractDatabase<byte[], byte[]> getDatabase() {
+    public AbstractDatabase<String, String> getDatabase() {
         return database;
     }
 
-    public void setDatabase(AbstractDatabase<byte[], byte[]> database) {
+    public void setDatabase(AbstractDatabase<String, String> database) {
         this.database = database;
     }
 

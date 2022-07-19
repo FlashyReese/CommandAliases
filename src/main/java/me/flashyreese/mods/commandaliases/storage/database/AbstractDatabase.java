@@ -20,5 +20,5 @@ public interface AbstractDatabase<K, V> {
 
     boolean delete(K key);
 
-    Map<K, V> list();
+    Map<K, V> map();
 }

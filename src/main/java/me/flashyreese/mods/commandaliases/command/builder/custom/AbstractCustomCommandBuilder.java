@@ -15,7 +15,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import me.flashyreese.mods.commandaliases.command.Permissions;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
@@ -23,10 +22,10 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.format.*;
 import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
 import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
 import me.flashyreese.mods.commandaliases.command.impl.InputMapper;
+import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -236,15 +235,13 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 List<String> suggestions = new ObjectArrayList<>();
                 long start = System.nanoTime();
                 String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
-                this.abstractCommandAliasesProvider.getDatabase().list().forEach((key, value) -> {
-                    String keyString = new String(key, StandardCharsets.UTF_8);
-                    if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && keyString.startsWith(formattedSuggestion)) &&
-                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && keyString.endsWith(formattedSuggestion)) &&
-                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && keyString.contains(formattedSuggestion)))
+                this.abstractCommandAliasesProvider.getDatabase().map().forEach((key, value) -> {
+                    if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && key.startsWith(formattedSuggestion)) &&
+                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && key.endsWith(formattedSuggestion)) &&
+                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && key.contains(formattedSuggestion)))
                         return;
 
-                    String valueString = new String(value, StandardCharsets.UTF_8);
-                    suggestions.add(valueString);
+                    suggestions.add(value);
                 });
                 long end = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {

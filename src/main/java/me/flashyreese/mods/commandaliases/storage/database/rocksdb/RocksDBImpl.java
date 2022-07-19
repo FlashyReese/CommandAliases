@@ -8,6 +8,7 @@ import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -17,7 +18,7 @@ import java.util.Map;
  * @version 0.8.0
  * @since 0.7.0
  */
-public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
+public class RocksDBImpl implements AbstractDatabase<String, String> {
 
     static {
         RocksDB.loadLibrary();
@@ -53,9 +54,9 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public boolean write(byte[] key, byte[] value) {
+    public boolean write(String key, String value) {
         try {
-            this.database.put(key, value);
+            this.database.put(key.getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8));
             return true;
         } catch (RocksDBException e) {
             CommandAliasesMod.logger().error(e.getMessage());
@@ -65,9 +66,12 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public byte[] read(byte[] key) {
+    public String read(String key) {
         try {
-            return this.database.get(key);
+            byte[] array = this.database.get(key.getBytes(StandardCharsets.UTF_8));
+            if (array != null) {
+                return new String(array, StandardCharsets.UTF_8);
+            }
         } catch (RocksDBException e) {
             CommandAliasesMod.logger().error(e.getMessage());
             e.printStackTrace();
@@ -76,9 +80,9 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public boolean delete(byte[] key) {
+    public boolean delete(String key) {
         try {
-            this.database.delete(key);
+            this.database.delete(key.getBytes(StandardCharsets.UTF_8));
             return true;
         } catch (RocksDBException e) {
             CommandAliasesMod.logger().error(e.getMessage());
@@ -88,11 +92,11 @@ public class RocksDBImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public Map<byte[], byte[]> list() {
-        Map<byte[], byte[]> map = new Object2ObjectOpenHashMap<>();
+    public Map<String, String> map() {
+        Map<String, String> map = new Object2ObjectOpenHashMap<>();
         RocksIterator iterator = this.database.newIterator();
         for (iterator.seekToLast(); iterator.isValid(); iterator.next()) {
-            map.put(iterator.key(), iterator.value());
+            map.put(new String(iterator.key(), StandardCharsets.UTF_8), new String(iterator.value(), StandardCharsets.UTF_8));
         }
         return map;
     }

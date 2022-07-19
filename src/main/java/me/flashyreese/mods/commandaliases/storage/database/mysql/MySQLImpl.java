@@ -4,11 +4,10 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 
-import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.Map;
 
-public class MySQLImpl implements AbstractDatabase<byte[], byte[]> {
+public class MySQLImpl implements AbstractDatabase<String, String> {
     private final String host;
     private final String database;
     private final String user;
@@ -59,17 +58,14 @@ public class MySQLImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public boolean write(byte[] key, byte[] value) {
-        String keyString = new String(key, StandardCharsets.UTF_8);
-        String valueString = new String(value, StandardCharsets.UTF_8);
-
-        byte[] exists = this.read(key);
+    public boolean write(String key, String value) {
+        String exists = this.read(key);
 
         if (exists == null) {
             try {
                 PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO " + this.table + " (`key`, `value`) VALUES (?, ?);");
-                preparedStatement.setString(1, keyString);
-                preparedStatement.setString(2, valueString);
+                preparedStatement.setString(1, key);
+                preparedStatement.setString(2, value);
                 preparedStatement.executeUpdate();
                 return true;
             } catch (SQLException e) {
@@ -79,8 +75,8 @@ public class MySQLImpl implements AbstractDatabase<byte[], byte[]> {
         } else {
             try {
                 PreparedStatement preparedStatement = connection.prepareStatement("UPDATE " + this.table + " SET `value` = ? WHERE `key` = ?;");
-                preparedStatement.setString(1, valueString);
-                preparedStatement.setString(1, keyString);
+                preparedStatement.setString(1, value);
+                preparedStatement.setString(2, key);
                 preparedStatement.executeUpdate();
                 return true;
             } catch (SQLException e) {
@@ -92,15 +88,13 @@ public class MySQLImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public byte[] read(byte[] key) {
-        String keyString = new String(key, StandardCharsets.UTF_8);
-
+    public String read(String key) {
         try {
             PreparedStatement preparedStatement = connection.prepareStatement("SELECT `value` FROM " + this.table + " WHERE `key` = ?;");
-            preparedStatement.setString(1, keyString);
+            preparedStatement.setString(1, key);
             ResultSet query = preparedStatement.executeQuery();
             if (query.next()) {
-                return query.getString(1).getBytes(StandardCharsets.UTF_8);
+                return query.getString(1);
             }
         } catch (SQLException e) {
             CommandAliasesMod.logger().error(e.getMessage());
@@ -111,11 +105,10 @@ public class MySQLImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public boolean delete(byte[] key) {
-        String keyString = new String(key, StandardCharsets.UTF_8);
+    public boolean delete(String key) {
         try {
             PreparedStatement preparedStatement = connection.prepareStatement("DELETE FROM " + this.table + " WHERE `key` = ?;");
-            preparedStatement.setString(1, keyString);
+            preparedStatement.setString(1, key);
             preparedStatement.executeUpdate();
             return true;
         } catch (SQLException e) {
@@ -126,13 +119,13 @@ public class MySQLImpl implements AbstractDatabase<byte[], byte[]> {
     }
 
     @Override
-    public Map<byte[], byte[]> list() {
-        Map<byte[], byte[]> map = new Object2ObjectOpenHashMap<>();
+    public Map<String, String> map() {
+        Map<String, String> map = new Object2ObjectOpenHashMap<>();
         try {
             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM " + this.table);
             ResultSet resultSet = preparedStatement.executeQuery();
-            while(resultSet.next()) {
-                map.put(resultSet.getString(2).getBytes(StandardCharsets.UTF_8), resultSet.getString(3).getBytes(StandardCharsets.UTF_8));
+            while (resultSet.next()) {
+                map.put(resultSet.getString(2), resultSet.getString(3));
             }
         } catch (SQLException e) {
             CommandAliasesMod.logger().error(e.getMessage());

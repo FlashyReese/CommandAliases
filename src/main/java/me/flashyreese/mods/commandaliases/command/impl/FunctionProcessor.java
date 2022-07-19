@@ -8,7 +8,6 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
@@ -236,19 +235,17 @@ public class FunctionProcessor<S extends CommandSource> {
 
         // Database related
         this.functionMap.put("get_database_contains", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.abstractCommandAliasesProvider.getDatabase().list().entrySet()) {
-                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
-                if (keyString.contains(input)) {
+            for (Map.Entry<String, String> entry : this.abstractCommandAliasesProvider.getDatabase().map().entrySet()) {
+                if (entry.getKey().contains(input)) {
                     return "true";
                 }
             }
             return "false";
         });
         this.functionMap.put("get_database_first_starts_with", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.abstractCommandAliasesProvider.getDatabase().list().entrySet()) {
-                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
-                if (keyString.startsWith(input)) {
-                    return new String(entry.getValue(), StandardCharsets.UTF_8);
+            for (Map.Entry<String, String> entry : this.abstractCommandAliasesProvider.getDatabase().map().entrySet()) {
+                if (entry.getKey().startsWith(input)) {
+                    return entry.getValue();
                 }
             }
             if (CommandAliasesMod.options().debugSettings.debugMode) {
@@ -257,10 +254,9 @@ public class FunctionProcessor<S extends CommandSource> {
             return null;
         });
         this.functionMap.put("get_database_first_ends_with", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.abstractCommandAliasesProvider.getDatabase().list().entrySet()) {
-                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
-                if (keyString.endsWith(input)) {
-                    return new String(entry.getValue(), StandardCharsets.UTF_8);
+            for (Map.Entry<String, String> entry : this.abstractCommandAliasesProvider.getDatabase().map().entrySet()) {
+                if (entry.getKey().endsWith(input)) {
+                    return entry.getValue();
                 }
             }
             if (CommandAliasesMod.options().debugSettings.debugMode) {
@@ -269,10 +265,9 @@ public class FunctionProcessor<S extends CommandSource> {
             return null;
         });
         this.functionMap.put("get_database_first_contains", (commandSource, input) -> {
-            for (Map.Entry<byte[], byte[]> entry : this.abstractCommandAliasesProvider.getDatabase().list().entrySet()) {
-                String keyString = new String(entry.getKey(), StandardCharsets.UTF_8);
-                if (keyString.contains(input)) {
-                    return new String(entry.getValue(), StandardCharsets.UTF_8);
+            for (Map.Entry<String, String> entry : this.abstractCommandAliasesProvider.getDatabase().map().entrySet()) {
+                if (entry.getKey().contains(input)) {
+                    return entry.getValue();
                 }
             }
             if (CommandAliasesMod.options().debugSettings.debugMode) {
@@ -281,9 +276,9 @@ public class FunctionProcessor<S extends CommandSource> {
             return null;
         });
         this.functionMap.put("get_database_value", (commandSource, input) -> {
-            byte[] value = this.abstractCommandAliasesProvider.getDatabase().read(input.getBytes(StandardCharsets.UTF_8));
+            String value = this.abstractCommandAliasesProvider.getDatabase().read(input);
             if (value != null) {
-                return new String(value, StandardCharsets.UTF_8);
+                return value;
             } else {
                 if (CommandAliasesMod.options().debugSettings.debugMode) {
                     CommandAliasesMod.logger().error("Invalid database key: {}", input);
