@@ -1,4 +1,4 @@
-name: Java CI with Gradle
+name: Gradle build on push - Self-Hosted Runner
 
 on: [ push ]
 
