@@ -125,8 +125,18 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
 
                     return Command.SINGLE_SUCCESS;
                 })
-                .then(this.literal("scheduler")
-                        .then(this.literal("remove")
+                .then(this.literal("scheduler").requires(Permissions.require("commandaliases.scheduler", 4))
+                        .then(this.literal("match").requires(Permissions.require("commandaliases.scheduler.match", 4))
+                                .then(this.argument("eventName", StringArgumentType.greedyString())
+                                        .executes(context -> {
+                                            String eventName = StringArgumentType.getString(context, "eventName");
+                                            if (this.getScheduler().contains(eventName))
+                                                return Command.SINGLE_SUCCESS;
+                                            return 0;
+                                        })
+                                )
+                        )
+                        .then(this.literal("remove").requires(Permissions.require("commandaliases.scheduler.remove", 4))
                                 .then(this.argument("eventName", StringArgumentType.greedyString())
                                         .executes(context -> {
                                             String eventName = StringArgumentType.getString(context, "eventName");
