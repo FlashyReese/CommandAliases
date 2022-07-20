@@ -41,10 +41,10 @@ dependencies {
 	include(implementation("org.iq80.leveldb:leveldb-api:0.12"))
 
 	// MySQL
-	include(implementation("mysql:mysql-connector-java:8.0.28"))
+	include(implementation("mysql:mysql-connector-java:8.0.29"))
 
 	// Redis
-	include(implementation("redis.clients:jedis:4.2.0"))
+	include(implementation("redis.clients:jedis:4.2.3"))
 	include(implementation("org.apache.commons:commons-pool2:2.11.1"))
 
 	// Parsing Libraries
