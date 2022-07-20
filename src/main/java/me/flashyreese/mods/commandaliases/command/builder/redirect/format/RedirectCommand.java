@@ -1,15 +1,17 @@
 package me.flashyreese.mods.commandaliases.command.builder.redirect.format;
 
+import me.flashyreese.mods.commandaliases.command.CommandAlias;
+
 /**
  * Represents a redirection command
  * <p>
- * JSON Serialization Template
+ * Serialization Template
  *
  * @author FlashyReese
  * @version 0.5.0
  * @since 0.5.0
  */
-public class RedirectCommand {
+public class RedirectCommand extends CommandAlias {
     private String command;
     private String redirectTo;
 
