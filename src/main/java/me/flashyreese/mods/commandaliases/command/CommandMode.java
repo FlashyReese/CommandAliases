@@ -10,7 +10,6 @@ package me.flashyreese.mods.commandaliases.command;
 public enum CommandMode {
     COMMAND_CUSTOM,
     COMMAND_REASSIGN,
-    COMMAND_REASSIGN_AND_CUSTOM,
     COMMAND_REDIRECT,
     COMMAND_REDIRECT_NOARG
 }

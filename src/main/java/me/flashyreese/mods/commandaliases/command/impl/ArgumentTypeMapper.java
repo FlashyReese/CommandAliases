@@ -51,10 +51,10 @@ public class ArgumentTypeMapper {
         this.argumentMap.put("minecraft:score_holders", ScoreHolderArgumentType.scoreHolders());
 
         this.argumentMap.put("minecraft:game_profile", GameProfileArgumentType.gameProfile());
-        this.argumentMap.put("minecraft:block_pos", BlockPosArgumentType.blockPos());
-        this.argumentMap.put("minecraft:column_pos", ColumnPosArgumentType.columnPos());
-        this.argumentMap.put("minecraft:vec3", Vec3ArgumentType.vec3());
-        this.argumentMap.put("minecraft:vec2", Vec2ArgumentType.vec2());
+        this.argumentMap.put("minecraft:block_pos", BlockPosArgumentType.blockPos()); // fixme: Relative pos - we should parse this them convert to string, should we fix this? or should we not? because pain
+        this.argumentMap.put("minecraft:column_pos", ColumnPosArgumentType.columnPos()); //
+        this.argumentMap.put("minecraft:vec3", Vec3ArgumentType.vec3()); //
+        this.argumentMap.put("minecraft:vec2", Vec2ArgumentType.vec2()); //
         this.argumentMap.put("minecraft:block_state", BlockStateArgumentType.blockState());
         this.argumentMap.put("minecraft:block_predicate", BlockPredicateArgumentType.blockPredicate());
         this.argumentMap.put("minecraft:item_stack", ItemStackArgumentType.itemStack());
@@ -69,8 +69,8 @@ public class ArgumentTypeMapper {
         this.argumentMap.put("minecraft:objective_criteria", ScoreboardCriterionArgumentType.scoreboardCriterion());
         this.argumentMap.put("minecraft:operation", OperationArgumentType.operation());
         this.argumentMap.put("minecraft:particle", ParticleEffectArgumentType.particleEffect());
-        this.argumentMap.put("minecraft:angle", AngleArgumentType.angle());
-        this.argumentMap.put("minecraft:rotation", RotationArgumentType.rotation());
+        this.argumentMap.put("minecraft:angle", AngleArgumentType.angle()); //
+        this.argumentMap.put("minecraft:rotation", RotationArgumentType.rotation()); //
         this.argumentMap.put("minecraft:scoreboard_slot", ScoreboardSlotArgumentType.scoreboardSlot());
         this.argumentMap.put("minecraft:swizzle", SwizzleArgumentType.swizzle());
         this.argumentMap.put("minecraft:team", TeamArgumentType.team());
@@ -79,8 +79,8 @@ public class ArgumentTypeMapper {
         this.argumentMap.put("minecraft:mob_effect", StatusEffectArgumentType.statusEffect());
         this.argumentMap.put("minecraft:function", CommandFunctionArgumentType.commandFunction());
         this.argumentMap.put("minecraft:entity_anchor", EntityAnchorArgumentType.entityAnchor());
-        this.argumentMap.put("minecraft:int_range", NumberRangeArgumentType.intRange());
-        this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.floatRange());
+        this.argumentMap.put("minecraft:int_range", NumberRangeArgumentType.intRange()); // todo: range
+        this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.floatRange()); // todo :rage
         this.argumentMap.put("minecraft:item_enchantment", EnchantmentArgumentType.enchantment());
         this.argumentMap.put("minecraft:entity_summon", EntitySummonArgumentType.entitySummon());
         this.argumentMap.put("minecraft:dimension", DimensionArgumentType.dimension());
