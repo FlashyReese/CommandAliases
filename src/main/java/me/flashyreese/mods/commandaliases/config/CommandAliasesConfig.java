@@ -86,7 +86,6 @@ public class CommandAliasesConfig {
 
     public enum DatabaseMode {
         LEVELDB,
-        ROCKSDB, // todo: Natives are too large to ship
         MYSQL,
         REDIS;
     }

@@ -36,9 +36,6 @@ dependencies {
 	// Permissions API
 	include(modImplementation("me.lucko:fabric-permissions-api:0.1-SNAPSHOT"))
 
-	// RocksDB
-	implementation("org.rocksdb:rocksdbjni:7.2.2") //include()
-
 	// LevelDB
 	include(implementation("org.iq80.leveldb:leveldb:0.12"))
 	include(implementation("org.iq80.leveldb:leveldb-api:0.12"))
