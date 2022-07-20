@@ -224,7 +224,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                     CommandAliasesMod.logger().info("""
                                     \n\t======================================================
                                     \tSuggestion Provider: {}
-                                    \t"Processing time: {}ms
+                                    \tProcessing time: {}ms
                                     \t======================================================""",
                             formattedSuggestion, (end - start) / 1000000.0);
                 }

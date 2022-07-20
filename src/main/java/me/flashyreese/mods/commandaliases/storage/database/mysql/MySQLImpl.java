@@ -9,14 +9,16 @@ import java.util.Map;
 
 public class MySQLImpl implements AbstractDatabase<String, String> {
     private final String host;
+    private final int port;
     private final String database;
     private final String user;
     private final String password;
     private final String table;
     private Connection connection;
 
-    public MySQLImpl(String host, String database, String user, String password, String table) {
+    public MySQLImpl(String host, int port, String database, String user, String password, String table) {
         this.host = host;
+        this.port = port;
         this.database = database;
         this.user = user;
         this.password = password;
@@ -27,7 +29,7 @@ public class MySQLImpl implements AbstractDatabase<String, String> {
     public boolean open() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://" + this.host + "/" + this.database, this.user, this.password);
+            connection = DriverManager.getConnection("jdbc:mysql://" + this.host + ":" + this.port + "/" + this.database, this.user, this.password);
             PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = ?;");
             preparedStatement.setString(1, this.table);
             if (!preparedStatement.executeQuery().next()) {

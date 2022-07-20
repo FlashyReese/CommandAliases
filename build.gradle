@@ -46,6 +46,10 @@ dependencies {
 	// MySQL
 	include(implementation("mysql:mysql-connector-java:8.0.28"))
 
+	// Redis
+	include(implementation("redis.clients:jedis:4.2.0"))
+	include(implementation("org.apache.commons:commons-pool2:2.11.1"))
+
 	// Parsing Libraries
 	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.13.3"))
 	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.3"))

@@ -69,6 +69,7 @@ public class CommandAliasesConfig {
     public static class DatabaseSettings {
         public DatabaseMode databaseMode;
         public String host;
+        public int port;
         public String database;
         public String user;
         public String password;
@@ -76,6 +77,7 @@ public class CommandAliasesConfig {
         public DatabaseSettings() {
             this.databaseMode = DatabaseMode.LEVELDB;
             this.host = "localhost";
+            this.port = 3306;
             this.database = "command_aliases";
             this.user = "root";
             this.password = "";
@@ -85,7 +87,8 @@ public class CommandAliasesConfig {
     public enum DatabaseMode {
         LEVELDB,
         ROCKSDB, // todo: Natives are too large to ship
-        MYSQL;
+        MYSQL,
+        REDIS;
     }
 
     public static class DebugSettings {
