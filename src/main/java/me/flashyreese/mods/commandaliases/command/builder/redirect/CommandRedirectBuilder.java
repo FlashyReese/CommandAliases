@@ -5,10 +5,10 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.command.CommandAlias;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
+import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
 import net.minecraft.command.CommandSource;
 
 import java.util.Arrays;
@@ -25,10 +25,10 @@ import java.util.List;
  * @since 0.3.0
  */
 public class CommandRedirectBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
-    private final CommandAlias command;
+    private final RedirectCommand command;
     private final CommandType commandType;
 
-    public CommandRedirectBuilder(CommandAlias command, CommandType commandType) {
+    public CommandRedirectBuilder(RedirectCommand command, CommandType commandType) {
         this.command = command;
         this.commandType = commandType;
     }
@@ -50,16 +50,11 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
      * @param dispatcher CommandDispatcher
      * @return Command
      */
-    private LiteralArgumentBuilder<S> parseCommand(CommandAlias cmd, CommandDispatcher<S> dispatcher) {
-        if (cmd.getRedirectCommand() == null) {
-            CommandAliasesMod.logger().error("[{}] {} - Skipping redirection, missing declaration!", this.commandType, cmd.getCommandMode());
-            return null;
-        }
-
+    private LiteralArgumentBuilder<S> parseCommand(RedirectCommand cmd, CommandDispatcher<S> dispatcher) {
         LiteralArgumentBuilder<S> commandBuilder = null;
 
-        String command = cmd.getRedirectCommand().getCommand().trim();
-        String redirectTo = cmd.getRedirectCommand().getRedirectTo().trim();
+        String command = cmd.getCommand().trim();
+        String redirectTo = cmd.getRedirectTo().trim();
 
         CommandNode<S> redirect = dispatcher.findNode(Lists.newArrayList(redirectTo.split(" ")));
         if (redirect == null) {

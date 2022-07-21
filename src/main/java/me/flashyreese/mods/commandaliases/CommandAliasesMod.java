@@ -1,5 +1,6 @@
 package me.flashyreese.mods.commandaliases;
 
+import me.flashyreese.mods.commandaliases.command.loader.CommandAliasesLoader;
 import me.flashyreese.mods.commandaliases.config.CommandAliasesConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;

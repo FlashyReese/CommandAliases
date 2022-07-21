@@ -1,25 +1,27 @@
 package me.flashyreese.mods.commandaliases.command.builder.custom.format;
 
+import me.flashyreese.mods.commandaliases.command.CommandAlias;
+
 import java.util.List;
 
 /**
  * Represents a custom command
  * <p>
- * JSON Serialization Template
+ * Serialization Template
  *
  * @author FlashyReese
- * @version 0.5.0
+ * @version 1.0.0
  * @since 0.4.0
  */
-public class CustomCommand {
-    private String parent;
+public class CustomCommand extends CommandAlias {
+    private String command;
     private int permission;
     private List<CustomCommandAction> actions;
     private List<CustomCommandChild> children;
     private String message;
 
-    public String getParent() {
-        return parent;
+    public String getCommand() {
+        return command;
     }
 
     public int getPermission() {
