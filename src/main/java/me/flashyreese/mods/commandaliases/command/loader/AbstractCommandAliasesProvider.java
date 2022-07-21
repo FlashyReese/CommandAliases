@@ -10,6 +10,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
+import com.mojang.brigadier.arguments.DoubleArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -148,18 +149,111 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                         )
                 )
                 .then(this.literal("compute").requires(Permissions.require("commandaliases.compute", 4))
+                        .then(this.literal("condition").requires(Permissions.require("commandaliases.compute.condition", 4))
+                                .then(this.argument("expression", StringArgumentType.string())
+                                        .executes(context -> {
+                                            String expression = StringArgumentType.getString(context, "expression");
+                                            boolean value = new SimpleBooleanEvaluator().evaluate(expression);
+                                            if (value)
+                                                return Command.SINGLE_SUCCESS;
+                                            return 0;
+                                        })
+                                )
+                        )
+
+                        // Todo: Comparison Evaluator
                         .then(this.literal("equals").requires(Permissions.require("commandaliases.compute.equals", 4))
-                                .then(this.argument("value1", StringArgumentType.string())
-                                        .then(this.argument("value2", StringArgumentType.string())
-                                                .executes(context -> {
-                                                    if (StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2")))
-                                                        return Command.SINGLE_SUCCESS;
-                                                    return 0;
-                                                })
+                                .then(this.argument("key", StringArgumentType.string())
+                                        .then(this.argument("value1", StringArgumentType.string())
+                                                .then(this.argument("value2", StringArgumentType.string())
+                                                        .executes(context -> {
+                                                            String key = StringArgumentType.getString(context, "key");
+                                                            boolean value = StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2"));
+                                                            if (this.getDatabase().write(key, String.valueOf(value)))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
                                         )
                                 )
                         )
-                        .then(this.literal("boolean").requires(Permissions.require("commandaliases.compute.boolean", 4))
+                        .then(this.literal("notEquals").requires(Permissions.require("commandaliases.compute.not_equals", 4))
+                                .then(this.argument("key", StringArgumentType.string())
+                                        .then(this.argument("value1", StringArgumentType.string())
+                                                .then(this.argument("value2", StringArgumentType.string())
+                                                        .executes(context -> {
+                                                            String key = StringArgumentType.getString(context, "key");
+                                                            boolean value = !StringArgumentType.getString(context, "value1").equals(StringArgumentType.getString(context, "value2"));
+                                                            if (this.getDatabase().write(key, String.valueOf(value)))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(this.literal("moreThan").requires(Permissions.require("commandaliases.compute.more_than", 4))
+                                .then(this.argument("key", StringArgumentType.string())
+                                        .then(this.argument("value1", DoubleArgumentType.doubleArg())
+                                                .then(this.argument("value2", DoubleArgumentType.doubleArg())
+                                                        .executes(context -> {
+                                                            String key = StringArgumentType.getString(context, "key");
+                                                            boolean value = DoubleArgumentType.getDouble(context, "value1") > DoubleArgumentType.getDouble(context, "value2");
+                                                            if (this.getDatabase().write(key, String.valueOf(value)))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(this.literal("lessThan").requires(Permissions.require("commandaliases.compute.less_than", 4))
+                                .then(this.argument("key", StringArgumentType.string())
+                                        .then(this.argument("value1", DoubleArgumentType.doubleArg())
+                                                .then(this.argument("value2", DoubleArgumentType.doubleArg())
+                                                        .executes(context -> {
+                                                            String key = StringArgumentType.getString(context, "key");
+                                                            boolean value = DoubleArgumentType.getDouble(context, "value1") < DoubleArgumentType.getDouble(context, "value2");
+                                                            if (this.getDatabase().write(key, String.valueOf(value)))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(this.literal("moreThanEquals").requires(Permissions.require("commandaliases.compute.more_than_equals", 4))
+                                .then(this.argument("key", StringArgumentType.string())
+                                        .then(this.argument("value1", DoubleArgumentType.doubleArg())
+                                                .then(this.argument("value2", DoubleArgumentType.doubleArg())
+                                                        .executes(context -> {
+                                                            String key = StringArgumentType.getString(context, "key");
+                                                            boolean value = DoubleArgumentType.getDouble(context, "value1") >= DoubleArgumentType.getDouble(context, "value2");
+                                                            if (this.getDatabase().write(key, String.valueOf(value)))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+                        .then(this.literal("lessThanEquals").requires(Permissions.require("commandaliases.compute.less_than_equals", 4))
+                                .then(this.argument("key", StringArgumentType.string())
+                                        .then(this.argument("value1", DoubleArgumentType.doubleArg())
+                                                .then(this.argument("value2", DoubleArgumentType.doubleArg())
+                                                        .executes(context -> {
+                                                            String key = StringArgumentType.getString(context, "key");
+                                                            boolean value = DoubleArgumentType.getDouble(context, "value1") <= DoubleArgumentType.getDouble(context, "value2");
+                                                            if (this.getDatabase().write(key, String.valueOf(value)))
+                                                                return Command.SINGLE_SUCCESS;
+                                                            return 0;
+                                                        })
+                                                )
+                                        )
+                                )
+                        )
+
+                        .then(this.literal("booleanEvaluate").requires(Permissions.require("commandaliases.compute.boolean_evaluate", 4))
                                 .then(this.argument("key", StringArgumentType.string())
                                         .then(this.argument("expression", StringArgumentType.string())
                                                 .executes(context -> {
@@ -168,23 +262,23 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
 
                                                     boolean value = new SimpleBooleanEvaluator().evaluate(expression);
 
-                                                    this.getDatabase().write(key, String.valueOf(value));
-                                                    return Command.SINGLE_SUCCESS;
+                                                    if (this.getDatabase().write(key, String.valueOf(value)))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
                                                 })
                                         )
                                 )
                         )
-                        .then(this.literal("evaluate").requires(Permissions.require("commandaliases.compute.evaluate", 4))
+                        .then(this.literal("doubleEvaluate").requires(Permissions.require("commandaliases.compute.double_evaluate", 4))
                                 .then(this.argument("key", StringArgumentType.string())
                                         .then(this.argument("expression", StringArgumentType.string())
                                                 .executes(context -> {
                                                     String key = StringArgumentType.getString(context, "key");
                                                     String expression = StringArgumentType.getString(context, "expression");
-
                                                     double value = new ExtendedDoubleEvaluator().evaluate(expression);
-
-                                                    this.getDatabase().write(key, String.valueOf(value));
-                                                    return Command.SINGLE_SUCCESS;
+                                                    if (this.getDatabase().write(key, String.valueOf(value)))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
                                                 })
                                         )
                                 )
@@ -197,8 +291,9 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                                 .executes(context -> {
                                                     String key = StringArgumentType.getString(context, "key");
                                                     String value = StringArgumentType.getString(context, "value");
-                                                    this.getDatabase().write(key, value);
-                                                    return Command.SINGLE_SUCCESS;
+                                                    if (this.getDatabase().write(key, String.valueOf(value)))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
                                                 })
                                         )
                                 )
@@ -207,10 +302,9 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                 .then(this.argument("key", StringArgumentType.string())
                                         .executes(context -> {
                                             String key = StringArgumentType.getString(context, "key");
-                                            if (this.getDatabase().read(key) != null) {
-                                                this.getDatabase().delete(key);
-                                            }
-                                            return Command.SINGLE_SUCCESS;
+                                            if (this.getDatabase().read(key) != null && this.getDatabase().delete(key))
+                                                return Command.SINGLE_SUCCESS;
+                                            return 0;
                                         })
                                 )
                         )
