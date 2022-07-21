@@ -25,6 +25,7 @@ public class CommandAliasesConfig {
             .setPrettyPrinting()
             .excludeFieldsWithModifiers(Modifier.PRIVATE)
             .create();
+    public final DatabaseSettings databaseSettings = new DatabaseSettings();
     public final DebugSettings debugSettings = new DebugSettings();
     private File file;
 
@@ -63,6 +64,30 @@ public class CommandAliasesConfig {
         } catch (IOException e) {
             throw new RuntimeException("Could not save configuration file", e);
         }
+    }
+
+    public static class DatabaseSettings {
+        public DatabaseMode databaseMode;
+        public String host;
+        public int port;
+        public String database;
+        public String user;
+        public String password;
+
+        public DatabaseSettings() {
+            this.databaseMode = DatabaseMode.LEVELDB;
+            this.host = "localhost";
+            this.port = 3306;
+            this.database = "command_aliases";
+            this.user = "root";
+            this.password = "";
+        }
+    }
+
+    public enum DatabaseMode {
+        LEVELDB,
+        MYSQL,
+        REDIS;
     }
 
     public static class DebugSettings {

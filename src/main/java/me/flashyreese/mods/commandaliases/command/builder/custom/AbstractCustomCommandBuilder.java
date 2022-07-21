@@ -15,17 +15,17 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
-import me.flashyreese.mods.commandaliases.CommandAliasesProvider;
+import me.flashyreese.mods.commandaliases.command.Permissions;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.*;
 import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
 import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
 import me.flashyreese.mods.commandaliases.command.impl.InputMapper;
+import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,23 +38,23 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Used to build a LiteralArgumentBuilder
  *
  * @author FlashyReese
- * @version 0.9.0
+ * @version 1.0.0
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
     protected final CustomCommand commandAliasParent;
 
     protected final ArgumentTypeMapper argumentTypeMapper;
-    protected final FunctionProcessor functionProcessor;
+    protected final FunctionProcessor<S> functionProcessor;
     protected final InputMapper<S> inputMapper;
 
-    protected final CommandAliasesProvider commandAliasesProvider;
+    protected final AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider;
 
-    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, CommandAliasesProvider commandAliasesProvider, CommandRegistryAccess registryAccess) {
+    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
         this.argumentTypeMapper = new ArgumentTypeMapper(registryAccess);
         this.commandAliasParent = commandAliasParent;
-        this.commandAliasesProvider = commandAliasesProvider;
-        this.functionProcessor = new FunctionProcessor(commandAliasesProvider);
+        this.abstractCommandAliasesProvider = abstractCommandAliasesProvider;
+        this.functionProcessor = new FunctionProcessor<>(abstractCommandAliasesProvider);
         this.inputMapper = new InputMapper<>();
     }
 
@@ -75,9 +75,11 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @return ArgumentBuilder
      */
     protected LiteralArgumentBuilder<S> buildCommandParent(CommandDispatcher<S> dispatcher) {
-        LiteralArgumentBuilder<S> argumentBuilder = this.literal(this.commandAliasParent.getParent());
+        LiteralArgumentBuilder<S> argumentBuilder = this.literal(this.commandAliasParent.getCommand());
         if (this.commandAliasParent.getPermission() > 0 && this.commandAliasParent.getPermission() <= 4) {
-            argumentBuilder = argumentBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(this.commandAliasParent.getPermission()));
+            argumentBuilder = argumentBuilder.requires(Permissions.require(this.commandAliasParent.getCommand(), this.commandAliasParent.getPermission()));
+        } else {
+            argumentBuilder = argumentBuilder.requires(Permissions.require(this.commandAliasParent.getCommand(), true));
         }
 
         if (this.commandAliasParent.isOptional()) {
@@ -88,7 +90,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         }
         if (this.commandAliasParent.getChildren() != null && !this.commandAliasParent.getChildren().isEmpty()) {
             for (CustomCommandChild child : this.commandAliasParent.getChildren()) {
-                ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new ObjectArrayList<>());
+                ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(child, dispatcher, new ObjectArrayList<>(), this.commandAliasParent.getCommand());
                 if (subArgumentBuilder != null) {
                     argumentBuilder = argumentBuilder.then(subArgumentBuilder);
                 }
@@ -105,22 +107,25 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      * @param inputs     User input list
      * @return ArgumentBuilder
      */
-    protected ArgumentBuilder<S, ?> buildCommandChild(CustomCommandChild child, CommandDispatcher<S> dispatcher, List<String> inputs) {
+    protected ArgumentBuilder<S, ?> buildCommandChild(CustomCommandChild child, CommandDispatcher<S> dispatcher, List<String> inputs, String permission) {
         ArgumentBuilder<S, ?> argumentBuilder = null;
         if (child.getType().equals("literal")) {
             argumentBuilder = this.literal(child.getChild());
         } else if (child.getType().equals("argument")) {
-            if (this.argumentTypeMapper.contains(child.getArgumentType())) {
-                argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getValue(child.getArgumentType()));
+            if (this.argumentTypeMapper.getArgumentMap().containsKey(child.getArgumentType())) {
+                argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getArgumentMap().get(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
                 CommandAliasesMod.logger().error("Invalid Argument Type: {}", child.getArgumentType());
             }
         }
         if (argumentBuilder != null) {
+            String permissionString = permission + "." + child.getChild();
             // Assign permission
             if (child.getPermission() > 0 && child.getPermission() <= 4) {
-                argumentBuilder = argumentBuilder.requires(serverCommandSource -> serverCommandSource.hasPermissionLevel(child.getPermission()));
+                argumentBuilder = argumentBuilder.requires(Permissions.require(permissionString, child.getPermission()));
+            } else {
+                argumentBuilder = argumentBuilder.requires(Permissions.require(permissionString, true));
             }
 
             if (child.isOptional()) {
@@ -135,7 +140,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             //Start building children if exist
             if (child.getChildren() != null && !child.getChildren().isEmpty()) {
                 for (CustomCommandChild subChild : child.getChildren()) {
-                    ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new ObjectArrayList<>(inputs));
+                    ArgumentBuilder<S, ?> subArgumentBuilder = this.buildCommandChild(subChild, dispatcher, new ObjectArrayList<>(inputs), permissionString);
                     if (subArgumentBuilder != null) {
                         argumentBuilder = argumentBuilder.then(subArgumentBuilder);
                     }
@@ -170,7 +175,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
     /**
      * Builds suggestion provider for child components using argument types and has a specified suggestion provider.
      *
-     * @param dispatcher
+     * @param dispatcher      The command dispatcher
      * @param argumentBuilder The argument builder
      * @param child           The child component
      * @param inputs          User input list
@@ -219,7 +224,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                     CommandAliasesMod.logger().info("""
                                     \n\t======================================================
                                     \tSuggestion Provider: {}
-                                    \t"Processing time: {}ms
+                                    \tProcessing time: {}ms
                                     \t======================================================""",
                             formattedSuggestion, (end - start) / 1000000.0);
                 }
@@ -230,15 +235,13 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 List<String> suggestions = new ObjectArrayList<>();
                 long start = System.nanoTime();
                 String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
-                this.commandAliasesProvider.getDatabase().list().forEach((key, value) -> {
-                    String keyString = new String(key, StandardCharsets.UTF_8);
-                    if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && keyString.startsWith(formattedSuggestion)) &&
-                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && keyString.endsWith(formattedSuggestion)) &&
-                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && keyString.contains(formattedSuggestion)))
+                this.abstractCommandAliasesProvider.getDatabase().map().forEach((key, value) -> {
+                    if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && key.startsWith(formattedSuggestion)) &&
+                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && key.endsWith(formattedSuggestion)) &&
+                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && key.contains(formattedSuggestion)))
                         return;
 
-                    String valueString = new String(value, StandardCharsets.UTF_8);
-                    suggestions.add(valueString);
+                    suggestions.add(value);
                 });
                 long end = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
@@ -292,12 +295,12 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         if (action.getId() != null && !action.getId().isEmpty())
             eventName = this.formatString(context, currentInputList, action.getId());
 
-        if (action.getTriggerTime() != null && !action.getTriggerTime().isEmpty()) {
-            String time = this.formatString(context, currentInputList, action.getTriggerTime());
+        if (action.getStartTime() != null && !action.getStartTime().isEmpty()) {
+            String time = this.formatString(context, currentInputList, action.getStartTime());
             triggerTime = System.currentTimeMillis() + Long.parseLong(time);
         }
 
-        this.commandAliasesProvider.getScheduler().addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
+        this.abstractCommandAliasesProvider.getScheduler().addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
             if (action.getCommand() != null && action.getCommandType() != null) {
                 long startFormat = System.nanoTime();
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());
@@ -331,24 +334,24 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                             action.getCommand(), action.getCommandType(), actionCommand, (endFormat - startFormat) / 1000000.0, (endExecution - endFormat) / 1000000.0);
                 }
                 if (state.get() != Command.SINGLE_SUCCESS) {
-                    if (action.getUnsuccessfulMessage() != null) {
-                        String message = this.formatString(context, currentInputList, action.getUnsuccessfulMessage());
+                    if (action.getMessageIfUnsuccessful() != null) {
+                        String message = this.formatString(context, currentInputList, action.getMessageIfUnsuccessful());
                         this.sendFeedback(context, message);
                     }
-                    if (action.getUnsuccessfulActions() != null && !action.getUnsuccessfulActions().isEmpty()) {
-                        Queue<CustomCommandAction> unsuccessfulActionsQueue = new LinkedList<>(action.getUnsuccessfulActions());
+                    if (action.getActionsIfUnsuccessful() != null && !action.getActionsIfUnsuccessful().isEmpty()) {
+                        Queue<CustomCommandAction> unsuccessfulActionsQueue = new LinkedList<>(action.getActionsIfUnsuccessful());
                         state.set(this.scheduleAction(unsuccessfulActionsQueue, System.currentTimeMillis(), dispatcher, context, currentInputList));
                     }
                     if (action.isRequireSuccess()) {
                         customCommandActionQueue.clear();
                     }
                 } else {
-                    if (action.getSuccessfulMessage() != null) {
-                        String message = this.formatString(context, currentInputList, action.getSuccessfulMessage());
+                    if (action.getMessageIfSuccessful() != null) {
+                        String message = this.formatString(context, currentInputList, action.getMessageIfSuccessful());
                         this.sendFeedback(context, message);
                     }
-                    if (action.getSuccessfulActions() != null && !action.getSuccessfulActions().isEmpty()) {
-                        Queue<CustomCommandAction> successfulActionsQueue = new LinkedList<>(action.getSuccessfulActions());
+                    if (action.getActionsIfSuccessful() != null && !action.getActionsIfSuccessful().isEmpty()) {
+                        Queue<CustomCommandAction> successfulActionsQueue = new LinkedList<>(action.getActionsIfSuccessful());
                         state.set(this.scheduleAction(successfulActionsQueue, System.currentTimeMillis(), dispatcher, context, currentInputList));
                     }
                 }
@@ -357,12 +360,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 String message = this.formatString(context, currentInputList, action.getMessage());
                 this.sendFeedback(context, message);
             }
-            long newTime = System.currentTimeMillis();
-            if (action.getSleep() != null) {
-                String formattedTime = this.formatString(context, currentInputList, action.getSleep());
-                newTime = System.currentTimeMillis() + Long.parseLong(formattedTime);
-            }
-            state.set(this.scheduleAction(customCommandActionQueue, newTime, dispatcher, context, currentInputList));
+            state.set(this.scheduleAction(customCommandActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList));
         }));
         return state.get();
     }
