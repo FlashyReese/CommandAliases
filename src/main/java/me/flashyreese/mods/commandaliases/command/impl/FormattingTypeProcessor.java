@@ -27,6 +27,11 @@ public class FormattingTypeProcessor {
         this.formatTypeMap.put("jsonUnescape", this::unescape);
         this.formatTypeMap.put("toLower", String::toLowerCase);
         this.formatTypeMap.put("toUpper", String::toUpperCase);
+        this.formatTypeMap.put("trim", String::trim);
+        this.formatTypeMap.put("strip", String::strip);
+        this.formatTypeMap.put("stripIndent", String::stripIndent);
+        this.formatTypeMap.put("stripLeading", String::stripLeading);
+        this.formatTypeMap.put("stripTrailing", String::stripTrailing);
         this.formatTypeMap.put("removeDoubleQuotes", this::removeDoubleQuotes);
     }
 

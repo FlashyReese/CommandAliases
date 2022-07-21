@@ -4,7 +4,7 @@ package me.flashyreese.mods.commandaliases.command.builder.custom.format;
  * Represents a custom command suggestion mode
  *
  * @author FlashyReese
- * @version 0.8.0
+ * @version 0.9.0
  * @since 0.8.0
  */
 public enum CustomCommandSuggestionMode {

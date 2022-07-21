@@ -5,27 +5,26 @@ import me.flashyreese.mods.commandaliases.command.CommandType;
 import java.util.List;
 
 /**
- * Represents a custom command Action
+ * Represents a custom command action component
  *
  * @author FlashyReese
- * @version 0.9.0
+ * @version 1.0.0
  * @since 0.4.0
  */
 public class CustomCommandAction {
-    private String triggerTime;
+    private String startTime;
     private String id;
     private String command;
     private CommandType commandType;
-    private String sleep;
     private String message;
     private boolean requireSuccess;
-    private String unsuccessfulMessage;
-    private String successfulMessage;
-    private List<CustomCommandAction> unsuccessfulActions;
-    private List<CustomCommandAction> successfulActions;
+    private String messageIfUnsuccessful;
+    private String messageIfSuccessful;
+    private List<CustomCommandAction> actionsIfUnsuccessful;
+    private List<CustomCommandAction> actionsIfSuccessful;
 
-    public String getTriggerTime() {
-        return triggerTime;
+    public String getStartTime() {
+        return startTime;
     }
 
     public String getId() {
@@ -40,10 +39,6 @@ public class CustomCommandAction {
         return commandType;
     }
 
-    public String getSleep() {
-        return sleep;
-    }
-
     public String getMessage() {
         return message;
     }
@@ -52,19 +47,19 @@ public class CustomCommandAction {
         return requireSuccess;
     }
 
-    public String getUnsuccessfulMessage() {
-        return unsuccessfulMessage;
+    public String getMessageIfUnsuccessful() {
+        return messageIfUnsuccessful;
     }
 
-    public String getSuccessfulMessage() {
-        return successfulMessage;
+    public String getMessageIfSuccessful() {
+        return messageIfSuccessful;
     }
 
-    public List<CustomCommandAction> getUnsuccessfulActions() {
-        return unsuccessfulActions;
+    public List<CustomCommandAction> getActionsIfUnsuccessful() {
+        return actionsIfUnsuccessful;
     }
 
-    public List<CustomCommandAction> getSuccessfulActions() {
-        return successfulActions;
+    public List<CustomCommandAction> getActionsIfSuccessful() {
+        return actionsIfSuccessful;
     }
 }
