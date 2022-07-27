@@ -28,7 +28,6 @@ import me.flashyreese.mods.commandaliases.command.builder.redirect.format.Redire
 import me.flashyreese.mods.commandaliases.math.ExtendedDoubleEvaluator;
 import me.flashyreese.mods.commandaliases.math.SimpleBooleanEvaluator;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
-import me.flashyreese.mods.commandaliases.util.Atomic;
 import me.flashyreese.mods.commandaliases.util.TreeNode;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
@@ -43,6 +42,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Represents the command aliases provider.
@@ -458,7 +458,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         return null;
     }
 
-    private List<CommandAlias> objectMapDataFormat(ObjectMapper objectMapper, File file, Atomic<String> state) throws IOException {
+    private List<CommandAlias> objectMapDataFormat(ObjectMapper objectMapper, File file, AtomicReference<String> state) throws IOException {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         List<CommandAlias> commandAliases = new ArrayList<>();
         CommandAlias commandAlias = objectMapper.readerFor(CommandAlias.class).readValue(file);
@@ -474,7 +474,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
 
     public List<StringBuilder> loadAndRenderDirectoryTreeLines(TreeNode<File> tree, List<CommandAlias> commandAliases) {
         List<StringBuilder> result = new ArrayList<>();
-        Atomic<String> state = new Atomic<>("");
+        AtomicReference<String> state = new AtomicReference<>("");
         if (tree.getData().isFile()) {
             File file = tree.getData();
             try {
