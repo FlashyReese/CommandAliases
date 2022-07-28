@@ -47,7 +47,8 @@ public class CommandAliasesLoader {
     }
 
     public void registerCommandAliases() {
-        // Any time commands get registered in the future, re-register CommandAliases nodes.
+        // CommandAliases must perform registration after all other mods, so that mod-added commands can be referenced
+        // in Aliases. We add our own phase that must execute after the default phase to achieve this.
         CommandRegistrationCallback.EVENT.addPhaseOrdering(Event.DEFAULT_PHASE, ALIASES_REGISTRATION_PHASE_ID);
         CommandRegistrationCallback.EVENT.register(
             ALIASES_REGISTRATION_PHASE_ID,
