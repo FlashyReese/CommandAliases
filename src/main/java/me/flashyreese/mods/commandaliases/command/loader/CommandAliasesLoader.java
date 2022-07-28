@@ -1,7 +1,9 @@
 package me.flashyreese.mods.commandaliases.command.loader;
 
+import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
+import me.flashyreese.mods.commandaliases.command.CommandManagerExtended;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.config.CommandAliasesConfig;
 import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
@@ -14,6 +16,8 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.util.WorldSavePath;
 
@@ -30,6 +34,7 @@ public class CommandAliasesLoader {
 
     private final AbstractCommandAliasesProvider<ServerCommandSource> serverCommandAliasesProvider;
     private final AbstractCommandAliasesProvider<FabricClientCommandSource> clientCommandAliasesProvider;
+    private boolean isServerStarted = false;
 
     public CommandAliasesLoader() {
         Field literalCommandNodeLiteralField = null;
@@ -44,12 +49,31 @@ public class CommandAliasesLoader {
     }
 
     public void registerCommandAliases() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+
+        CommandRegistrationCallback handleRegister = (dispatcher, registryAccess, environment) -> {
             this.serverCommandAliasesProvider.registerCommandAliasesCommands(dispatcher, registryAccess);
             this.serverCommandAliasesProvider.loadCommandAliases();
             this.serverCommandAliasesProvider.registerCommands(dispatcher, registryAccess);
-        });
+        };
+
+        // Any time commands get registered in the future, re-register CommandAliases nodes.
+        CommandRegistrationCallback.EVENT.register(
+            (dispatcher, registryAccess, environment) -> {
+                // On server startup, registration will be handled in the `SERVER_STARTED` callback, so that it always
+                // occurs after all other mods have registered their commands.
+                if (isServerStarted) {
+                    handleRegister.register(dispatcher, registryAccess, environment);
+                }
+            });
+
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            // CommandRegistrationCallback.EVENT won't work here because it gets called before the server even starts.
+            CommandDispatcher<ServerCommandSource> dispatcher = server.getCommandManager().getDispatcher();
+            CommandRegistryAccess registryAccess = ((CommandManagerExtended) server.getCommandManager()).getCommandRegistryAccess();
+            CommandManager.RegistrationEnvironment environment = ((CommandManagerExtended) server.getCommandManager()).getEnvironment();
+            // Immediately register on server start, (after all other mods have registered their commands)
+            handleRegister.register(dispatcher, registryAccess, environment);
+
             if (this.serverCommandAliasesProvider.getDatabase() == null) {
                 if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
                     this.serverCommandAliasesProvider.setDatabase(new LevelDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString()));
@@ -64,8 +88,12 @@ public class CommandAliasesLoader {
             if (this.serverCommandAliasesProvider.getScheduler() == null) {
                 this.serverCommandAliasesProvider.setScheduler(new Scheduler());
             }
+
+            isServerStarted = true;
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            isServerStarted = false;
+
             if (this.serverCommandAliasesProvider.getDatabase() != null) {
                 this.serverCommandAliasesProvider.getDatabase().close();
                 this.serverCommandAliasesProvider.setDatabase(null);
