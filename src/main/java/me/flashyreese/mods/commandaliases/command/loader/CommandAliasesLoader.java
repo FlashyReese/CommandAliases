@@ -11,10 +11,12 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.WorldSavePath;
 
 import java.lang.reflect.Field;
@@ -28,6 +30,7 @@ import java.lang.reflect.Field;
  */
 public class CommandAliasesLoader {
 
+    private static final Identifier ALIASES_REGISTRATION_PHASE_ID = Identifier.of("commandaliases", "register_aliases_phase");
     private final AbstractCommandAliasesProvider<ServerCommandSource> serverCommandAliasesProvider;
     private final AbstractCommandAliasesProvider<FabricClientCommandSource> clientCommandAliasesProvider;
 
@@ -44,11 +47,17 @@ public class CommandAliasesLoader {
     }
 
     public void registerCommandAliases() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            this.serverCommandAliasesProvider.registerCommandAliasesCommands(dispatcher, registryAccess);
-            this.serverCommandAliasesProvider.loadCommandAliases();
-            this.serverCommandAliasesProvider.registerCommands(dispatcher, registryAccess);
-        });
+        // CommandAliases must perform registration after all other mods, so that mod-added commands can be referenced
+        // in Aliases. We add our own phase that must execute after the default phase to achieve this.
+        CommandRegistrationCallback.EVENT.addPhaseOrdering(Event.DEFAULT_PHASE, ALIASES_REGISTRATION_PHASE_ID);
+        CommandRegistrationCallback.EVENT.register(
+            ALIASES_REGISTRATION_PHASE_ID,
+            (dispatcher, registryAccess, environment) -> {
+                this.serverCommandAliasesProvider.registerCommandAliasesCommands(dispatcher, registryAccess);
+                this.serverCommandAliasesProvider.loadCommandAliases();
+                this.serverCommandAliasesProvider.registerCommands(dispatcher, registryAccess);
+            });
+
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             if (this.serverCommandAliasesProvider.getDatabase() == null) {
                 if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
