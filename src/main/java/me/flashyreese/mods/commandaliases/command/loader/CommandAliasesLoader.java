@@ -4,6 +4,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.config.CommandAliasesConfig;
+import me.flashyreese.mods.commandaliases.storage.database.in_memory.InMemoryImpl;
 import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
 import me.flashyreese.mods.commandaliases.storage.database.mysql.MySQLImpl;
 import me.flashyreese.mods.commandaliases.storage.database.redis.RedisImpl;
@@ -60,7 +61,9 @@ public class CommandAliasesLoader {
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             if (this.serverCommandAliasesProvider.getDatabase() == null) {
-                if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
+                if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.IN_MEMORY) {
+                    this.serverCommandAliasesProvider.setDatabase(new InMemoryImpl());
+                } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
                     this.serverCommandAliasesProvider.setDatabase(new LevelDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString()));
                 } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.MYSQL) {
                     this.serverCommandAliasesProvider.setDatabase(new MySQLImpl(CommandAliasesMod.options().databaseSettings.host, CommandAliasesMod.options().databaseSettings.port, CommandAliasesMod.options().databaseSettings.database, CommandAliasesMod.options().databaseSettings.user, CommandAliasesMod.options().databaseSettings.password, "server"));
@@ -93,7 +96,9 @@ public class CommandAliasesLoader {
     public void registerClientSidedCommandAliases() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             if (this.clientCommandAliasesProvider.getDatabase() == null) {
-                if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
+                if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.IN_MEMORY) {
+                    this.clientCommandAliasesProvider.setDatabase(new InMemoryImpl());
+                } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
                     this.clientCommandAliasesProvider.setDatabase(new LevelDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString()));
                 } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.MYSQL) {
                     this.clientCommandAliasesProvider.setDatabase(new MySQLImpl(CommandAliasesMod.options().databaseSettings.host, CommandAliasesMod.options().databaseSettings.port, CommandAliasesMod.options().databaseSettings.database, CommandAliasesMod.options().databaseSettings.user, CommandAliasesMod.options().databaseSettings.password, "client"));
