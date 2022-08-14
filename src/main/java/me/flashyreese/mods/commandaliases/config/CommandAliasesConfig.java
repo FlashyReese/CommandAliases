@@ -85,6 +85,7 @@ public class CommandAliasesConfig {
     }
 
     public enum DatabaseMode {
+        IN_MEMORY,
         LEVELDB,
         MYSQL,
         REDIS;
