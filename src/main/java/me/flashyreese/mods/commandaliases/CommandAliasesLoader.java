@@ -51,7 +51,7 @@ public class CommandAliasesLoader {
     private final CommandAliasesProvider clientCommandAliasesProvider;
     private Field literalCommandNodeLiteralField = null;
 
-    private static final Identifier ALIASES_REGISTRATION_PHASE_ID = Identifier.of("commandaliases", "register_aliases_phase");
+    private static final Identifier ALIASES_REGISTRATION_PHASE_ID = new Identifier("commandaliases", "register_aliases_phase");
 
     public CommandAliasesLoader() {
         try {
