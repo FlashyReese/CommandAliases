@@ -57,7 +57,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
             .enable(JsonReadFeature.ALLOW_TRAILING_COMMA).enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
             .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER).enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
             .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS).enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
-            //.enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS).enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS) todo: enable for jackson 2.14
+            .enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS).enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS)
             .build());
     private final ObjectMapper tomlMapper = new TomlMapper();
     private final ObjectMapper yamlMapper = new YAMLMapper();
@@ -485,7 +485,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                 } else if (file.getAbsolutePath().endsWith(".json5")) {
                     commandAliases.addAll(this.objectMapDataFormat(this.json5Mapper, file, state));
                     CommandAliasesMod.logger().warn("JSON5 not fully supported yet! \"{}\"", file.getAbsolutePath());
-                } else if (file.getAbsolutePath().endsWith(".yml")) {
+                } else if (file.getAbsolutePath().endsWith(".yml") || file.getAbsolutePath().endsWith(".yaml")) {
                     commandAliases.addAll(this.objectMapDataFormat(this.yamlMapper, file, state));
                 } else {
                     state.set(" - Unsupported data format type");
