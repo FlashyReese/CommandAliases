@@ -22,7 +22,7 @@ import net.minecraft.text.Text;
  * @since 0.5.0
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
-    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, AbstractCommandAliasesProvider abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
+    public ServerCustomCommandBuilder(CustomCommand commandAliasParent, AbstractCommandAliasesProvider<ServerCommandSource> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
         super(commandAliasParent, abstractCommandAliasesProvider, registryAccess);
     }
 
