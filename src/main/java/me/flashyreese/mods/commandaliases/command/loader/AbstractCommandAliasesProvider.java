@@ -148,6 +148,34 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                 )
                         )
                 )
+                .then(this.literal("compare").requires(Permissions.require("commandaliases.compare", 4))
+                        .then(this.literal("equals").requires(Permissions.require("commandaliases.compare.equals", 4))
+                                .then(this.argument("string1", StringArgumentType.string())
+                                        .then(this.argument("string2", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String string1 = StringArgumentType.getString(context, "string1");
+                                                    String string2 = StringArgumentType.getString(context, "string2");
+                                                    if (string1.equals(string2))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(this.literal("not_equals").requires(Permissions.require("commandaliases.compare.not_equals", 4))
+                                .then(this.argument("string1", StringArgumentType.string())
+                                        .then(this.argument("string2", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String string1 = StringArgumentType.getString(context, "string1");
+                                                    String string2 = StringArgumentType.getString(context, "string2");
+                                                    if (!string1.equals(string2))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
+                                                })
+                                        )
+                                )
+                        )
+                )
                 .then(this.literal("compute").requires(Permissions.require("commandaliases.compute", 4))
                         .then(this.literal("condition").requires(Permissions.require("commandaliases.compute.condition", 4))
                                 .then(this.argument("expression", StringArgumentType.string())
