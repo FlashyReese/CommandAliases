@@ -484,7 +484,6 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                     commandAliases.addAll(this.objectMapDataFormat(this.jsonMapper, file, state));
                 } else if (file.getAbsolutePath().endsWith(".json5")) {
                     commandAliases.addAll(this.objectMapDataFormat(this.json5Mapper, file, state));
-                    CommandAliasesMod.logger().warn("JSON5 not fully supported yet! \"{}\"", file.getAbsolutePath());
                 } else if (file.getAbsolutePath().endsWith(".yml") || file.getAbsolutePath().endsWith(".yaml")) {
                     commandAliases.addAll(this.objectMapDataFormat(this.yamlMapper, file, state));
                 } else {
