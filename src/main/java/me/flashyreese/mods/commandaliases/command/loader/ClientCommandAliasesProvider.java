@@ -4,6 +4,7 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ClientCustomCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
@@ -15,7 +16,7 @@ import java.lang.reflect.Field;
 
 public class ClientCommandAliasesProvider extends AbstractCommandAliasesProvider<FabricClientCommandSource> {
     public ClientCommandAliasesProvider(Field literalCommandNodeLiteralField) {
-        super(FabricLoader.getInstance().getConfigDir().resolve("commandaliases-client"), literalCommandNodeLiteralField, "commandaliases:client");
+        super(FabricLoader.getInstance().getConfigDir().resolve("commandaliases-client"), literalCommandNodeLiteralField, "commandaliases:client", CommandType.CLIENT);
     }
 
     @Override
@@ -51,7 +52,7 @@ public class ClientCommandAliasesProvider extends AbstractCommandAliasesProvider
     }
 
     @Override
-    protected LiteralArgumentBuilder<FabricClientCommandSource> buildCustomCommand(CustomCommand customCommand, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider, CommandDispatcher<FabricClientCommandSource> dispatcher) {
-        return new ClientCustomCommandBuilder(customCommand, abstractCommandAliasesProvider).buildCommand(dispatcher);
+    protected LiteralArgumentBuilder<FabricClientCommandSource> buildCustomCommand(String filePath, CustomCommand customCommand, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider, CommandDispatcher<FabricClientCommandSource> dispatcher) {
+        return new ClientCustomCommandBuilder(filePath, customCommand, abstractCommandAliasesProvider).buildCommand(dispatcher);
     }
 }
