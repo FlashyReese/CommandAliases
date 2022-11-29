@@ -88,8 +88,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         // Load reassignments first
         this.getCommands().entrySet().stream().filter(cmd -> cmd.getValue().getCommandMode() == CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
             if (cmd.getValue().getCommandMode() == CommandMode.COMMAND_REASSIGN && cmd.getValue() instanceof ReassignCommand reassignCommand) {
-                new ReassignCommandBuilder<S>(cmd.getKey(), reassignCommand, this.literalCommandNodeLiteralField, this.getReassignedCommandMap(), this.commandType).buildCommand(dispatcher);
-                this.getLoadedCommands().add(reassignCommand.getCommand());
+                new ReassignCommandBuilder<S>(cmd.getKey(), reassignCommand, this.literalCommandNodeLiteralField, this.getReassignedCommandMap(), this.getLoadedCommands(), this.commandType).buildCommand(dispatcher);
             }
         });
         // Load other commands
