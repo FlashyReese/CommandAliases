@@ -16,7 +16,7 @@ public class Scheduler {
     private final Queue<Event> events = new PriorityQueue<>(Comparator.comparingLong(Event::getTriggerTime));
 
     public void processEvents() {
-        while(true) {
+        while (true) {
             Event event = this.events.peek();
             if (event == null || event.triggerTime > System.currentTimeMillis()) {
                 return;
