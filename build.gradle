@@ -34,7 +34,7 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Permissions API
-	include(modImplementation("me.lucko:fabric-permissions-api:0.1-SNAPSHOT"))
+	include(modImplementation("me.lucko:fabric-permissions-api:0.2-SNAPSHOT"))
 
 	// LevelDB
 	include(implementation("org.iq80.leveldb:leveldb:0.12"))
