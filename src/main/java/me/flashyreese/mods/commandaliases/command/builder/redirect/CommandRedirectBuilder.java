@@ -14,6 +14,7 @@ import net.minecraft.command.CommandSource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents the CommandAliases Redirect Builder
@@ -56,6 +57,11 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
         String command = cmd.getCommand().trim();
         String redirectTo = cmd.getRedirectTo().trim();
 
+        if (command.isEmpty() || redirectTo.isEmpty()) {
+            CommandAliasesMod.logger().error("[{}] {} - Empty command/redirect field.", this.commandType, cmd.getCommandMode());
+            return null;
+        }
+
         CommandNode<S> redirect = dispatcher.findNode(Lists.newArrayList(redirectTo.split(" ")));
         if (redirect == null) {
             CommandAliasesMod.logger().error("[{}] {} - Could not find existing command \"{}\".", this.commandType, cmd.getCommandMode(), redirectTo);
@@ -63,6 +69,13 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
         }
 
         List<String> literals = Arrays.asList(command.split(" "));
+
+        Optional<String> topLevelCommand = literals.stream().findFirst();
+        if (topLevelCommand.isPresent() && dispatcher.findNode(List.of(topLevelCommand.get())) != null) {
+            CommandAliasesMod.logger().error("[{}] {} - Existing top level command \"{}\".", this.commandType, cmd.getCommandMode(), command);
+            return null;
+        }
+
         Collections.reverse(literals);
         for (String literal : literals) {
             if (commandBuilder != null) {
