@@ -52,12 +52,12 @@ public class CommandAliasesLoader {
         // in Aliases. We add our own phase that must execute after the default phase to achieve this.
         CommandRegistrationCallback.EVENT.addPhaseOrdering(Event.DEFAULT_PHASE, ALIASES_REGISTRATION_PHASE_ID);
         CommandRegistrationCallback.EVENT.register(
-            ALIASES_REGISTRATION_PHASE_ID,
-            (dispatcher, registryAccess, environment) -> {
-                this.serverCommandAliasesProvider.registerCommandAliasesCommands(dispatcher, registryAccess);
-                this.serverCommandAliasesProvider.loadCommandAliases();
-                this.serverCommandAliasesProvider.registerCommands(dispatcher, registryAccess);
-            });
+                ALIASES_REGISTRATION_PHASE_ID,
+                (dispatcher, registryAccess, environment) -> {
+                    this.serverCommandAliasesProvider.registerCommandAliasesCommands(dispatcher, registryAccess);
+                    this.serverCommandAliasesProvider.loadCommandAliases();
+                    this.serverCommandAliasesProvider.registerCommands(dispatcher, registryAccess);
+                });
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             if (this.serverCommandAliasesProvider.getDatabase() == null) {

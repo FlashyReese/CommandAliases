@@ -42,6 +42,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 0.4.0
  */
 public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+
+    protected final String filePath;
     protected final CustomCommand commandAliasParent;
 
     protected final ArgumentTypeMapper argumentTypeMapper;
@@ -50,7 +52,8 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
 
     protected final AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider;
 
-    public AbstractCustomCommandBuilder(CustomCommand commandAliasParent, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
+    public AbstractCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
+        this.filePath = filePath;
         this.argumentTypeMapper = new ArgumentTypeMapper(registryAccess);
         this.commandAliasParent = commandAliasParent;
         this.abstractCommandAliasesProvider = abstractCommandAliasesProvider;
@@ -183,8 +186,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      */
     @SuppressWarnings("unchecked")
     public ArgumentBuilder<S, ?> buildCommandChildSuggestion(CommandDispatcher<S> dispatcher, ArgumentBuilder<S, ?> argumentBuilder, CustomCommandChild child, List<String> inputs) {
-        if (!(argumentBuilder instanceof RequiredArgumentBuilder))
-            return argumentBuilder;
+        if (!(argumentBuilder instanceof RequiredArgumentBuilder)) return argumentBuilder;
 
         SuggestionProvider<S> SUGGESTION_PROVIDER;
 
@@ -222,11 +224,10 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 long end = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
                     CommandAliasesMod.logger().info("""
-                                    \n\t======================================================
-                                    \tSuggestion Provider: {}
-                                    \tProcessing time: {}ms
-                                    \t======================================================""",
-                            formattedSuggestion, (end - start) / 1000000.0);
+                            \n\t======================================================
+                            \tSuggestion Provider: {}
+                            \tProcessing time: {}ms
+                            \t======================================================""", formattedSuggestion, (end - start) / 1000000.0);
                 }
                 return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
             };
@@ -236,9 +237,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 long start = System.nanoTime();
                 String formattedSuggestion = this.formatString(context, inputs, suggestionProvider.getSuggestion());
                 this.abstractCommandAliasesProvider.getDatabase().map().forEach((key, value) -> {
-                    if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && key.startsWith(formattedSuggestion)) &&
-                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && key.endsWith(formattedSuggestion)) &&
-                            !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && key.contains(formattedSuggestion)))
+                    if (!(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_STARTS_WITH && key.startsWith(formattedSuggestion)) && !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_ENDS_WITH && key.endsWith(formattedSuggestion)) && !(suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.DATABASE_CONTAINS && key.contains(formattedSuggestion)))
                         return;
 
                     suggestions.add(value);
@@ -246,11 +245,10 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 long end = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
                     CommandAliasesMod.logger().info("""
-                                    \n\t======================================================
-                                    \tSuggestion Provider: {}
-                                    \t"Processing time: {}ms
-                                    \t======================================================""",
-                            formattedSuggestion, (end - start) / 1000000.0);
+                            \n\t======================================================
+                            \tSuggestion Provider: {}
+                            \t"Processing time: {}ms
+                            \t======================================================""", formattedSuggestion, (end - start) / 1000000.0);
                 }
                 return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
             };
@@ -287,8 +285,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      */
     private int scheduleAction(Queue<CustomCommandAction> customCommandActionQueue, long triggerTime, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
         AtomicInteger state = new AtomicInteger();
-        if (customCommandActionQueue.isEmpty())
-            return Command.SINGLE_SUCCESS;
+        if (customCommandActionQueue.isEmpty()) return Command.SINGLE_SUCCESS;
 
         CustomCommandAction action = customCommandActionQueue.poll();
         String eventName = "generic";
@@ -324,14 +321,13 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 long endExecution = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
                     CommandAliasesMod.logger().info("""
-                                    \n\t======================================================
-                                    \tOriginal Action Command: {}
-                                    \tOriginal Action Command Type: {}
-                                    \tPost Processed Action Command: {}
-                                    \tFormatting time: {}ms
-                                    \tExecuting time: {}ms
-                                    \t======================================================""",
-                            action.getCommand(), action.getCommandType(), actionCommand, (endFormat - startFormat) / 1000000.0, (endExecution - endFormat) / 1000000.0);
+                            \n\t======================================================
+                            \tOriginal Action Command: {}
+                            \tOriginal Action Command Type: {}
+                            \tPost Processed Action Command: {}
+                            \tFormatting time: {}ms
+                            \tExecuting time: {}ms
+                            \t======================================================""", action.getCommand(), action.getCommandType(), actionCommand, (endFormat - startFormat) / 1000000.0, (endExecution - endFormat) / 1000000.0);
                 }
                 if (state.get() != Command.SINGLE_SUCCESS) {
                     if (action.getMessageIfUnsuccessful() != null) {

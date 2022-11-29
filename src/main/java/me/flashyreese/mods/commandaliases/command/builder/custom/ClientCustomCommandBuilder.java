@@ -4,10 +4,10 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
+import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
@@ -24,9 +24,8 @@ import java.util.Objects;
  * @since 0.5.0
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {
-
-    public ClientCustomCommandBuilder(CustomCommand commandAliasParent, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
-        super(commandAliasParent, abstractCommandAliasesProvider, registryAccess);
+    public ClientCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
+        super(filePath, commandAliasParent, abstractCommandAliasesProvider, registryAccess);
     }
 
     @Override

@@ -66,6 +66,13 @@ public class CommandAliasesConfig {
         }
     }
 
+    public enum DatabaseMode {
+        IN_MEMORY,
+        LEVELDB,
+        MYSQL,
+        REDIS
+    }
+
     public static class DatabaseSettings {
         public DatabaseMode databaseMode;
         public String host;
@@ -82,13 +89,6 @@ public class CommandAliasesConfig {
             this.user = "root";
             this.password = "";
         }
-    }
-
-    public enum DatabaseMode {
-        IN_MEMORY,
-        LEVELDB,
-        MYSQL,
-        REDIS;
     }
 
     public static class DebugSettings {

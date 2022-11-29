@@ -26,10 +26,12 @@ import java.util.Optional;
  * @since 0.3.0
  */
 public class CommandRedirectBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+    private final String filePath;
     private final RedirectCommand command;
     private final CommandType commandType;
 
-    public CommandRedirectBuilder(RedirectCommand command, CommandType commandType) {
+    public CommandRedirectBuilder(String filePath, RedirectCommand command, CommandType commandType) {
+        this.filePath = filePath;
         this.command = command;
         this.commandType = commandType;
     }
