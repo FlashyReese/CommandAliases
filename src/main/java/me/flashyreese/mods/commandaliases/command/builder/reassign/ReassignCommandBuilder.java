@@ -10,6 +10,7 @@ import me.flashyreese.mods.commandaliases.command.builder.reassign.format.Reassi
 import net.minecraft.command.CommandSource;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -25,14 +26,16 @@ public class ReassignCommandBuilder<S extends CommandSource> implements CommandB
     protected final String filePath;
     protected final ReassignCommand command;
     protected final Map<String, String> reassignCommandMap;
+    protected final List<String> loadedCommands;
     private final Field literalCommandNodeLiteralField;
     private final CommandType commandType;
 
-    public ReassignCommandBuilder(String filePath, ReassignCommand command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType) {
+    public ReassignCommandBuilder(String filePath, ReassignCommand command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, List<String> loadedCommands, CommandType commandType) {
         this.filePath = filePath;
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.reassignCommandMap = reassignCommandMap;
+        this.loadedCommands = loadedCommands;
         this.commandType = commandType;
     }
 
@@ -47,6 +50,7 @@ public class ReassignCommandBuilder<S extends CommandSource> implements CommandB
             String command = this.command.getCommand().trim();
             String reassignTo = this.command.getReassignTo().trim();
             this.reassignCommandMap.put(command, reassignTo);
+            this.loadedCommands.add(command);
         }
         return null;
     }
