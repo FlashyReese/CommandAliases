@@ -22,12 +22,14 @@ import java.util.Map;
  * @since 0.3.0
  */
 public class ReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+    protected final String filePath;
     protected final ReassignCommand command;
     protected final Map<String, String> reassignCommandMap;
     private final Field literalCommandNodeLiteralField;
     private final CommandType commandType;
 
-    public ReassignCommandBuilder(ReassignCommand command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType) {
+    public ReassignCommandBuilder(String filePath, ReassignCommand command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType) {
+        this.filePath = filePath;
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.reassignCommandMap = reassignCommandMap;
