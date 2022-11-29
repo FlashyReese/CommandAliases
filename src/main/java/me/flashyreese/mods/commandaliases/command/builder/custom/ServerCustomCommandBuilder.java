@@ -23,7 +23,7 @@ import net.minecraft.text.Text;
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
     public ServerCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<ServerCommandSource> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
-        super(filePath, commandAliasParent, abstractCommandAliasesProvider, registryAccess);
+        super(filePath, commandAliasParent, abstractCommandAliasesProvider, registryAccess, CommandType.SERVER);
     }
 
     @Override
