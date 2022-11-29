@@ -60,13 +60,13 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
         String redirectTo = cmd.getRedirectTo().trim();
 
         if (command.isEmpty() || redirectTo.isEmpty()) {
-            CommandAliasesMod.logger().error("[{}] {} - Empty command/redirect field.", this.commandType, cmd.getCommandMode());
+            CommandAliasesMod.logger().error("[{}] {} - Empty command/redirect field: {}", this.commandType, cmd.getCommandMode(), this.filePath);
             return null;
         }
 
         CommandNode<S> redirect = dispatcher.findNode(Lists.newArrayList(redirectTo.split(" ")));
         if (redirect == null) {
-            CommandAliasesMod.logger().error("[{}] {} - Could not find existing command \"{}\".", this.commandType, cmd.getCommandMode(), redirectTo);
+            CommandAliasesMod.logger().error("[{}] {} - Could not find existing command \"{}\": {}", this.commandType, cmd.getCommandMode(), redirectTo, this.filePath);
             return null;
         }
 
@@ -74,7 +74,7 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
 
         Optional<String> topLevelCommand = literals.stream().findFirst();
         if (topLevelCommand.isPresent() && dispatcher.findNode(List.of(topLevelCommand.get())) != null) {
-            CommandAliasesMod.logger().error("[{}] {} - Existing top level command \"{}\".", this.commandType, cmd.getCommandMode(), command);
+            CommandAliasesMod.logger().error("[{}] {} - Existing top level command \"{}\": {}", this.commandType, cmd.getCommandMode(), command, this.filePath);
             return null;
         }
 
