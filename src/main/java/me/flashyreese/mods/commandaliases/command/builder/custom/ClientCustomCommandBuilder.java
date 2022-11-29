@@ -24,7 +24,7 @@ import java.util.Objects;
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {
     public ClientCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider) {
-        super(filePath, commandAliasParent, abstractCommandAliasesProvider);
+        super(filePath, commandAliasParent, abstractCommandAliasesProvider, CommandType.CLIENT);
     }
 
     @Override

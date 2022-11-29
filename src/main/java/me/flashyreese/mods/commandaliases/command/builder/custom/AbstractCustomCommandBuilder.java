@@ -15,6 +15,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
+import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.Permissions;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
@@ -44,6 +45,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
 
     protected final String filePath;
     protected final CustomCommand commandAliasParent;
+    protected final CommandType commandType;
 
     protected final ArgumentTypeMapper argumentTypeMapper;
     protected final FunctionProcessor<S> functionProcessor;
@@ -51,11 +53,12 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
 
     protected final AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider;
 
-    public AbstractCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider) {
+    public AbstractCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandType commandType) {
         this.filePath = filePath;
         this.argumentTypeMapper = new ArgumentTypeMapper();
         this.commandAliasParent = commandAliasParent;
         this.abstractCommandAliasesProvider = abstractCommandAliasesProvider;
+        this.commandType = commandType;
         this.functionProcessor = new FunctionProcessor<>(abstractCommandAliasesProvider);
         this.inputMapper = new InputMapper<>();
     }
@@ -118,7 +121,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                 argumentBuilder = this.argument(child.getChild(), this.argumentTypeMapper.getArgumentMap().get(child.getArgumentType()));
                 inputs.add(child.getChild());
             } else {
-                CommandAliasesMod.logger().error("Invalid Argument Type: {}", child.getArgumentType());
+                CommandAliasesMod.logger().error("[{}] {} - Invalid Argument Type of \"{}\": {}", this.commandType, this.commandAliasParent.getCommandMode(), child.getArgumentType(), this.filePath);
             }
         }
         if (argumentBuilder != null) {
@@ -192,17 +195,17 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
         CustomCommandSuggestionProvider suggestionProvider = child.getSuggestionProvider();
 
         if (suggestionProvider.getSuggestionMode() == null) {
-            CommandAliasesMod.logger().warn("Missing suggestion mode in \"{}\"", child.getChild());
+            CommandAliasesMod.logger().warn("[{}] {} - Missing suggestion mode: {}", this.commandType, this.commandAliasParent.getCommandMode(), this.filePath);
             return argumentBuilder;
         }
 
         if (suggestionProvider.getSuggestion() == null || suggestionProvider.getSuggestion().isEmpty()) {
-            CommandAliasesMod.logger().warn("Missing suggestion in \"{}\"", child.getChild());
+            CommandAliasesMod.logger().warn("[{}] {} - Missing suggestion: {}", this.commandType, this.commandAliasParent.getCommandMode(), this.filePath);
             return argumentBuilder;
         }
 
         if (Arrays.stream(CustomCommandSuggestionMode.values()).filter(value -> suggestionProvider.getSuggestionMode() == value).count() != 1) {
-            CommandAliasesMod.logger().error("Invalid suggestion mode \"{}\"", suggestionProvider.getSuggestionMode());
+            CommandAliasesMod.logger().error("[{}] {} - Invalid suggestion mode \"{}\": {}", this.commandType, this.commandAliasParent.getCommandMode(), suggestionProvider.getSuggestionMode(), this.filePath);
             return argumentBuilder;
         }
 
@@ -211,7 +214,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
             if (redirect != null && redirect.createBuilder() instanceof RequiredArgumentBuilder requiredArgumentBuilder) {
                 SUGGESTION_PROVIDER = requiredArgumentBuilder.getSuggestionsProvider();
             } else {
-                CommandAliasesMod.logger().error("Invalid suggestion \"{}\"", suggestionProvider.getSuggestion());
+                CommandAliasesMod.logger().error("[{}] {} - Invalid suggestion \"{}\": {}", this.commandType, this.commandAliasParent.getCommandMode(), suggestionProvider.getSuggestion(), this.filePath);
                 return argumentBuilder;
             }
         } else if (suggestionProvider.getSuggestionMode() == CustomCommandSuggestionMode.JSON_LIST) {

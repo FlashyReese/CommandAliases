@@ -67,12 +67,12 @@ public class ReassignCommandBuilder<S extends CommandSource> implements CommandB
         String reassignTo = cmd.getReassignTo().trim();
 
         if (command.contains(" ")) {
-            CommandAliasesMod.logger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), command);
+            CommandAliasesMod.logger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\": {}", this.commandType, cmd.getCommandMode(), command, this.filePath);
             return false;
         }
 
         if (reassignTo.contains(" ")) {
-            CommandAliasesMod.logger().error("[{}] {} - \"reassignTo\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), reassignTo);
+            CommandAliasesMod.logger().error("[{}] {} - \"reassignTo\" field must not contain spaces, skipping \"{}\": {}", this.commandType, cmd.getCommandMode(), reassignTo, this.filePath);
             return false;
         }
 
@@ -89,13 +89,13 @@ public class ReassignCommandBuilder<S extends CommandSource> implements CommandB
             } catch (IllegalAccessException e) {
                 dispatcher.getRoot().addChild(commandNode);
                 e.printStackTrace();
-                CommandAliasesMod.logger().error("[{}] {} - Failed to modify command literal \"{}\", skipping.", this.commandType, cmd.getCommandMode(), command);
+                CommandAliasesMod.logger().error("[{}] {} - Failed to modify command literal \"{}\", skipping: {}", this.commandType, cmd.getCommandMode(), command, this.filePath);
                 return false;
             }
 
             dispatcher.getRoot().addChild(commandNode);
 
-            CommandAliasesMod.logger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\"", this.commandType, cmd.getCommandMode(), command, reassignTo);
+            CommandAliasesMod.logger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\": {}", this.commandType, cmd.getCommandMode(), command, reassignTo, this.filePath);
             return true;
         }
         return false;

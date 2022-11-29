@@ -22,7 +22,7 @@ import net.minecraft.text.LiteralText;
  */
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
     public ServerCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<ServerCommandSource> abstractCommandAliasesProvider) {
-        super(filePath, commandAliasParent, abstractCommandAliasesProvider);
+        super(filePath, commandAliasParent, abstractCommandAliasesProvider, CommandType.SERVER);
     }
 
     @Override
