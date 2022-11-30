@@ -98,7 +98,7 @@ Command Aliases currently support multiple data formats. The following are:
 
 Let's start creating our first command aliases and get familiar with the format and types of command aliases mode.
 
-We are going to start off by creating a basic redirect without arguments using the command mode `COMMAND_REDIRECT_NOARG`. We can find other command modes on the [Command Modes](command-modes/) page.
+We are going to start off by creating a basic redirect without arguments using the command mode `COMMAND_REDIRECT_NOARG`. We can find other command modes on the [Command Modes](command-modes.md) page.
 
 Let's create our first command aliases file with our data format of choice. Start by creating a filed name `survival.json` placed in `.minecraft/config/commandaliases/`. Depending on the format you prefer used the proper extension accordingly.
 
@@ -173,4 +173,4 @@ commandaliases
 
 Now let's try our command `/survival`. If everything was done correctly the command alias should be working as intended.
 
-Congratulations you have now created your first command alias. You can read more about different command modes on the [Command Modes](command-modes/) page.
+Congratulations you have now created your first command alias. You can read more about different command modes on the [Command Modes](command-modes.md) page.
