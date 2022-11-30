@@ -73,7 +73,7 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
         List<String> literals = Arrays.asList(command.split(" "));
 
         Optional<String> topLevelCommand = literals.stream().findFirst();
-        if (topLevelCommand.isPresent() && dispatcher.findNode(List.of(topLevelCommand.get())) != null) {
+        if (topLevelCommand.isPresent() && dispatcher.findNode(List.of(topLevelCommand.get())) != null && literals.size() == 1) {
             CommandAliasesMod.logger().error("[{}] {} - Existing top level command \"{}\": {}", this.commandType, cmd.getCommandMode(), command, this.filePath);
             return null;
         }
