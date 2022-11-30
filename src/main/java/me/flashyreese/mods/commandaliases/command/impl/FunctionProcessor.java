@@ -88,7 +88,7 @@ public class FunctionProcessor<S extends CommandSource> {
             }
             return null;
         });
-        this.functionMap.put("get_dimension", (commandSource, input) -> {
+        this.functionMap.put("get_world", (commandSource, input) -> {
             if (commandSource instanceof ServerCommandSource serverCommandSource) {
                 Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
                         .filter(serverPlayerEntity -> serverPlayerEntity.getEntityName().equals(input)).findFirst();
@@ -100,6 +100,22 @@ public class FunctionProcessor<S extends CommandSource> {
                         .filter(clientPlayerEntity -> clientPlayerEntity.getEntityName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return optionalPlayer.get().getEntityWorld().getRegistryKey().getValue().toString();
+                }
+            }
+            return null;
+        });
+        this.functionMap.put("get_dimension", (commandSource, input) -> {
+            if (commandSource instanceof ServerCommandSource serverCommandSource) {
+                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getEntityName().equals(input)).findFirst();
+                if (optionalPlayer.isPresent()) {
+                    return optionalPlayer.get().getEntityWorld().getDimension().effects().toString();
+                }
+            } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
+                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getEntityName().equals(input)).findFirst();
+                if (optionalPlayer.isPresent()) {
+                    return optionalPlayer.get().getEntityWorld().getDimension().effects().toString();
                 }
             }
             return null;
