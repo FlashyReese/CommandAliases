@@ -46,4 +46,4 @@ Command Aliases can be found on many platforms. The official downloads are locat
 
 CommandAliases is currently only a Fabric mod and runs on the [Fabric Mod Loader](https://fabricmc.net/).
 
-Depending on the environment of the installation, the Fabric Mod Loader will generate a new folder named \`mods\`, all fabric mods should be placed in this folder.
+Depending on the environment of the installation, the Fabric Mod Loader will generate a new folder named `mods`, all fabric mods should be placed in this folder.
