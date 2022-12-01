@@ -163,7 +163,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                         )
                                 )
                         )
-                        .then(this.literal("not_equals").requires(Permissions.require("commandaliases.compare.not_equals", 4))
+                        .then(this.literal("notEquals").requires(Permissions.require("commandaliases.compare.not_equals", 4))
                                 .then(this.argument("string1", StringArgumentType.string())
                                         .then(this.argument("string2", StringArgumentType.string())
                                                 .executes(context -> {
