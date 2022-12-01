@@ -298,7 +298,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                         )
                                 )
                         )
-                        .then(this.literal("doubleEvaluate").requires(Permissions.require("commandaliases.compute.double_evaluate", 4))
+                        .then(this.literal("numericalEvaluate").requires(Permissions.require("commandaliases.compute.numerical_evaluate", 4))
                                 .then(this.argument("key", StringArgumentType.string())
                                         .then(this.argument("expression", StringArgumentType.string())
                                                 .executes(context -> {
