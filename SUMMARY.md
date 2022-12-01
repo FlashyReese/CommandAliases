@@ -13,3 +13,4 @@
     * [Child Component](command-modes/custom/child-component.md)
     * [Action Component](command-modes/custom/action-component.md)
     * [Suggestion Provider Component](command-modes/custom/suggestion-provider-component.md)
+* [Commands](commands.md)
