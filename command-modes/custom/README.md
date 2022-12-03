@@ -1,10 +1,153 @@
 # Custom
 
-When using command mode `COMMAND_CUSTOM`, it creates a new command that can run one or more existing commands with required/optional arguments passthrough.
+When using the `COMMAND_CUSTOM` command mode, it creates a new command that can run one or more existing commands with required or optional arguments passthrough.
 
-### Create a custom command using `COMMAND_CUSTOM`
+## Format Structure
 
-First, we need to set our command mode to `COMMAND_CUSTOM`.
+The custom command format consists of multiple components and allows for a high degree of customizability. The following components are included:
+
+* [Base Component](base-component.md): The base template for creating a custom command.
+* [Child Component](child-component.md): A sub-child component that allows for the inclusion of arguments and sub-commands on a recursive basis.
+* [Action Component](action-component.md): The action component allows for the execution of commands, evaluation of command state execution, and the ability to apply additional actions on a recursive basis depending on the command state.
+* [Suggestion Provider Component](suggestion-provider-component.md): A suggestion provider for a list of items in the database, or an existing vanilla suggestion provider.
+
+### Full Example
+
+* JSON or JSON5
+
+```json5
+{
+  "schemaVersion": 1,
+  "commandMode": "COMMAND_CUSTOM",
+  "command": "hello",
+  "permission": 0,
+  "message": "hello parent command",
+  "children": [
+    {
+      "child": "name",
+      "type": "argument",
+      "argumentType": "minecraft:word",
+      "suggestionProvider": {
+        "suggestionMode": "DATABASE_STARTS_WITH",
+        "suggestion": "$executor_name().home.suggestions"
+      },
+      "permission": 0,
+      "message": "Hello name sub command",
+      "children": [
+        {
+
+        }
+      ],
+      "actions": [
+        {
+
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "startTime": "1000",
+      "id": "generic",
+      "command": "say Hello {{name}}",
+      "commandType": "SERVER",
+      "message": "We tried to say hello {{name}}",
+      "requireSuccess": false,
+      "messageIfUnsuccessful": "We failed to say hello {{name}}",
+      "messageIfSuccessful": "We said hello {{name}}",
+      "actionsIfUnsuccessful": [
+        {
+
+        }
+      ],
+      "actionsIfSuccessful": [
+        {
+
+        }
+      ]
+    }
+  ]
+}
+```
+
+* TOML
+
+```toml
+schemaVersion = 1
+commandMode = "COMMAND_CUSTOM"
+command = "hello"
+permission = 0
+message = "hello parent command"
+
+[[children]]
+child = "name"
+type = "argument"
+argumentType = "minecraft:word"
+permission = 0
+message = "Hello name sub command"
+
+  [children.suggestionProvider]
+  suggestionMode = "DATABASE_STARTS_WITH"
+  suggestion = "$executor_name().home.suggestions"
+
+  [[children.children]]
+
+  [[children.actions]]
+
+[[actions]]
+startTime = "1000"
+id = "generic"
+command = "say Hello {{name}}"
+commandType = "SERVER"
+message = "We tried to say hello {{name}}"
+requireSuccess = false
+messageIfUnsuccessful = "We failed to say hello {{name}}"
+messageIfSuccessful = "We said hello {{name}}"
+
+  [[actions.actionsIfUnsuccessful]]
+
+  [[actions.actionsIfSuccessful]]
+```
+
+* YAML
+
+```yaml
+schemaVersion: 1
+commandMode: COMMAND_CUSTOM
+command: hello
+permission: 0
+message: hello parent command
+children:
+  - child: name
+    type: argument
+    argumentType: 'minecraft:word'
+    permission: 0
+    message: Hello name sub command
+    suggestionProvider:
+      suggestionMode: DATABASE_STARTS_WITH
+      suggestion: $executor_name().home.suggestions
+    children:
+      - {}
+    actions:
+      - {}
+actions:
+  - startTime: '1000'
+    id: generic
+    command: 'say Hello {{name}}'
+    commandType: SERVER
+    message: 'We tried to say hello {{name}}'
+    requireSuccess: false
+    messageIfUnsuccessful: 'We failed to say hello {{name}}'
+    messageIfSuccessful: 'We said hello {{name}}'
+    actionsIfUnsuccessful:
+      - {}
+    actionsIfSuccessful:
+      - {}
+```
+
+## Create a custom command using `COMMAND_CUSTOM`
+
+To begin, we must set our command mode to `COMMAND_CUSTOM`.
 
 * JSON or JSON5
 
@@ -29,7 +172,7 @@ schemaVersion: 1
 commandMode: COMMAND_CUSTOM
 ```
 
-Now that we have set our command mode, we can define our new command.
+With the command mode set, we can now define our new command.
 
 * JSON or JSON5
 
@@ -57,7 +200,7 @@ commandMode: COMMAND_CUSTOM
 command: tools
 ```
 
-Let's send a message to the command executor(the player/console that runs the command).
+Next, let's send a message to the command executor (the player or console that runs the command).
 
 * JSON or JSON5
 
@@ -88,9 +231,7 @@ command: tools
 message: Here are some free wooden tools
 ```
 
-Let's get the executor's name and bind it to our message.
-
-We can get the executor's name using `$executor_name()`.
+To personalize the message, let's get the executor's name and bind it to our message. We can obtain the executor's name using the `$executor_name()` function.
 
 * JSON or JSON5
 
@@ -126,7 +267,7 @@ message: 'Here are some free wooden tools, $executor_name()!'
 1. Player123 runs `/tools`
 2. Output will return `Here are some free wooden tools, Player123!`
 
-Now let's give the player a wooden sword. This can be done by using the field `actions` which takes in an array of command action objects.
+To continue, let's give the player a wooden sword. This can be done by using the `actions` field, which takes an array of command action objects as input.
 
 * JSON or JSON5
 
@@ -161,7 +302,7 @@ message: 'Here are some free wooden tools, $executor_name()!'
 actions: []
 ```
 
-We will need to create a command action object inside the custom command.
+To complete this step, we will need to create a command action object inside the custom command.
 
 * JSON or JSON5
 
@@ -202,7 +343,7 @@ actions:
   - command: 'give $executor_name() minecraft:wooden_sword'
 ```
 
-Before we go ahead and run the command. We need to define the type of execution between `CLIENT` and `SERVER`. Using `CLIENT` will imply that the executors run the command(in this case the `/give` command). This means if the executor doesn't have permission to use the `/give` command our custom command will error out. Now to get around this issue, we can use `SERVER`. Using `SERVER` will imply the internal/dedicated server executes said the custom command, not the executor. In this case for our `/tools` command, we will need to use `SERVER` since the players don't have access to the `/give` command.
+Before we proceed to run the command, we must define the type of execution between `CLIENT` and `SERVER`. Using `CLIENT` will imply that the executors run the command (in this case, the `/give` command), which means that if the executor does not have permission to use the `/give` command, our custom command will error out. To avoid this issue, we can use `SERVER`. Using `SERVER` will imply that the internal or dedicated server executes the custom command, not the executor. In this case, for our `/tools` command, we will need to use `SERVER` since players do not have access to the `/give` command."
 
 * JSON or JSON5
 
@@ -320,7 +461,7 @@ actions:
     commandType: SERVER
 ```
 
-We can also add a schedule a start time for commands using `startTime` in milliseconds. This way we can add a 1 second wait time for all the commands to execute. This means we can schedule time accordingly to our liking. So for this example, I will be scheduling them with 1 second wait time between each command.
+We can also schedule a start time for commands using `startTime` in milliseconds. This allows us to add a 1 second wait time for all commands to execute, allowing us to schedule the time according to our preferences. In this example, I will be scheduling them with a 1 second wait time between each command.
 
 * JSON or JSON5
 
@@ -406,7 +547,7 @@ actions:
     startTime: '1000'
 ```
 
-You can also add a message in the command action object.
+You can also include a message in the command action object.
 
 * JSON or JSON5
 
@@ -504,11 +645,12 @@ actions:
     message: 'Here is a wooden shovel, $executor_name()!'
 ```
 
-**Scenario**
+Scenario:
 
-1. Player123 runs `/tools`
-2. `Here are some free wooden tools, Player123!`
-3. Drops wooden sword, and prints `Here is a wooden sword`; waits for 1 second
-4. Drops wooden pickaxe, and prints `Here is a wooden pickaxe`; waits for 1 second
-5. Drops wooden axe, and prints `Here is a wooden axe`; waits for 1 second
-6. Drops wooden shovel, and prints `Here is a wooden shovel, Player123!`
+1. Player123 runs the `/tools` command.
+2. The message "Here are some free wooden tools, Player123!" is displayed.
+3. A wooden sword is dropped, and the message "Here is a wooden sword" is printed; a 1 second wait time is initiated.
+4. A wooden pickaxe is dropped, and the message "Here is a wooden pickaxe" is printed; a 1 second wait time is initiated.
+5. A wooden axe is dropped, and the message "Here is a wooden axe" is printed; a 1 second wait time is initiated.
+6. A wooden shovel is dropped, and the message "Here is a wooden shovel, Player123!" is displayed.
+

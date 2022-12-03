@@ -9,6 +9,7 @@
   * [Redirect without arguments](command-modes/redirect-without-arguments.md)
   * [Reassign](command-modes/reassign.md)
   * [Custom](command-modes/custom/README.md)
+    * [Functions](command-modes/custom/functions.md)
     * [Base Component](command-modes/custom/base-component.md)
     * [Child Component](command-modes/custom/child-component.md)
     * [Action Component](command-modes/custom/action-component.md)

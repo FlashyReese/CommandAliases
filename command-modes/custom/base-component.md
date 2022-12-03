@@ -4,7 +4,7 @@
 
 ```json5
 {
-    "schemaVersion": 1, // Required | Schema Version
+    "schemaVersion": 1, // Required | SchemaVersion
     "commandMode": "COMMAND_CUSTOM", // Required | Custom Command Format
     "command": "hello", // Required | Parent command name
     "permission": 0, // Optional | Default: 0 | If LuckPerms is not installed will fallback to these permission level
@@ -25,7 +25,7 @@
 * TOML
 
 ```toml
-schemaVersion = 1 # Required | Schema Version
+schemaVersion = 1 # Required | SchemaVersion
 commandMode = "COMMAND_CUSTOM" # Required | Custom Command Format
 command = "hello" # Required | Parent command name
 permission = 0 # Optional | Default: 0 | If LuckPerms is not installed will fallback to these permission level
@@ -39,7 +39,7 @@ message = "hello parent command" # Optional | Default: Empty | Executor gets a l
 * YAML
 
 ```yaml
-schemaVersion: 1 # Required | Schema Version
+schemaVersion: 1 # Required | SchemaVersion
 commandMode: COMMAND_CUSTOM # Required | Custom Command Format
 command: hello # Required | Parent command name
 permission: 0 # Optional | Default: 0 | If LuckPerms is not installed will fallback to these permission level

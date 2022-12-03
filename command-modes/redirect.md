@@ -1,10 +1,10 @@
 # Redirect
 
-When using command mode `COMMAND_REDIRECT`, it creates a new command alias that redirects to an existing command with trailing command arguments.
+When using the `COMMAND_REDIRECT` command mode, it creates a new command alias that redirects to an existing command along with its trailing command arguments.
 
 ## Create a command alias using `COMMAND_REDIRECT`
 
-First, we need to set our command mode to `COMMAND_REDIRECT`.
+To begin, we must set our command mode to `COMMAND_REDIRECT`.
 
 * JSON or JSON5
 
@@ -29,7 +29,7 @@ schemaVersion: 1
 commandMode: COMMAND_REDIRECT
 ```
 
-Now that we have set our command mode, we can define our new command.
+With the command mode set, we can now define our new command.
 
 * JSON or JSON5
 
@@ -57,7 +57,7 @@ commandMode: COMMAND_REDIRECT
 command: s
 ```
 
-Finally, we chose what existing command our new command will redirect to. In this case, I chose the `/say` command.
+Finally, we must choose the existing command that our new command will redirect to. In this case, I have chosen the `/say` command.
 
 * JSON or JSON5
 

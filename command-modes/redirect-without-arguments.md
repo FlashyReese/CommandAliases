@@ -1,10 +1,10 @@
 # Redirect without arguments
 
-When using command mode `COMMAND_REDIRECT_NOARG`, it creates a new command alias that redirects to an existing command **without** trailing command arguments.
+When using the `COMMAND_REDIRECT_NOARG` command mode, it creates a new command alias that redirects to an existing command **without** its trailing command arguments.
 
 ## Create a command alias using `COMMAND_REDIRECT_NOARG`
 
-First, we need to set our command mode to `COMMAND_REDIRECT_NOARG`.
+To begin, we must set our command mode to `COMMAND_REDIRECT_NOARG`.
 
 * JSON or JSON5
 
@@ -29,7 +29,7 @@ schemaVersion: 1
 commandMode: COMMAND_REDIRECT_NOARG
 ```
 
-Now that we have defined our redirect command object, we can define our new command.
+With the command mode set, we can now define our new command.
 
 * JSON or JSON5
 
@@ -57,7 +57,7 @@ commandMode: COMMAND_REDIRECT_NOARG
 command: easy
 ```
 
-Finally, we chose what existing command our new command will redirect to. In this case, I chose the `/difficulty easy` command.
+Finally, we must choose the existing command that our new command will redirect to. In this case, I have chosen the `/difficulty easy` command.
 
 * JSON or JSON5
 
@@ -88,7 +88,7 @@ command: easy
 redirectTo: difficulty easy
 ```
 
-Let's create another one for `/gamemode survival`
+Next, let's create another one for the `/gamemode survival` command.
 
 * JSON or JSON5
 

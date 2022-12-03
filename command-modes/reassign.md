@@ -1,6 +1,6 @@
 # Reassign
 
-When using command mode `COMMAND_REASSIGN`, it will reassign the existing command to a new command name.
+When using the `COMMAND_REASSIGN` command mode, it will reassign the existing command to a new command name.
 
 ## Create a command alias using `COMMAND_REASSIGN`
 
