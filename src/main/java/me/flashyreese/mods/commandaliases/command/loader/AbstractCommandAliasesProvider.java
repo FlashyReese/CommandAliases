@@ -28,12 +28,12 @@ import me.flashyreese.mods.commandaliases.command.builder.redirect.format.Redire
 import me.flashyreese.mods.commandaliases.math.ExtendedDoubleEvaluator;
 import me.flashyreese.mods.commandaliases.math.SimpleBooleanEvaluator;
 import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
-import me.flashyreese.mods.commandaliases.util.Atomic;
 import me.flashyreese.mods.commandaliases.util.TreeNode;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.CommandSource;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Represents the command aliases provider.
@@ -57,24 +58,26 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
             .enable(JsonReadFeature.ALLOW_TRAILING_COMMA).enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
             .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER).enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
             .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS).enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
-            //.enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS).enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS) todo: enable for jackson 2.14
+            .enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS).enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS)
             .build());
     private final ObjectMapper tomlMapper = new TomlMapper();
     private final ObjectMapper yamlMapper = new YAMLMapper();
 
-    private final List<CommandAlias> commands = new ObjectArrayList<>();
+    private final Map<String, CommandAlias> commands = new Object2ObjectOpenHashMap<>();
     private final List<String> loadedCommands = new ObjectArrayList<>();
     private final Map<String, String> reassignedCommandMap = new Object2ObjectOpenHashMap<>();
     private final Path commandsDirectory;
     private final Field literalCommandNodeLiteralField;
     private final String rootCommand;
+    private final CommandType commandType;
     private AbstractDatabase<String, String> database;
     private Scheduler scheduler;
 
-    public AbstractCommandAliasesProvider(Path commandsDirectory, Field literalCommandNodeLiteralField, String rootCommand) {
+    public AbstractCommandAliasesProvider(Path commandsDirectory, Field literalCommandNodeLiteralField, String rootCommand, CommandType commandType) {
         this.commandsDirectory = commandsDirectory;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.rootCommand = rootCommand;
+        this.commandType = commandType;
     }
 
     /**
@@ -84,22 +87,21 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
      */
     protected void registerCommands(CommandDispatcher<S> dispatcher, CommandRegistryAccess registryAccess) {
         // Load reassignments first
-        this.getCommands().stream().filter(cmd -> cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
-            if (cmd.getCommandMode() == CommandMode.COMMAND_REASSIGN && cmd instanceof ReassignCommand reassignCommand) {
-                new ReassignCommandBuilder<S>(reassignCommand, this.literalCommandNodeLiteralField, this.getReassignedCommandMap(), CommandType.SERVER).buildCommand(dispatcher);
-                this.getLoadedCommands().add(reassignCommand.getCommand());
+        this.getCommands().entrySet().stream().filter(cmd -> cmd.getValue().getCommandMode() == CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
+            if (cmd.getValue().getCommandMode() == CommandMode.COMMAND_REASSIGN && cmd.getValue() instanceof ReassignCommand reassignCommand) {
+                new ReassignCommandBuilder<S>(cmd.getKey(), reassignCommand, this.literalCommandNodeLiteralField, this.getReassignedCommandMap(), this.getLoadedCommands(), this.commandType).buildCommand(dispatcher);
             }
         });
         // Load other commands
-        this.getCommands().stream().filter(cmd -> cmd.getCommandMode() != CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
-            if (cmd.getCommandMode() == CommandMode.COMMAND_CUSTOM && cmd instanceof CustomCommand customCommand) {
-                LiteralArgumentBuilder<S> command = this.buildCustomCommand(customCommand, this, registryAccess, dispatcher);
+        this.getCommands().entrySet().stream().filter(cmd -> cmd.getValue().getCommandMode() != CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
+            if (cmd.getValue().getCommandMode() == CommandMode.COMMAND_CUSTOM && cmd.getValue() instanceof CustomCommand customCommand) {
+                LiteralArgumentBuilder<S> command = this.buildCustomCommand(cmd.getKey(), customCommand, this, registryAccess, dispatcher);
                 if (command != null) {
                     dispatcher.register(command);
                     this.getLoadedCommands().add(customCommand.getCommand());
                 }
-            } else if ((cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) && cmd instanceof RedirectCommand redirectCommand) {
-                LiteralArgumentBuilder<S> command = new CommandRedirectBuilder<S>(redirectCommand, CommandType.SERVER).buildCommand(dispatcher);
+            } else if ((cmd.getValue().getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getValue().getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) && cmd.getValue() instanceof RedirectCommand redirectCommand) {
+                LiteralArgumentBuilder<S> command = new CommandRedirectBuilder<S>(cmd.getKey(), redirectCommand, this.commandType).buildCommand(dispatcher);
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
                     command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), true));
@@ -122,7 +124,11 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                     Optional<ModContainer> modContainerOptional = FabricLoader.getInstance().getModContainer("commandaliases");
                     modContainerOptional.ifPresent(modContainer -> this.sendFeedback(context.getSource(), Text.literal("Running Command Aliases")
                             .formatted(Formatting.YELLOW)
-                            .append(Text.literal(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED))));
+                            .append(Text.literal(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED))
+                            .formatted(Formatting.RESET)
+                            .append(Text.literal(", "))
+                            .append(Text.literal("Click here to visit the wiki.").formatted(Formatting.UNDERLINE, Formatting.AQUA).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://wiki.commandaliases.flashyreese.me/"))))
+                    ));
 
                     return Command.SINGLE_SUCCESS;
                 })
@@ -145,6 +151,34 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                                 return Command.SINGLE_SUCCESS;
                                             return 0;
                                         })
+                                )
+                        )
+                )
+                .then(this.literal("compare").requires(Permissions.require("commandaliases.compare", 4))
+                        .then(this.literal("equals").requires(Permissions.require("commandaliases.compare.equals", 4))
+                                .then(this.argument("string1", StringArgumentType.string())
+                                        .then(this.argument("string2", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String string1 = StringArgumentType.getString(context, "string1");
+                                                    String string2 = StringArgumentType.getString(context, "string2");
+                                                    if (string1.equals(string2))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
+                                                })
+                                        )
+                                )
+                        )
+                        .then(this.literal("notEquals").requires(Permissions.require("commandaliases.compare.not_equals", 4))
+                                .then(this.argument("string1", StringArgumentType.string())
+                                        .then(this.argument("string2", StringArgumentType.string())
+                                                .executes(context -> {
+                                                    String string1 = StringArgumentType.getString(context, "string1");
+                                                    String string2 = StringArgumentType.getString(context, "string2");
+                                                    if (!string1.equals(string2))
+                                                        return Command.SINGLE_SUCCESS;
+                                                    return 0;
+                                                })
+                                        )
                                 )
                         )
                 )
@@ -269,7 +303,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                         )
                                 )
                         )
-                        .then(this.literal("doubleEvaluate").requires(Permissions.require("commandaliases.compute.double_evaluate", 4))
+                        .then(this.literal("numericalEvaluate").requires(Permissions.require("commandaliases.compute.numerical_evaluate", 4))
                                 .then(this.argument("key", StringArgumentType.string())
                                         .then(this.argument("expression", StringArgumentType.string())
                                                 .executes(context -> {
@@ -353,14 +387,14 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
 
     protected abstract int commandAliasesReload(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandRegistryAccess registryAccess);
 
-    protected abstract LiteralArgumentBuilder<S> buildCustomCommand(CustomCommand customCommand, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess, CommandDispatcher<S> dispatcher);
+    protected abstract LiteralArgumentBuilder<S> buildCustomCommand(String filePath, CustomCommand customCommand, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess, CommandDispatcher<S> dispatcher);
 
     /**
      * Loads command aliases file, meant for integrated/dedicated servers.
      */
     protected void loadCommandAliases() {
         this.commands.clear();
-        this.commands.addAll(this.loadCommandAliasesFromDirectory(this.commandsDirectory.toFile()));
+        this.commands.putAll(this.loadCommandAliasesFromDirectory(this.commandsDirectory.toFile()));
     }
 
     /**
@@ -402,8 +436,8 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
      * @param file Directory File Path
      * @return List of CommandAliases
      */
-    private @NotNull List<CommandAlias> loadCommandAliasesFromDirectory(File file) {
-        List<CommandAlias> commandAliases = new ObjectArrayList<>();
+    private @NotNull Map<String, CommandAlias> loadCommandAliasesFromDirectory(File file) {
+        Map<String, CommandAlias> commandAliases = new Object2ObjectOpenHashMap<>();
 
         if (file.exists()) {
             String output = "\n" + loadAndRenderDirectoryTree(this.createDirectoryTree(file), commandAliases);
@@ -434,7 +468,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         return rootTree;
     }
 
-    public String loadAndRenderDirectoryTree(TreeNode<File> tree, List<CommandAlias> commandAliases) {
+    public String loadAndRenderDirectoryTree(TreeNode<File> tree, Map<String, CommandAlias> commandAliases) {
         List<StringBuilder> lines = loadAndRenderDirectoryTreeLines(tree, commandAliases);
         String newline = System.getProperty("line.separator");
         StringBuilder sb = new StringBuilder();
@@ -458,13 +492,13 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         return null;
     }
 
-    private List<CommandAlias> objectMapDataFormat(ObjectMapper objectMapper, File file, Atomic<String> state) throws IOException {
+    private Map<String, CommandAlias> objectMapDataFormat(ObjectMapper objectMapper, File file, AtomicReference<String> state) throws IOException {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        List<CommandAlias> commandAliases = new ArrayList<>();
+        Map<String, CommandAlias> commandAliases = new Object2ObjectOpenHashMap<>();
         CommandAlias commandAlias = objectMapper.readerFor(CommandAlias.class).readValue(file);
         if (commandAlias.getSchemaVersion() == 1) {
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-            commandAliases.add(objectMapper.readerFor(this.getCommandModeClass(commandAlias.getCommandMode())).readValue(file));
+            commandAliases.put(file.getAbsolutePath(), objectMapper.readerFor(this.getCommandModeClass(commandAlias.getCommandMode())).readValue(file));
             state.set(" - Successfully loaded");
         } else {
             state.set(" - Unsupported schema version");
@@ -472,21 +506,20 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         return commandAliases;
     }
 
-    public List<StringBuilder> loadAndRenderDirectoryTreeLines(TreeNode<File> tree, List<CommandAlias> commandAliases) {
+    public List<StringBuilder> loadAndRenderDirectoryTreeLines(TreeNode<File> tree, Map<String, CommandAlias> commandAliases) {
         List<StringBuilder> result = new ArrayList<>();
-        Atomic<String> state = new Atomic<>("");
+        AtomicReference<String> state = new AtomicReference<>("");
         if (tree.getData().isFile()) {
             File file = tree.getData();
             try {
                 if (file.getAbsolutePath().endsWith(".toml")) {
-                    commandAliases.addAll(this.objectMapDataFormat(this.tomlMapper, file, state));
+                    commandAliases.putAll(this.objectMapDataFormat(this.tomlMapper, file, state));
                 } else if (file.getAbsolutePath().endsWith(".json")) {
-                    commandAliases.addAll(this.objectMapDataFormat(this.jsonMapper, file, state));
+                    commandAliases.putAll(this.objectMapDataFormat(this.jsonMapper, file, state));
                 } else if (file.getAbsolutePath().endsWith(".json5")) {
-                    commandAliases.addAll(this.objectMapDataFormat(this.json5Mapper, file, state));
-                    CommandAliasesMod.logger().warn("JSON5 not fully supported yet! \"{}\"", file.getAbsolutePath());
-                } else if (file.getAbsolutePath().endsWith(".yml")) {
-                    commandAliases.addAll(this.objectMapDataFormat(this.yamlMapper, file, state));
+                    commandAliases.putAll(this.objectMapDataFormat(this.json5Mapper, file, state));
+                } else if (file.getAbsolutePath().endsWith(".yml") || file.getAbsolutePath().endsWith(".yaml")) {
+                    commandAliases.putAll(this.objectMapDataFormat(this.yamlMapper, file, state));
                 } else {
                     state.set(" - Unsupported data format type");
                 }
@@ -523,7 +556,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         return RequiredArgumentBuilder.argument(name, type);
     }
 
-    public List<CommandAlias> getCommands() {
+    public Map<String, CommandAlias> getCommands() {
         return commands;
     }
 

@@ -10,6 +10,7 @@ import me.flashyreese.mods.commandaliases.command.builder.reassign.format.Reassi
 import net.minecraft.command.CommandSource;
 
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,15 +23,19 @@ import java.util.Map;
  * @since 0.3.0
  */
 public class ReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+    protected final String filePath;
     protected final ReassignCommand command;
     protected final Map<String, String> reassignCommandMap;
+    protected final List<String> loadedCommands;
     private final Field literalCommandNodeLiteralField;
     private final CommandType commandType;
 
-    public ReassignCommandBuilder(ReassignCommand command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, CommandType commandType) {
+    public ReassignCommandBuilder(String filePath, ReassignCommand command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, List<String> loadedCommands, CommandType commandType) {
+        this.filePath = filePath;
         this.command = command;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.reassignCommandMap = reassignCommandMap;
+        this.loadedCommands = loadedCommands;
         this.commandType = commandType;
     }
 
@@ -45,6 +50,7 @@ public class ReassignCommandBuilder<S extends CommandSource> implements CommandB
             String command = this.command.getCommand().trim();
             String reassignTo = this.command.getReassignTo().trim();
             this.reassignCommandMap.put(command, reassignTo);
+            this.loadedCommands.add(command);
         }
         return null;
     }
@@ -61,12 +67,12 @@ public class ReassignCommandBuilder<S extends CommandSource> implements CommandB
         String reassignTo = cmd.getReassignTo().trim();
 
         if (command.contains(" ")) {
-            CommandAliasesMod.logger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), command);
+            CommandAliasesMod.logger().error("[{}] {} - \"command\" field must not contain spaces, skipping \"{}\": {}", this.commandType, cmd.getCommandMode(), command, this.filePath);
             return false;
         }
 
         if (reassignTo.contains(" ")) {
-            CommandAliasesMod.logger().error("[{}] {} - \"reassignTo\" field must not contain spaces, skipping \"{}\".", this.commandType, cmd.getCommandMode(), reassignTo);
+            CommandAliasesMod.logger().error("[{}] {} - \"reassignTo\" field must not contain spaces, skipping \"{}\": {}", this.commandType, cmd.getCommandMode(), reassignTo, this.filePath);
             return false;
         }
 
@@ -83,13 +89,13 @@ public class ReassignCommandBuilder<S extends CommandSource> implements CommandB
             } catch (IllegalAccessException e) {
                 dispatcher.getRoot().addChild(commandNode);
                 e.printStackTrace();
-                CommandAliasesMod.logger().error("[{}] {} - Failed to modify command literal \"{}\", skipping.", this.commandType, cmd.getCommandMode(), command);
+                CommandAliasesMod.logger().error("[{}] {} - Failed to modify command literal \"{}\", skipping: {}", this.commandType, cmd.getCommandMode(), command, this.filePath);
                 return false;
             }
 
             dispatcher.getRoot().addChild(commandNode);
 
-            CommandAliasesMod.logger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\"", this.commandType, cmd.getCommandMode(), command, reassignTo);
+            CommandAliasesMod.logger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\": {}", this.commandType, cmd.getCommandMode(), command, reassignTo, this.filePath);
             return true;
         }
         return false;

@@ -6,10 +6,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class TreeNode<T> implements Iterable<TreeNode<T>>{
+public class TreeNode<T> implements Iterable<TreeNode<T>> {
     private final T data;
-    private TreeNode<T> parent;
     private final List<TreeNode<T>> children;
+    private TreeNode<T> parent;
 
     public TreeNode(T data) {
         this.parent = this;

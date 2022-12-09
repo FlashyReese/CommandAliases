@@ -1,19 +1,27 @@
 package me.flashyreese.mods.commandaliases.math;
 
+import com.fathzer.soft.javaluator.AbstractEvaluator;
+import com.fathzer.soft.javaluator.Operator;
+import com.fathzer.soft.javaluator.Parameters;
+
 import java.util.Iterator;
 
-import com.fathzer.soft.javaluator.*;
-
-/** An example of how to implement an evaluator from scratch.
+/**
+ * An example of how to implement an evaluator from scratch.
  */
 public class SimpleBooleanEvaluator extends AbstractEvaluator<Boolean> {
-    /** The negate unary operator.*/
+    /**
+     * The negation unary operator.
+     */
     public final static Operator NEGATE = new Operator("!", 1, Operator.Associativity.RIGHT, 3);
-    /** The logical AND operator.*/
-    private static final Operator AND = new Operator("&&", 2, Operator.Associativity.LEFT, 2);
-    /** The logical OR operator.*/
+    /**
+     * The logical OR operator.
+     */
     public final static Operator OR = new Operator("||", 2, Operator.Associativity.LEFT, 1);
-
+    /**
+     * The logical AND operator.
+     */
+    private static final Operator AND = new Operator("&&", 2, Operator.Associativity.LEFT, 2);
     private static final Parameters PARAMETERS;
 
     static {
