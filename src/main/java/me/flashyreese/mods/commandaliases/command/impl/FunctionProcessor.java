@@ -104,6 +104,22 @@ public class FunctionProcessor<S extends CommandSource> {
             }
             return null;
         });
+        this.functionMap.put("get_world", (commandSource, input) -> {
+            if (commandSource instanceof ServerCommandSource serverCommandSource) {
+                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getEntityName().equals(input)).findFirst();
+                if (optionalPlayer.isPresent()) {
+                    return optionalPlayer.get().getEntityWorld().getDimension().getSkyProperties().toString();
+                }
+            } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
+                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getEntityName().equals(input)).findFirst();
+                if (optionalPlayer.isPresent()) {
+                    return optionalPlayer.get().getEntityWorld().getDimension().getSkyProperties().toString();
+                }
+            }
+            return null;
+        });
         this.functionMap.put("get_block_pos_x", (commandSource, input) -> {
             if (commandSource instanceof ServerCommandSource serverCommandSource) {
                 Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
