@@ -32,6 +32,7 @@ import me.flashyreese.mods.commandaliases.util.TreeNode;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.command.CommandSource;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -123,7 +124,11 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                     Optional<ModContainer> modContainerOptional = FabricLoader.getInstance().getModContainer("commandaliases");
                     modContainerOptional.ifPresent(modContainer -> this.sendFeedback(context.getSource(), new LiteralText("Running Command Aliases")
                             .formatted(Formatting.YELLOW)
-                            .append(new LiteralText(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED))));
+                            .append(new LiteralText(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED))
+                            .formatted(Formatting.RESET)
+                            .append(new LiteralText(", "))
+                            .append(new LiteralText("Click here to visit the wiki.").formatted(Formatting.UNDERLINE, Formatting.AQUA).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://wiki.commandaliases.flashyreese.me/"))))
+                    ));
 
                     return Command.SINGLE_SUCCESS;
                 })
