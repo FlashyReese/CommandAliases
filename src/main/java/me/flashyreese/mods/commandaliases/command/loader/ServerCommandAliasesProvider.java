@@ -5,6 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
+import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.ServerCustomCommandBuilder;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import net.fabricmc.loader.api.FabricLoader;
@@ -17,7 +18,7 @@ import java.lang.reflect.Field;
 
 public class ServerCommandAliasesProvider extends AbstractCommandAliasesProvider<ServerCommandSource> {
     public ServerCommandAliasesProvider(Field literalCommandNodeLiteralField) {
-        super(FabricLoader.getInstance().getConfigDir().resolve("commandaliases"), literalCommandNodeLiteralField, "commandaliases");
+        super(FabricLoader.getInstance().getConfigDir().resolve("commandaliases"), literalCommandNodeLiteralField, "commandaliases", CommandType.SERVER);
     }
 
     @Override
@@ -67,7 +68,7 @@ public class ServerCommandAliasesProvider extends AbstractCommandAliasesProvider
     }
 
     @Override
-    protected LiteralArgumentBuilder<ServerCommandSource> buildCustomCommand(CustomCommand customCommand, AbstractCommandAliasesProvider<ServerCommandSource> abstractCommandAliasesProvider, CommandDispatcher<ServerCommandSource> dispatcher) {
-        return new ServerCustomCommandBuilder(customCommand, abstractCommandAliasesProvider).buildCommand(dispatcher);
+    protected LiteralArgumentBuilder<ServerCommandSource> buildCustomCommand(String filePath, CustomCommand customCommand, AbstractCommandAliasesProvider<ServerCommandSource> abstractCommandAliasesProvider, CommandDispatcher<ServerCommandSource> dispatcher) {
+        return new ServerCustomCommandBuilder(filePath, customCommand, abstractCommandAliasesProvider).buildCommand(dispatcher);
     }
 }

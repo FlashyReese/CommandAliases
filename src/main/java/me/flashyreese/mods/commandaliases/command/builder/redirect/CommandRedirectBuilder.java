@@ -14,6 +14,7 @@ import net.minecraft.command.CommandSource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Represents the CommandAliases Redirect Builder
@@ -25,10 +26,12 @@ import java.util.List;
  * @since 0.3.0
  */
 public class CommandRedirectBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+    private final String filePath;
     private final RedirectCommand command;
     private final CommandType commandType;
 
-    public CommandRedirectBuilder(RedirectCommand command, CommandType commandType) {
+    public CommandRedirectBuilder(String filePath, RedirectCommand command, CommandType commandType) {
+        this.filePath = filePath;
         this.command = command;
         this.commandType = commandType;
     }
@@ -56,13 +59,25 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
         String command = cmd.getCommand().trim();
         String redirectTo = cmd.getRedirectTo().trim();
 
+        if (command.isEmpty() || redirectTo.isEmpty()) {
+            CommandAliasesMod.logger().error("[{}] {} - Empty command/redirect field: {}", this.commandType, cmd.getCommandMode(), this.filePath);
+            return null;
+        }
+
         CommandNode<S> redirect = dispatcher.findNode(Lists.newArrayList(redirectTo.split(" ")));
         if (redirect == null) {
-            CommandAliasesMod.logger().error("[{}] {} - Could not find existing command \"{}\".", this.commandType, cmd.getCommandMode(), redirectTo);
+            CommandAliasesMod.logger().error("[{}] {} - Could not find existing command \"{}\": {}", this.commandType, cmd.getCommandMode(), redirectTo, this.filePath);
             return null;
         }
 
         List<String> literals = Arrays.asList(command.split(" "));
+
+        Optional<String> topLevelCommand = literals.stream().findFirst();
+        if (topLevelCommand.isPresent() && dispatcher.findNode(List.of(topLevelCommand.get())) != null && literals.size() == 1) {
+            CommandAliasesMod.logger().error("[{}] {} - Existing top level command \"{}\": {}", this.commandType, cmd.getCommandMode(), command, this.filePath);
+            return null;
+        }
+
         Collections.reverse(literals);
         for (String literal : literals) {
             if (commandBuilder != null) {
