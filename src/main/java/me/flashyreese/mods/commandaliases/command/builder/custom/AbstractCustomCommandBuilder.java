@@ -115,6 +115,17 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
      */
     protected ArgumentBuilder<S, ?> buildCommandChild(CustomCommandChild child, CommandDispatcher<S> dispatcher, List<String> inputs, String permission) {
         ArgumentBuilder<S, ?> argumentBuilder = null;
+
+        if (child.getChild() == null || child.getChild().isEmpty()) {
+            CommandAliasesMod.logger().warn("[{}] {} - Missing Command Child Node Name: {}", this.commandType, this.commandAliasParent.getCommandMode(), this.filePath);
+            return null;
+        }
+
+        if (child.getType() == null || child.getType().isEmpty()) {
+            CommandAliasesMod.logger().warn("[{}] {} - Missing Command Child Node Type of \"{}\": {}", this.commandType, this.commandAliasParent.getCommandMode(), child.getChild(), this.filePath);
+            return null;
+        }
+
         if (child.getType().equals("literal")) {
             argumentBuilder = this.literal(child.getChild());
         } else if (child.getType().equals("argument")) {
