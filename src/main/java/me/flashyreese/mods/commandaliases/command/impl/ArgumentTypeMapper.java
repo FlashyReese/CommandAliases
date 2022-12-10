@@ -8,7 +8,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.SharedConstants;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.*;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
+import net.minecraft.registry.RegistryKeys;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.Map;
  * This ArgumentTypeMapper maps ArgumentTypes to String.
  * See <a href="https://minecraft.gamepedia.com/Argument_types">...</a>
  */
-public class ArgumentTypeMapper {
+public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via mixin maybe
 
     private final Map<String, ArgumentType<?>> argumentMap = new Object2ObjectOpenHashMap<>();
 
@@ -70,7 +71,7 @@ public class ArgumentTypeMapper {
         this.argumentMap.put("minecraft:objective", ScoreboardObjectiveArgumentType.scoreboardObjective());
         this.argumentMap.put("minecraft:objective_criteria", ScoreboardCriterionArgumentType.scoreboardCriterion());
         this.argumentMap.put("minecraft:operation", OperationArgumentType.operation());
-        this.argumentMap.put("minecraft:particle", ParticleEffectArgumentType.particleEffect());
+        this.argumentMap.put("minecraft:particle", ParticleEffectArgumentType.particleEffect(registryAccess));
         this.argumentMap.put("minecraft:angle", AngleArgumentType.angle()); //
         this.argumentMap.put("minecraft:rotation", RotationArgumentType.rotation()); //
         this.argumentMap.put("minecraft:scoreboard_slot", ScoreboardSlotArgumentType.scoreboardSlot());
@@ -78,24 +79,30 @@ public class ArgumentTypeMapper {
         this.argumentMap.put("minecraft:team", TeamArgumentType.team());
         this.argumentMap.put("minecraft:item_slot", ItemSlotArgumentType.itemSlot());
         this.argumentMap.put("minecraft:resource_location", IdentifierArgumentType.identifier());
-        this.argumentMap.put("minecraft:mob_effect", StatusEffectArgumentType.statusEffect());
         this.argumentMap.put("minecraft:function", CommandFunctionArgumentType.commandFunction());
         this.argumentMap.put("minecraft:entity_anchor", EntityAnchorArgumentType.entityAnchor());
         this.argumentMap.put("minecraft:int_range", NumberRangeArgumentType.intRange()); // todo: range
         this.argumentMap.put("minecraft:float_range", NumberRangeArgumentType.floatRange()); // todo :rage
-        this.argumentMap.put("minecraft:item_enchantment", EnchantmentArgumentType.enchantment());
-        this.argumentMap.put("minecraft:entity_summon", EntitySummonArgumentType.entitySummon());
         this.argumentMap.put("minecraft:dimension", DimensionArgumentType.dimension());
+        this.argumentMap.put("minecraft:gamemode", GameModeArgumentType.gameMode());
         this.argumentMap.put("minecraft:time", TimeArgumentType.time());
 
         // Todo: Allow entire registry keys by creating registry map
-        this.argumentMap.put("minecraft:resource_or_tag.structure_key", RegistryPredicateArgumentType.registryPredicate(Registry.STRUCTURE_KEY));
-        this.argumentMap.put("minecraft:resource_or_tag.biome_key", RegistryPredicateArgumentType.registryPredicate(Registry.BIOME_KEY));
-        this.argumentMap.put("minecraft:resource_or_tag.poi_type_key", RegistryPredicateArgumentType.registryPredicate(Registry.POINT_OF_INTEREST_TYPE_KEY));
-        this.argumentMap.put("minecraft:resource.attribute_key", RegistryKeyArgumentType.registryKey(Registry.ATTRIBUTE_KEY));
-        this.argumentMap.put("minecraft:resource.configured_feature_key", RegistryKeyArgumentType.registryKey(Registry.CONFIGURED_FEATURE_KEY));
-        this.argumentMap.put("minecraft:resource.structure_pool_key", RegistryKeyArgumentType.registryKey(Registry.STRUCTURE_POOL_KEY));
-        this.argumentMap.put("minecraft:resource.structure_key", RegistryKeyArgumentType.registryKey(Registry.STRUCTURE_KEY));
+        this.argumentMap.put("minecraft:entry.attribute_key", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.ATTRIBUTE));
+        this.argumentMap.put("minecraft:entry.status_effect_key", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.STATUS_EFFECT));
+        this.argumentMap.put("minecraft:entry.enchantment_type", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.ENCHANTMENT));
+        this.argumentMap.put("minecraft:entry.biome_key", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.BIOME));
+        this.argumentMap.put("minecraft:entry.entity_type_key", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE));
+
+        this.argumentMap.put("minecraft:entry_predicate.biome_key", RegistryEntryPredicateArgumentType.registryEntryPredicate(registryAccess, RegistryKeys.BIOME));
+        this.argumentMap.put("minecraft:entry_predicate.poi_type_key", RegistryEntryPredicateArgumentType.registryEntryPredicate(registryAccess, RegistryKeys.POINT_OF_INTEREST_TYPE));
+
+        this.argumentMap.put("minecraft:predicate.structure_key", RegistryPredicateArgumentType.registryPredicate(RegistryKeys.STRUCTURE));
+
+        this.argumentMap.put("minecraft:key.configured_feature_key", RegistryKeyArgumentType.registryKey(RegistryKeys.CONFIGURED_FEATURE));
+        this.argumentMap.put("minecraft:key.template_pool_key", RegistryKeyArgumentType.registryKey(RegistryKeys.TEMPLATE_POOL));
+        this.argumentMap.put("minecraft:key.structure_key", RegistryKeyArgumentType.registryKey(RegistryKeys.STRUCTURE));
+        // end
 
         this.argumentMap.put("minecraft:template_mirror", BlockMirrorArgumentType.blockMirror());
         this.argumentMap.put("minecraft:template_rotation", BlockRotationArgumentType.blockRotation());
