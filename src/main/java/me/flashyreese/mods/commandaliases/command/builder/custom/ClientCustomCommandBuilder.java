@@ -32,7 +32,7 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
     protected int dispatcherExecute(CustomCommandAction action, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandContext<FabricClientCommandSource> context, String actionCommand) throws CommandSyntaxException {
         int state = 0;
         if (action.getCommandType() == CommandType.CLIENT) {
-            context.getSource().getPlayer().sendCommand("/" + actionCommand);
+            context.getSource().getPlayer().sendMessage(Text.literal("/" + actionCommand));
             state = Command.SINGLE_SUCCESS;
         } else if (action.getCommandType() == CommandType.SERVER) {
             state = Objects.requireNonNull(context.getSource().getWorld().getServer()).getCommandManager().getDispatcher().execute(actionCommand, Objects.requireNonNull(context.getSource().getWorld().getServer()).getCommandSource());
