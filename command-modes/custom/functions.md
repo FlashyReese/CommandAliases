@@ -1,11 +1,5 @@
 # Functions
 
-|   |   |   |
-| - | - | - |
-|   |   |   |
-|   |   |   |
-|   |   |   |
-
 As of `0.7.0`
 
 * `$executor_name()`
