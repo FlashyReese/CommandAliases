@@ -23,6 +23,7 @@ repositories {
 			includeGroup "maven.modrinth"
 		}
 	}
+	mavenCentral()
 }
 
 dependencies {
@@ -50,6 +51,7 @@ dependencies {
 	// Parsing Libraries
 	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.0"))
 	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.0"))
+	include(implementation("org.yaml:snakeyaml:1.33"))
 	include(implementation("com.fasterxml.jackson.core:jackson-core:2.14.0"))
 	include(implementation("com.fasterxml.jackson.core:jackson-databind:2.14.0"))
 	include(implementation("com.fasterxml.jackson.core:jackson-annotations:2.14.0"))
