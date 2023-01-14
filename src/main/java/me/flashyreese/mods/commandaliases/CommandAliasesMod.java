@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
  * @since 0.0.9
  */
 public class CommandAliasesMod implements ClientModInitializer, ModInitializer {
+    public static final String MOD_ID = "commandaliases";
     private static Logger LOGGER;
     private static CommandAliasesConfig CONFIG;
     private final CommandAliasesLoader commandManager = new CommandAliasesLoader();
