@@ -1,37 +1,49 @@
-# Command Aliases
+# Getting Command Aliases
 
-![Java 8](https://img.shields.io/badge/language-Java%208-9B599A.svg?style=flat-square) ![Project License](https://img.shields.io/github/license/FlashyReese/CommandAliases?style=flat-square) ![Environment: Client](https://img.shields.io/badge/environment-client/server-1976d2?style=flat-square)  ![Version](https://img.shields.io/github/v/tag/FlashyReese/CommandAliases?label=version\&style=flat-square) [![CurseForge](http://cf.way2muchnoise.eu/title/409389.svg)](https://www.curseforge.com/minecraft/mc-mods/commandaliases)
+## Acquisition
 
-Alternate short commands for complex commands (with tab completion)
+Before we begin, we must download the mod or compile the mod.
 
-### Purpose
+### Downloading
 
-This mod allows you to rebind multiple commands into a single command, this also implies commands that may require vanilla operator permissions.
+Command Aliases can be found on many platforms. The official downloads are located in the following platforms:
 
-Additionally, provide format to start building new commands from scratch.
+* [GitHub](https://github.com/FlashyReese/CommandAliases/releases/latest)
+* [CurseForge](https://www.curseforge.com/minecraft/mc-mods/commandaliases/files)
+* [Modrinth](https://modrinth.com/mod/commandaliases/versions)
 
-### Commands
+### Compiling (Advanced)
 
-**How to make a command?**
+#### Prerequisites
 
-You can find more information about them at the [wiki](https://github.com/FlashyReese/CommandAliases/wiki).
+* [Java Development Kit 17](https://adoptium.net/) or later
+* [Git ](https://git-scm.com/)(optional)
 
-**Running into issues?**
+#### Instructions
 
-Here are some current issues with Command Aliases
+1.  Clone the repository and navigate into the cloned repository
 
-### Building from source
+    ```bash
+    git clone https://github.com/FlashyReese/CommandAliases.git
+    cd CommandAliases
+    ```
+2.  Navigate to the directory you've cloned this repository and launch a build with Gradle. If you are not using the Gradle wrapper, simply replace `gradlew` with `gradle` or the path to it.
 
-**Prerequisites**
+    * Windows
 
-* Java 8 or above
+    ```batch
+    gradlew build
+    ```
 
-**Compiling**
+    * Linux/macOS
 
-Navigate to the directory you've cloned this repository and launch a build with Gradle using `gradlew build` (Windows) or `./gradlew build` (macOS/Linux). If you are not using the Gradle wrapper, simply replace `gradlew` with `gradle` or the path to it.
+    ```bash
+    ./gradlew build 
+    ```
+3. The initial setup may take a few minutes. After Gradle has finished building everything, you can find the resulting artifacts in `build/libs`.
 
-The initial setup may take a few minutes. After Gradle has finished building everything, you can find the resulting artifacts in `build/libs`.
+## Installation
 
-### License
+CommandAliases is currently only a Fabric mod and runs on the [Fabric Mod Loader](https://fabricmc.net/).
 
-Command Aliases is license under MIT, a free and open-source license. For more information, please see the license file.
+Depending on the environment of the installation, the Fabric Mod Loader will generate a new folder named `mods`, all fabric mods should be placed in this folder.

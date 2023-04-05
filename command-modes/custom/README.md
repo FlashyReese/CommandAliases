@@ -147,6 +147,8 @@ actions:
 
 ## Create a custom command using `COMMAND_CUSTOM`
 
+### `Understanding the basics`
+
 To begin, we must set our command mode to `COMMAND_CUSTOM`.
 
 * JSON or JSON5

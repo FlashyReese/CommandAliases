@@ -185,7 +185,7 @@ command: night
 redirectTo: time set night
 ```
 
-### Game Mode Command
+### Game Mode Command (1.19.2 and below)
 
 #### **Survival**
 
