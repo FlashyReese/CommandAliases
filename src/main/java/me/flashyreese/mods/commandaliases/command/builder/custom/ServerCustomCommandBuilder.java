@@ -3,6 +3,8 @@ package me.flashyreese.mods.commandaliases.command.builder.custom;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import eu.pb4.placeholders.api.PlaceholderContext;
+import eu.pb4.placeholders.api.Placeholders;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
@@ -11,6 +13,8 @@ import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesP
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
+
+import java.util.List;
 
 /**
  * Represents the Server Custom Command Builder
@@ -24,6 +28,16 @@ import net.minecraft.text.Text;
 public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<ServerCommandSource> {
     public ServerCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<ServerCommandSource> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
         super(filePath, commandAliasParent, abstractCommandAliasesProvider, registryAccess, CommandType.SERVER);
+    }
+
+    @Override
+    protected String formatString(CommandContext<ServerCommandSource> context, List<String> currentInputList, String string) {
+        string = super.formatString(context, currentInputList, string);
+
+        // Placeholder API processor
+        string = Placeholders.parseText(Text.literal(string), PlaceholderContext.of(context.getSource())).getString();
+
+        return string;
     }
 
     @Override

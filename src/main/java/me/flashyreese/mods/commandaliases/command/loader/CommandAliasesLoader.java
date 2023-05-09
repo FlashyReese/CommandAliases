@@ -8,6 +8,7 @@ import me.flashyreese.mods.commandaliases.storage.database.in_memory.InMemoryImp
 import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
 import me.flashyreese.mods.commandaliases.storage.database.mysql.MySQLImpl;
 import me.flashyreese.mods.commandaliases.storage.database.redis.RedisImpl;
+import me.flashyreese.mods.commandaliases.util.CommandAliasesPlaceholders;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -76,6 +77,9 @@ public class CommandAliasesLoader {
             if (this.serverCommandAliasesProvider.getScheduler() == null) {
                 this.serverCommandAliasesProvider.setScheduler(new Scheduler());
             }
+
+            // Placeholders dynamic registration
+            CommandAliasesPlaceholders.register((ServerCommandAliasesProvider) this.serverCommandAliasesProvider);
         });
         ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
             if (this.serverCommandAliasesProvider.getDatabase() != null) {

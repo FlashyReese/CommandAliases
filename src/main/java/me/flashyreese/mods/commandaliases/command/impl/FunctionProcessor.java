@@ -1,5 +1,6 @@
 package me.flashyreese.mods.commandaliases.command.impl;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -23,9 +24,9 @@ import java.util.regex.Pattern;
  * @since 0.7.0
  */
 public class FunctionProcessor<S extends CommandSource> {
-    private final Pattern singleArgumentFunction = Pattern.compile("\\$(?<fn>\\w+?)\\((?<arg>[+-]?(\\d+([.]\\d*)?|[.]\\d+)?|[\\w._]+?)\\)");
+    private final Pattern singleArgumentFunction = Pattern.compile("\\$(?<functionName>\\w+?)\\((?<arg>[+-]?(\\d+([.]\\d*)?|[.]\\d+)?|[\\w._]+?)\\)");
 
-    private final Map<String, BiFunction<CommandSource, String, String>> functionMap = new HashMap<>();
+    private final Map<String, BiFunction<CommandSource, String, String>> functionMap = new Object2ObjectOpenHashMap<>();
 
     private final AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider;
 
@@ -308,17 +309,25 @@ public class FunctionProcessor<S extends CommandSource> {
         String modified = original;
         Matcher matcher = this.singleArgumentFunction.matcher(modified);
         while (matcher.find()) {
-            String fn = matcher.group("fn");
+            String functionName = matcher.group("functionName");
             String arg = matcher.group("arg");
-            if (this.functionMap.containsKey(fn)) {
-                String value = this.functionMap.get(fn).apply(commandSource, arg);
-                modified = modified.replace(matcher.group(), Objects.requireNonNullElse(value, "null"));
-            } else {
-                CommandAliasesMod.logger().error("Invalid function of `{}` in `{}`", fn, original);
-                break;
+
+            if (!this.functionMap.containsKey(functionName)) {
+                CommandAliasesMod.logger().error("Invalid function of `{}` in `{}`. Please check the functionMap", functionName, original);
+                throw new IllegalArgumentException("Invalid function name : " + functionName);
             }
+
+            BiFunction<CommandSource, String, String> function = this.functionMap.get(functionName);
+
+            String value = function.apply(commandSource, arg);
+            modified = modified.replace(matcher.group(), Objects.requireNonNullElse(value, "null"));
+
             matcher = this.singleArgumentFunction.matcher(modified);
         }
         return modified;
+    }
+
+    public Map<String, BiFunction<CommandSource, String, String>> getFunctionMap() {
+        return functionMap;
     }
 }
