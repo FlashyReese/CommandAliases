@@ -23,7 +23,7 @@ public class ServerCommandAliasesProvider extends AbstractCommandAliasesProvider
 
     @Override
     protected void sendFeedback(ServerCommandSource source, Text text) {
-        source.sendFeedback(text, CommandAliasesMod.options().debugSettings.broadcastToOps);
+        source.sendFeedback(() -> text, CommandAliasesMod.options().debugSettings.broadcastToOps);
     }
 
     @Override

@@ -53,6 +53,6 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Ser
 
     @Override
     protected void sendFeedback(CommandContext<ServerCommandSource> context, String message) {
-        context.getSource().sendFeedback(Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
+        context.getSource().sendFeedback(() -> Text.literal(message), CommandAliasesMod.options().debugSettings.broadcastToOps);
     }
 }
