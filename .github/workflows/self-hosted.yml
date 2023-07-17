@@ -1,24 +1,26 @@
-name: Gradle build on push - Self-Hosted Runner
+name: Self-Hosted runner CI with Gradle
 
 on: [ push ]
 
 jobs:
-  build:
+  selfhost-build:
+    if: github.repository_owner == 'FlashyReese'
     runs-on: self-hosted
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up JDK 17
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: 17
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: build-artifacts
-        path: build/libs
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Build with Gradle
+        run: |
+          chmod +x gradlew
+          ./gradlew build
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'Command Aliases Artifacts'
+          path: build/libs
