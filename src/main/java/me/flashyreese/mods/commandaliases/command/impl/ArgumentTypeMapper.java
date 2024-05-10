@@ -63,7 +63,7 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
         this.argumentMap.put("minecraft:item_stack", ItemStackArgumentType.itemStack(registryAccess));
         this.argumentMap.put("minecraft:item_predicate", ItemPredicateArgumentType.itemPredicate(registryAccess));
         this.argumentMap.put("minecraft:color", ColorArgumentType.color());
-        this.argumentMap.put("minecraft:component", TextArgumentType.text());
+        this.argumentMap.put("minecraft:component", TextArgumentType.text(registryAccess));
         this.argumentMap.put("minecraft:message", MessageArgumentType.message());
         this.argumentMap.put("minecraft:nbt_compound_tag", NbtCompoundArgumentType.nbtCompound());
         this.argumentMap.put("minecraft:nbt_tag", NbtElementArgumentType.nbtElement());
@@ -88,11 +88,11 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
         this.argumentMap.put("minecraft:time", TimeArgumentType.time());
 
         // Todo: Allow entire registry keys by creating registry map
-        this.argumentMap.put("minecraft:entry.attribute_key", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.ATTRIBUTE));
-        this.argumentMap.put("minecraft:entry.status_effect_key", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.STATUS_EFFECT));
-        this.argumentMap.put("minecraft:entry.enchantment_type", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.ENCHANTMENT));
-        this.argumentMap.put("minecraft:entry.biome_key", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.BIOME));
-        this.argumentMap.put("minecraft:entry.entity_type_key", RegistryEntryArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE));
+        this.argumentMap.put("minecraft:entry.attribute_key", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ATTRIBUTE));
+        this.argumentMap.put("minecraft:entry.status_effect_key", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.STATUS_EFFECT));
+        this.argumentMap.put("minecraft:entry.enchantment_type", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENCHANTMENT));
+        this.argumentMap.put("minecraft:entry.biome_key", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.BIOME));
+        this.argumentMap.put("minecraft:entry.entity_type_key", RegistryEntryReferenceArgumentType.registryEntry(registryAccess, RegistryKeys.ENTITY_TYPE));
 
         this.argumentMap.put("minecraft:entry_predicate.biome_key", RegistryEntryPredicateArgumentType.registryEntryPredicate(registryAccess, RegistryKeys.BIOME));
         this.argumentMap.put("minecraft:entry_predicate.poi_type_key", RegistryEntryPredicateArgumentType.registryEntryPredicate(registryAccess, RegistryKeys.POINT_OF_INTEREST_TYPE));
