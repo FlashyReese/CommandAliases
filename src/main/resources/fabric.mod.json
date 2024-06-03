@@ -2,15 +2,32 @@
   "schemaVersion": 1,
   "id": "commandaliases",
   "version": "${version}",
-
   "name": "Command Aliases",
   "description": "Alternate short commands for complex commands",
   "authors": [
-    "FlashyReese"
+    {
+      "name": "FlashyReese",
+      "contact": {
+        "homepage": "https://flashyreese.me"
+      }
+    }
   ],
   "contact": {
-    "homepage": "https://github.com/FlashyReese",
-    "sources": "https://github.com/FlashyReese/CommandAliases"
+    "homepage": "https://modrinth.com/mod/commandaliases",
+    "sources": "https://github.com/FlashyReese/CommandAliases",
+    "issues": "https://github.com/FlashyReese/CommandAliases/issues"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.curseforge": "https://curseforge.com/minecraft/mc-mods/commandaliases",
+        "modmenu.discord": "https://flashyreese.me/discord",
+        "modmenu.donate": "https://ko-fi.com/flashyreese",
+        "modmenu.github_releases": "https://github.com/FlashyReese/CommandAliases/releases",
+        "modmenu.kofi": "https://ko-fi.com/flashyreese",
+        "modmenu.modrinth": "https://modrinth.com/mod/commandaliases"
+      }
+    }
   },
   "license": "MIT",
   "icon": "assets/commandaliases/icon.png",
