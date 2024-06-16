@@ -13,6 +13,6 @@ public class CommandAliasesPlaceholders {
     public static void register(ServerCommandAliasesProvider serverCommandAliasesProvider) {
         FunctionProcessor<ServerCommandSource> functionProcessor = new FunctionProcessor<>(serverCommandAliasesProvider);
 
-        functionProcessor.getFunctionMap().forEach((key, value) -> Placeholders.register(new Identifier(MOD_ID, key), ((context, argument) -> PlaceholderResult.value(value.apply(context.source(), argument)))));
+        functionProcessor.getFunctionMap().forEach((key, value) -> Placeholders.register(Identifier.of(MOD_ID, key), ((context, argument) -> PlaceholderResult.value(value.apply(context.source(), argument)))));
     }
 }

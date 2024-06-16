@@ -330,7 +330,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                         String output = e.getLocalizedMessage();
                         this.sendFeedback(context, output);
                     }
-                    e.printStackTrace();
+                    CommandAliasesMod.logger().error(e.getLocalizedMessage());
                 }
                 long endExecution = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {

@@ -42,7 +42,7 @@ public class CommandAliasesLoader {
             literalCommandNodeLiteralField = LiteralCommandNode.class.getDeclaredField("literal");
             literalCommandNodeLiteralField.setAccessible(true);
         } catch (NoSuchFieldException e) {
-            e.printStackTrace();
+            CommandAliasesMod.logger().error("", e);
         }
         this.serverCommandAliasesProvider = new ServerCommandAliasesProvider(literalCommandNodeLiteralField);
         this.clientCommandAliasesProvider = new ClientCommandAliasesProvider(literalCommandNodeLiteralField);
