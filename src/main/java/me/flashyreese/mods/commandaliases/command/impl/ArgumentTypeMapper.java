@@ -108,8 +108,6 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
         this.argumentMap.put("minecraft:template_rotation", BlockRotationArgumentType.blockRotation());
 
         if (SharedConstants.isDevelopment) {
-            this.argumentMap.put("minecraft:test_argument", TestFunctionArgumentType.testFunction());
-            this.argumentMap.put("minecraft:test_class", TestClassArgumentType.testClass());
         }
 
         this.argumentMap.put("minecraft:uuid", UuidArgumentType.uuid());

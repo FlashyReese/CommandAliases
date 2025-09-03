@@ -122,13 +122,13 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         dispatcher.register(this.literal(this.rootCommand).requires(Permissions.require("commandaliases", 4))
                 .executes(context -> {
                     Optional<ModContainer> modContainerOptional = FabricLoader.getInstance().getModContainer("commandaliases");
-                    modContainerOptional.ifPresent(modContainer -> this.sendFeedback(context.getSource(), Text.literal("Running Command Aliases")
-                            .formatted(Formatting.YELLOW)
-                            .append(Text.literal(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED))
-                            .formatted(Formatting.RESET)
-                            .append(Text.literal(", "))
-                            .append(Text.literal("Click here to visit the wiki.").formatted(Formatting.UNDERLINE, Formatting.AQUA).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://wiki.commandaliases.flashyreese.me/"))))
-                    ));
+            modContainerOptional.ifPresent(modContainer -> this.sendFeedback(context.getSource(), Text.literal("Running Command Aliases")
+                .formatted(Formatting.YELLOW)
+                .append(Text.literal(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED))
+                .formatted(Formatting.RESET)
+                .append(Text.literal(", "))
+                .append(Text.literal("Click here to visit the wiki. https://wiki.commandaliases.flashyreese.me/"))
+            ));
 
                     return Command.SINGLE_SUCCESS;
                 })
