@@ -5,10 +5,8 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.context.StringRange;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.SharedConstants;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.command.argument.*;
-import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 import net.minecraft.registry.RegistryKeys;
 
 import java.lang.reflect.Field;
@@ -106,11 +104,6 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
 
         this.argumentMap.put("minecraft:template_mirror", BlockMirrorArgumentType.blockMirror());
         this.argumentMap.put("minecraft:template_rotation", BlockRotationArgumentType.blockRotation());
-
-        if (SharedConstants.isDevelopment) {
-            //this.argumentMap.put("minecraft:test_argument", TestFunctionArgumentType.testFunction());
-            //this.argumentMap.put("minecraft:test_class", TestClassArgumentType.testClass());
-        }
 
         this.argumentMap.put("minecraft:uuid", UuidArgumentType.uuid());
 

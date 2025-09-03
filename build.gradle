@@ -106,7 +106,7 @@ jar {
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
-			artifactId = project.archives_base_name
+			artifactId = project.base.archivesName.get()
 			from components.java
 		}
 	}
