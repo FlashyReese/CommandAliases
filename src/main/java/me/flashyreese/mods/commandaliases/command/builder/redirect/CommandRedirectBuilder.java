@@ -84,9 +84,20 @@ public class CommandRedirectBuilder<S extends CommandSource> implements CommandB
                 commandBuilder = this.literal(literal).then(commandBuilder);
             } else {
                 if (this.command.getCommandMode() == CommandMode.COMMAND_REDIRECT) {
-                    commandBuilder = this.literal(literal).redirect(redirect);
+                    LiteralArgumentBuilder<S> builder = this.literal(literal)
+                            .executes(context -> dispatcher.execute(redirectTo, context.getSource()));
+
+                    // Copy children from redirect node to maintain tab completion
+                    redirect.getChildren().forEach(child -> builder.then(child.createBuilder().executes(context -> {
+                        String input = context.getInput();
+                        String args = input.substring(input.indexOf(' ') + 1);
+                        String fullCommand = redirectTo + " " + args;
+                        return dispatcher.execute(fullCommand, context.getSource());
+                    })));
+
+                    commandBuilder = builder;
                 } else if (this.command.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                    commandBuilder = this.literal(literal).executes(redirect.getCommand());
+                    commandBuilder = this.literal(literal).executes(context -> dispatcher.execute(redirectTo, context.getSource()));
                 }
             }
         }
