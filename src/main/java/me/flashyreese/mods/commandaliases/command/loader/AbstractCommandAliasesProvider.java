@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -127,7 +128,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                             .append(Text.literal(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED))
                             .formatted(Formatting.RESET)
                             .append(Text.literal(", "))
-                            .append(Text.literal("Click here to visit the wiki.").formatted(Formatting.UNDERLINE, Formatting.AQUA).styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://wiki.commandaliases.flashyreese.me/"))))
+                            .append(Text.literal("Click here to visit the wiki.").formatted(Formatting.UNDERLINE, Formatting.AQUA).styled(style -> style.withClickEvent(new ClickEvent.OpenUrl(URI.create("https://wiki.commandaliases.flashyreese.me/")))))
                     ));
 
                     return Command.SINGLE_SUCCESS;
@@ -470,11 +471,11 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
 
     public String loadAndRenderDirectoryTree(TreeNode<File> tree, Map<String, CommandAlias> commandAliases) {
         List<StringBuilder> lines = loadAndRenderDirectoryTreeLines(tree, commandAliases);
-        String newline = System.getProperty("line.separator");
+        String newline = System.lineSeparator();
         StringBuilder sb = new StringBuilder();
         for (StringBuilder line : lines) {
             sb.append(line);
-            if (lines.get(lines.size() - 1) != line) {
+            if (lines.getLast() != line) {
                 sb.append(newline);
             }
         }
