@@ -12,8 +12,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.Text;
 
-import java.util.Objects;
-
 /**
  * Represents the Client Custom Command Builder
  * <p>
@@ -32,10 +30,10 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
     protected int dispatcherExecute(CustomCommandAction action, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandContext<FabricClientCommandSource> context, String actionCommand) throws CommandSyntaxException {
         int state = 0;
         if (action.getCommandType() == CommandType.CLIENT) {
-            context.getSource().getPlayer().sendMessage(Text.literal("/" + actionCommand), false);
-            state = Command.SINGLE_SUCCESS;
+            state = dispatcher.execute(actionCommand, context.getSource());
         } else if (action.getCommandType() == CommandType.SERVER) {
-            state = Objects.requireNonNull(context.getSource().getWorld().getServer()).getCommandManager().getDispatcher().execute(actionCommand, Objects.requireNonNull(context.getSource().getWorld().getServer()).getCommandSource());
+            context.getSource().getPlayer().networkHandler.sendChatCommand(actionCommand); // Todo: Dangerous might cause abuse by spammers
+            state = Command.SINGLE_SUCCESS;
         }
         return state;
     }
