@@ -11,7 +11,7 @@ java {
 }
 
 base {
-    archivesName = "command-aliases"
+    archivesName = project.archives_base_name
 }
 
 version = "${project.mod_version}+mc${project.minecraft_version}-${getVersionMetadata()}"
@@ -45,7 +45,7 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Permissions API
-	include(modImplementation("me.lucko:fabric-permissions-api:0.3.3"))
+	include(modImplementation("me.lucko:fabric-permissions-api:0.4.0"))
 
 	// LevelDB
 	include(implementation("org.iq80.leveldb:leveldb:0.12"))
@@ -70,7 +70,7 @@ dependencies {
 	include(implementation("com.fathzer:javaluator:3.0.6"))
 
 	// Placeholders API
-	modImplementation include("eu.pb4:placeholder-api:2.6.4+1.21.5")
+	modImplementation include("eu.pb4:placeholder-api:2.7.2+1.21.8")
 
 	//modRuntimeOnly "maven.modrinth:lazydfu:0.1.3"
 	//modRuntimeOnly "maven.modrinth:sodium:mc1.19-0.4.2"
