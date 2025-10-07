@@ -1,7 +1,6 @@
 plugins {
 	id 'fabric-loom' version '1.11-SNAPSHOT'
 	id 'maven-publish'
-	id 'io.github.juuxel.loom-quiltflower' version '1.10.0'
 }
 
 java {
@@ -45,32 +44,32 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Permissions API
-	include(modImplementation("me.lucko:fabric-permissions-api:0.4.0"))
+	include(modImplementation("me.lucko:fabric-permissions-api:0.5.0"))
+
+	// Placeholders API
+	modImplementation include("eu.pb4:placeholder-api:2.8.0+1.21.9")
 
 	// LevelDB
 	include(implementation("org.iq80.leveldb:leveldb:0.12"))
 	include(implementation("org.iq80.leveldb:leveldb-api:0.12"))
 
 	// MySQL
-	include(implementation("mysql:mysql-connector-java:8.0.33"))
+	include(implementation("com.mysql:mysql-connector-j:9.4.0"))
 
 	// Redis
-	include(implementation("redis.clients:jedis:5.1.2"))
-	include(implementation("org.apache.commons:commons-pool2:2.12.0"))
+	include(implementation("redis.clients:jedis:6.2.0"))
+	//include(implementation("org.apache.commons:commons-pool2:2.12.1"))
 
 	// Parsing Libraries
-	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.17.1"))
-	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.17.1"))
-	include(implementation("org.yaml:snakeyaml:2.2"))
-	include(implementation("com.fasterxml.jackson.core:jackson-core:2.17.1"))
-	include(implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1"))
-	include(implementation("com.fasterxml.jackson.core:jackson-annotations:2.17.1"))
+	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.20.0"))
+	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0"))
+	//include(implementation("org.yaml:snakeyaml:2.5"))
+	include(implementation("com.fasterxml.jackson.core:jackson-core:2.20.0"))
+	include(implementation("com.fasterxml.jackson.core:jackson-databind:2.20.0"))
+	include(implementation("com.fasterxml.jackson.core:jackson-annotations:3.0-rc5"))
 
 	// Math Evaluator
 	include(implementation("com.fathzer:javaluator:3.0.6"))
-
-	// Placeholders API
-	modImplementation include("eu.pb4:placeholder-api:2.7.2+1.21.8")
 
 	//modRuntimeOnly "maven.modrinth:lazydfu:0.1.3"
 	//modRuntimeOnly "maven.modrinth:sodium:mc1.19-0.4.2"
