@@ -100,7 +100,7 @@ public class FunctionProcessor<S extends CommandSource> {
                 Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
                         .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return clientCommandSource.getWorld().getRegistryKey().getValue().toString();
+                    return optionalPlayer.get().getEntityWorld().getRegistryKey().getValue().toString();
                 }
             }
             return null;
