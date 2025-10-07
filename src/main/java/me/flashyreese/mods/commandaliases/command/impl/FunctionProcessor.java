@@ -94,13 +94,13 @@ public class FunctionProcessor<S extends CommandSource> {
                 Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
                         .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getWorld().getRegistryKey().getValue().toString();
+                    return optionalPlayer.get().getEntityWorld().getRegistryKey().getValue().toString();
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
                 Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
                         .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getWorld().getRegistryKey().getValue().toString();
+                    return clientCommandSource.getWorld().getRegistryKey().getValue().toString();
                 }
             }
             return null;
@@ -110,13 +110,13 @@ public class FunctionProcessor<S extends CommandSource> {
                 Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
                         .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getWorld().getDimension().effects().toString();
+                    return optionalPlayer.get().getEntityWorld().getDimension().effects().toString();
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
                 Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
                         .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getWorld().getDimension().effects().toString();
+                    return clientCommandSource.getWorld().getDimension().effects().toString();
                 }
             }
             return null;
