@@ -1,7 +1,7 @@
 package me.flashyreese.mods.commandaliases.command;
 
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.server.command.CommandManager;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.Commands;
 
 /**
  * Accessor for CommandManager
@@ -11,7 +11,7 @@ import net.minecraft.server.command.CommandManager;
  * @since 0.7.0
  */
 public interface CommandManagerExtended {
-    CommandManager.RegistrationEnvironment getEnvironment();
+    Commands.CommandSelection getEnvironment();
 
-    CommandRegistryAccess getCommandRegistryAccess();
+    CommandBuildContext getCommandRegistryAccess();
 }

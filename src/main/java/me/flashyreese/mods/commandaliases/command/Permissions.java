@@ -1,7 +1,7 @@
 package me.flashyreese.mods.commandaliases.command;
 
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.command.CommandSource;
+import net.minecraft.commands.SharedSuggestionProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -18,7 +18,7 @@ public class Permissions {
      * @param defaultValue the default value to use if nothing has been set
      * @return a predicate that will perform the permission check
      */
-    public static <S extends CommandSource> @NotNull Predicate<S> require(@NotNull String permission, boolean defaultValue) {
+    public static <S extends SharedSuggestionProvider> @NotNull Predicate<S> require(@NotNull String permission, boolean defaultValue) {
         Objects.requireNonNull(permission, "permission");
         return player -> check(player, permission, defaultValue);
     }
@@ -32,7 +32,7 @@ public class Permissions {
      * @param defaultRequiredLevel the required permission level to check for as a fallback
      * @return a predicate that will perform the permission check
      */
-    public static <S extends CommandSource> @NotNull Predicate<S> require(@NotNull String permission, int defaultRequiredLevel) {
+    public static <S extends SharedSuggestionProvider> @NotNull Predicate<S> require(@NotNull String permission, int defaultRequiredLevel) {
         Objects.requireNonNull(permission, "permission");
         return player -> check(player, permission, defaultRequiredLevel);
     }
@@ -44,7 +44,7 @@ public class Permissions {
      * @param permission the permission to check
      * @return a predicate that will perform the permission check
      */
-    public static <S extends CommandSource> @NotNull Predicate<S> require(@NotNull String permission) {
+    public static <S extends SharedSuggestionProvider> @NotNull Predicate<S> require(@NotNull String permission) {
         Objects.requireNonNull(permission, "permission");
         return player -> check(player, permission);
     }

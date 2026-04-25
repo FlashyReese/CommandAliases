@@ -4,10 +4,10 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.command.CommandSource;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -23,10 +23,10 @@ import java.util.regex.Pattern;
  * @version 0.8.0
  * @since 0.7.0
  */
-public class FunctionProcessor<S extends CommandSource> {
+public class FunctionProcessor<S extends SharedSuggestionProvider> {
     private final Pattern singleArgumentFunction = Pattern.compile("\\$(?<functionName>\\w+?)\\((?<arg>[+-]?(\\d+([.]\\d*)?|[.]\\d+)?|[\\w._]+?)\\)");
 
-    private final Map<String, BiFunction<CommandSource, String, String>> functionMap = new Object2ObjectOpenHashMap<>();
+    private final Map<String, BiFunction<SharedSuggestionProvider, String, String>> functionMap = new Object2ObjectOpenHashMap<>();
 
     private final AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider;
 
@@ -37,10 +37,10 @@ public class FunctionProcessor<S extends CommandSource> {
 
     public void registerFunctions() {
         this.functionMap.put("executor_name", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                return serverCommandSource.getName();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                return serverCommandSource.getTextName();
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                return clientCommandSource.getPlayer().getNameForScoreboard();
+                return clientCommandSource.getPlayer().getScoreboardName();
             }
             return null;
         });
@@ -58,79 +58,79 @@ public class FunctionProcessor<S extends CommandSource> {
             return String.valueOf(new Random().nextInt());
         });
         this.functionMap.put("is_online", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                return String.valueOf(serverCommandSource.getWorld().getPlayers().stream().anyMatch(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)));
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                return String.valueOf(serverCommandSource.getLevel().players().stream().anyMatch(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)));
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                return String.valueOf(clientCommandSource.getWorld().getPlayers().stream().anyMatch(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)));
+                return String.valueOf(clientCommandSource.getLevel().players().stream().anyMatch(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)));
             }
             return "false";
         });
         this.functionMap.put("get_time", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                return String.valueOf(serverCommandSource.getWorld().getTime());
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                return String.valueOf(serverCommandSource.getLevel().getGameTime());
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                return String.valueOf(clientCommandSource.getWorld().getTime());
+                return String.valueOf(clientCommandSource.getLevel().getGameTime());
             }
             return null;
         });
         this.functionMap.put("get_time_of_day", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                return String.valueOf(serverCommandSource.getWorld().getTimeOfDay());
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                return String.valueOf(serverCommandSource.getLevel().getDefaultClockTime());
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                return String.valueOf(clientCommandSource.getWorld().getTimeOfDay());
+                return String.valueOf(clientCommandSource.getLevel().getDefaultClockTime());
             }
             return null;
         });
         this.functionMap.put("get_lunar_time", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                return String.valueOf(serverCommandSource.getWorld().getLunarTime());
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                return String.valueOf(serverCommandSource.getLevel().getDefaultClockTime());
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                return String.valueOf(clientCommandSource.getWorld().getLunarTime());
+                return String.valueOf(clientCommandSource.getLevel().getDefaultClockTime());
             }
             return null;
         });
         this.functionMap.put("get_dimension", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getEntityWorld().getRegistryKey().getValue().toString();
+                    return optionalPlayer.get().level().dimension().identifier().toString();
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getEntityWorld().getRegistryKey().getValue().toString();
+                    return optionalPlayer.get().level().dimension().identifier().toString();
                 }
             }
             return null;
         });
         this.functionMap.put("get_world", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getEntityWorld().getDimension().effects().toString();
+                    return optionalPlayer.get().level().dimension().identifier().toString();
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return clientCommandSource.getWorld().getDimension().effects().toString();
+                    return clientCommandSource.getLevel().dimension().identifier().toString();
                 }
             }
             return null;
         });
         this.functionMap.put("get_block_pos_x", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getBlockX());
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getBlockX());
                 }
@@ -138,15 +138,15 @@ public class FunctionProcessor<S extends CommandSource> {
             return null;
         });
         this.functionMap.put("get_block_pos_y", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getBlockY());
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getBlockY());
                 }
@@ -154,15 +154,15 @@ public class FunctionProcessor<S extends CommandSource> {
             return null;
         });
         this.functionMap.put("get_block_pos_z", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getBlockZ());
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getBlockZ());
                 }
@@ -170,47 +170,47 @@ public class FunctionProcessor<S extends CommandSource> {
             return null;
         });
         this.functionMap.put("get_yaw", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return String.valueOf(optionalPlayer.get().getYaw());
+                    return String.valueOf(optionalPlayer.get().getYRot());
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return String.valueOf(optionalPlayer.get().getYaw());
+                    return String.valueOf(optionalPlayer.get().getYRot());
                 }
             }
             return null;
         });
         this.functionMap.put("get_pitch", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return String.valueOf(optionalPlayer.get().getPitch());
+                    return String.valueOf(optionalPlayer.get().getXRot());
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return String.valueOf(optionalPlayer.get().getPitch());
+                    return String.valueOf(optionalPlayer.get().getXRot());
                 }
             }
             return null;
         });
         this.functionMap.put("get_pos_x", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getX());
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getX());
                 }
@@ -218,15 +218,15 @@ public class FunctionProcessor<S extends CommandSource> {
             return null;
         });
         this.functionMap.put("get_pos_y", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getY());
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getY());
                 }
@@ -234,15 +234,15 @@ public class FunctionProcessor<S extends CommandSource> {
             return null;
         });
         this.functionMap.put("get_pos_z", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
-                        .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+            if (commandSource instanceof CommandSourceStack serverCommandSource) {
+                Optional<ServerPlayer> optionalPlayer = serverCommandSource.getLevel().players().stream()
+                        .filter(serverPlayerEntity -> serverPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getZ());
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
-                        .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
+                Optional<AbstractClientPlayer> optionalPlayer = clientCommandSource.getLevel().players().stream()
+                        .filter(clientPlayerEntity -> clientPlayerEntity.getScoreboardName().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
                     return String.valueOf(optionalPlayer.get().getZ());
                 }
@@ -305,7 +305,7 @@ public class FunctionProcessor<S extends CommandSource> {
         });
     }
 
-    public String processFunctions(String original, CommandSource commandSource) {
+    public String processFunctions(String original, SharedSuggestionProvider commandSource) {
         String modified = original;
         Matcher matcher = this.singleArgumentFunction.matcher(modified);
         while (matcher.find()) {
@@ -317,7 +317,7 @@ public class FunctionProcessor<S extends CommandSource> {
                 throw new IllegalArgumentException("Invalid function name : " + functionName);
             }
 
-            BiFunction<CommandSource, String, String> function = this.functionMap.get(functionName);
+            BiFunction<SharedSuggestionProvider, String, String> function = this.functionMap.get(functionName);
 
             String value = function.apply(commandSource, arg);
             modified = modified.replace(matcher.group(), Objects.requireNonNullElse(value, "null"));
@@ -327,7 +327,7 @@ public class FunctionProcessor<S extends CommandSource> {
         return modified;
     }
 
-    public Map<String, BiFunction<CommandSource, String, String>> getFunctionMap() {
+    public Map<String, BiFunction<SharedSuggestionProvider, String, String>> getFunctionMap() {
         return functionMap;
     }
 }
