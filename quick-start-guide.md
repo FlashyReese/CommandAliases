@@ -11,10 +11,10 @@ To begin with the basics after the installation, we will type the following comm
 Output:
 
 ```
-Running Command Aliases v1.0.0-mc1.19.2
+Running Command Aliases v<version>
 ```
 
-The output above may vary depending on the version of the installation chosen.
+The output varies depending on the version installed.
 
 ## Structure
 
@@ -55,7 +55,7 @@ commandaliases
 [16:14:48] [Render thread/INFO] (Minecraft) [System] [CHAT] Reloaded all Command Aliases!
 ```
 
-At present, since our directory of command aliases files is empty, we receive a blank structure. To demonstrate how this would appear, I will be downloading the files from [Essentials Command Aliases TOML](https://github.com/FlashyReese/CommandAliases-Collection/tree/1.0.0/essentials/toml) and copying them to `.minecraft/config/commandaliases` or a similar path if you are running a server installation.
+At present, since our directory of command aliases files is empty, we receive a blank structure. To demonstrate how this would appear, download the files from [Essentials Command Aliases TOML](https://github.com/FlashyReese/CommandAliases-Collection/tree/1.0.0/essentials/toml) and copy them to `.minecraft/config/commandaliases` or a similar path if you are running a server installation.
 
 If we then run the previous command `/commandaliases reload` again, we will be able to see the structure of the output.
 

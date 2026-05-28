@@ -13,7 +13,7 @@ The configuration file for command aliases can be found at `.minecraft/config/co
     "host": "localhost",
     "port": 3306,
     "database": "command_aliases",
-    "user": "default",
+    "user": "root",
     "password": ""
   },
   "debug_settings": {
@@ -32,10 +32,10 @@ You may be curious as to why a mod like Command Aliases would need or use a data
 
 | Database mode | Description                                                                  | Requirements                         |
 | ------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
-| `IN_MEMORY`   | An implementation of a hashmap, data is losted upon closing the game/server. | None                                 |
-| `LEVELDB`     | An implementation of LevelDB which is locally stored in the world folder.    | None                                 |
+| `IN_MEMORY`   | Stores values in memory only. Data is lost when the game/server closes.     | None                                 |
+| `LEVELDB`     | Stores values locally in the game or world folder.                          | None                                 |
 | `MYSQL`       | An implementation of MySQL.                                                  | Host, Port, Database, User, Password |
-| `REDIS`       | An implementation of Redis                                                   | Host, Port, User, Password           |
+| `REDIS`       | An implementation of Redis.                                                  | Host, Port, User, Password           |
 
 ### Database configuration examples
 
@@ -68,7 +68,7 @@ You may be curious as to why a mod like Command Aliases would need or use a data
     "host": "localhost",
     "port": 3306,
     "database": "command_aliases",
-    "user": "default",
+    "user": "root",
     "password": ""
   }
 }

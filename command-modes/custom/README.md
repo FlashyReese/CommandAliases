@@ -2,6 +2,8 @@
 
 When using the `COMMAND_CUSTOM` command mode, it creates a new command that can run one or more existing commands with required or optional arguments passthrough.
 
+If you are writing your first custom command, start with [Authoring Custom Commands](authoring-custom-commands.md). This reference page documents the full format, but the authoring guide explains how to keep aliases readable as they grow.
+
 ## Format Structure
 
 The custom command format consists of multiple components and allows for a high degree of customizability. The following components are included:
@@ -10,6 +12,7 @@ The custom command format consists of multiple components and allows for a high 
 * [Child Component](child-component.md): A sub-child component that allows for the inclusion of arguments and sub-commands on a recursive basis.
 * [Action Component](action-component.md): The action component allows for the execution of commands, evaluation of command state execution, and the ability to apply additional actions on a recursive basis depending on the command state.
 * [Suggestion Provider Component](suggestion-provider-component.md): A suggestion provider for a list of items in the database, or an existing vanilla suggestion provider.
+* [Placeholders and Formatting](placeholders-and-formatting.md): How to use command arguments in actions and messages.
 
 ### Full Example
 
@@ -655,4 +658,3 @@ Scenario:
 4. A wooden pickaxe is dropped, and the message "Here is a wooden pickaxe" is printed; a 1 second wait time is initiated.
 5. A wooden axe is dropped, and the message "Here is a wooden axe" is printed; a 1 second wait time is initiated.
 6. A wooden shovel is dropped, and the message "Here is a wooden shovel, Player123!" is displayed.
-

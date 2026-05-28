@@ -2,7 +2,7 @@
 
 ## Acquisition
 
-Before we begin, we must download the mod or compile the mod.
+You can install Command Aliases from a release build or compile it from source.
 
 ### Downloading
 
@@ -16,7 +16,7 @@ Command Aliases can be found on many platforms. The official downloads are locat
 
 #### Prerequisites
 
-* [Java Development Kit 17](https://adoptium.net/) or later
+* [Java Development Kit 21](https://adoptium.net/) or later for current Minecraft 1.21 builds
 * [Git ](https://git-scm.com/)(optional)
 
 #### Instructions
@@ -44,6 +44,6 @@ Command Aliases can be found on many platforms. The official downloads are locat
 
 ## Installation
 
-CommandAliases is currently only a Fabric mod and runs on the [Fabric Mod Loader](https://fabricmc.net/).
+Command Aliases is a Fabric mod and runs on the [Fabric Mod Loader](https://fabricmc.net/).
 
-Depending on the environment of the installation, the Fabric Mod Loader will generate a new folder named `mods`, all fabric mods should be placed in this folder.
+Place the downloaded `.jar` file in the `mods` folder for your client or server. If the folder does not exist yet, start Fabric once and it will be created.

@@ -22,6 +22,6 @@
 | `/commandaliases compute moreThanEquals <key> <value1> <value2>`        | Stores boolean results to `key` if the `value1` is more than or equal to `value2`, there is no user output                                                              |
 | `/commandaliases compute lessThanEquals <key> <value1> <value2>`        | Stores boolean results to `key` if the `value1` is less than or equal to `value2`, there is no user output                                                              |
 | `/commandaliases compute booleanEvaluate <key> <boolean_expression>`    | Stores boolean results to `key` if the `boolean_expression` evaluates to true also returns success internally if the evaluation was successful, there is no user output |
-| `/commandaliases compute numericalEvaluate <key><numerical_expression>` | Stores numerical results to `key` of the `numerical_expression` evaluation also returns success internally if the evaluation was successful, there is no user output    |
+| `/commandaliases compute numericalEvaluate <key> <numerical_expression>` | Stores numerical results to `key` of the `numerical_expression` evaluation also returns success internally if the evaluation was successful, there is no user output    |
 
 Note: Client-sided command aliases are identical by replacing the top level `/commandaliases` to `/commandaliases:client`.
