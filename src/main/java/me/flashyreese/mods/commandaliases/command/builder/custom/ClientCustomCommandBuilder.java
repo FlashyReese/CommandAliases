@@ -9,8 +9,8 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCo
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
 
 /**
  * Represents the Client Custom Command Builder
@@ -22,7 +22,7 @@ import net.minecraft.text.Text;
  * @since 0.5.0
  */
 public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<FabricClientCommandSource> {
-    public ClientCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess) {
+    public ClientCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider, CommandBuildContext registryAccess) {
         super(filePath, commandAliasParent, abstractCommandAliasesProvider, registryAccess, CommandType.CLIENT);
     }
 
@@ -32,7 +32,7 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
         if (action.getCommandType() == CommandType.CLIENT) {
             state = dispatcher.execute(actionCommand, context.getSource());
         } else if (action.getCommandType() == CommandType.SERVER) {
-            context.getSource().getPlayer().networkHandler.sendChatCommand(actionCommand); // Todo: Dangerous might cause abuse by spammers
+            context.getSource().getPlayer().connection.sendCommand(actionCommand); // Todo: Dangerous might cause abuse by spammers
             state = Command.SINGLE_SUCCESS;
         }
         return state;
@@ -40,6 +40,6 @@ public class ClientCustomCommandBuilder extends AbstractCustomCommandBuilder<Fab
 
     @Override
     protected void sendFeedback(CommandContext<FabricClientCommandSource> context, String message) {
-        context.getSource().sendFeedback(Text.literal(message));
+        context.getSource().sendFeedback(Component.literal(message));
     }
 }

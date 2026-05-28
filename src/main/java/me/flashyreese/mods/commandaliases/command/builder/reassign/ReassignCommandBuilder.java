@@ -7,7 +7,7 @@ import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.command.builder.reassign.format.ReassignCommand;
-import net.minecraft.command.CommandSource;
+import net.minecraft.commands.SharedSuggestionProvider;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.Map;
  * @version 1.0.0
  * @since 0.3.0
  */
-public class ReassignCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+public class ReassignCommandBuilder<S extends SharedSuggestionProvider> implements CommandBuilderDelegate<S> {
     protected final String filePath;
     protected final ReassignCommand command;
     protected final Map<String, String> reassignCommandMap;

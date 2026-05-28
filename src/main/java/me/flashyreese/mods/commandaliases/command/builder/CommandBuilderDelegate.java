@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
-import net.minecraft.command.CommandSource;
+import net.minecraft.commands.SharedSuggestionProvider;
 
 /**
  * Represents a command builder
@@ -13,7 +13,7 @@ import net.minecraft.command.CommandSource;
  * @version 0.5.0
  * @since 0.5.0
  */
-public interface CommandBuilderDelegate<S extends CommandSource> {
+public interface CommandBuilderDelegate<S extends SharedSuggestionProvider> {
     LiteralArgumentBuilder<S> buildCommand(CommandDispatcher<S> dispatcher);
 
     default LiteralArgumentBuilder<S> literal(String literal) {

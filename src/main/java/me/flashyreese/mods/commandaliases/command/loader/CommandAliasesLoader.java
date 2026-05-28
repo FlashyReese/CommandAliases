@@ -17,9 +17,9 @@ import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.WorldSavePath;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.storage.LevelResource;
 
 import java.lang.reflect.Field;
 
@@ -32,8 +32,8 @@ import java.lang.reflect.Field;
  */
 public class CommandAliasesLoader {
 
-    private static final Identifier ALIASES_REGISTRATION_PHASE_ID = Identifier.of("commandaliases", "register_aliases_phase");
-    private final AbstractCommandAliasesProvider<ServerCommandSource> serverCommandAliasesProvider;
+    private static final Identifier ALIASES_REGISTRATION_PHASE_ID = Identifier.fromNamespaceAndPath("commandaliases", "register_aliases_phase");
+    private final AbstractCommandAliasesProvider<CommandSourceStack> serverCommandAliasesProvider;
     private final AbstractCommandAliasesProvider<FabricClientCommandSource> clientCommandAliasesProvider;
 
     public CommandAliasesLoader() {
@@ -65,7 +65,7 @@ public class CommandAliasesLoader {
                 if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.IN_MEMORY) {
                     this.serverCommandAliasesProvider.setDatabase(new InMemoryImpl());
                 } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
-                    this.serverCommandAliasesProvider.setDatabase(new LevelDBImpl(server.getSavePath(WorldSavePath.ROOT).resolve("commandaliases").toString()));
+                    this.serverCommandAliasesProvider.setDatabase(new LevelDBImpl(server.getWorldPath(LevelResource.ROOT).resolve("commandaliases").toString()));
                 } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.MYSQL) {
                     this.serverCommandAliasesProvider.setDatabase(new MySQLImpl(CommandAliasesMod.options().databaseSettings.host, CommandAliasesMod.options().databaseSettings.port, CommandAliasesMod.options().databaseSettings.database, CommandAliasesMod.options().databaseSettings.user, CommandAliasesMod.options().databaseSettings.password, "server"));
                 } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.REDIS) {

@@ -31,16 +31,15 @@ import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import me.flashyreese.mods.commandaliases.util.TreeNode;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.CommandSource;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.*;
@@ -53,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @version 1.0.0
  * @since 0.9.0
  */
-public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
+public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionProvider> {
     private final ObjectMapper jsonMapper = new JsonMapper();
     private final ObjectMapper json5Mapper = new JsonMapper(JsonFactory.builder().enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
             .enable(JsonReadFeature.ALLOW_TRAILING_COMMA).enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
@@ -68,25 +67,26 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
     private final List<String> loadedCommands = new ObjectArrayList<>();
     private final Map<String, String> reassignedCommandMap = new Object2ObjectOpenHashMap<>();
     private final Path commandsDirectory;
-    private final Field literalCommandNodeLiteralField;
     private final String rootCommand;
     private final CommandType commandType;
     private AbstractDatabase<String, String> database;
     private Scheduler scheduler;
 
-    public AbstractCommandAliasesProvider(Path commandsDirectory, Field literalCommandNodeLiteralField, String rootCommand, CommandType commandType) {
+    public AbstractCommandAliasesProvider(Path commandsDirectory, java.lang.reflect.Field literalCommandNodeLiteralField, String rootCommand, CommandType commandType) {
         this.commandsDirectory = commandsDirectory;
         this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
         this.rootCommand = rootCommand;
         this.commandType = commandType;
     }
 
+    private final java.lang.reflect.Field literalCommandNodeLiteralField;
+
     /**
      * Registers all server Command Aliases' custom commands.
      *
      * @param dispatcher Server CommandDispatcher
      */
-    protected void registerCommands(CommandDispatcher<S> dispatcher, CommandRegistryAccess registryAccess) {
+    protected void registerCommands(CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess) {
         // Load reassignments first
         this.getCommands().entrySet().stream().filter(cmd -> cmd.getValue().getCommandMode() == CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
             if (cmd.getValue().getCommandMode() == CommandMode.COMMAND_REASSIGN && cmd.getValue() instanceof ReassignCommand reassignCommand) {
@@ -119,16 +119,16 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
      *
      * @param dispatcher The CommandDispatcher
      */
-    protected void registerCommandAliasesCommands(CommandDispatcher<S> dispatcher, CommandRegistryAccess registryAccess) {
+    protected void registerCommandAliasesCommands(CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess) {
         dispatcher.register(this.literal(this.rootCommand).requires(Permissions.require("commandaliases", 4))
                 .executes(context -> {
                     Optional<ModContainer> modContainerOptional = FabricLoader.getInstance().getModContainer("commandaliases");
-                    modContainerOptional.ifPresent(modContainer -> this.sendFeedback(context.getSource(), Text.literal("Running Command Aliases")
-                            .formatted(Formatting.YELLOW)
-                            .append(Text.literal(" v" + modContainer.getMetadata().getVersion()).formatted(Formatting.RED))
-                            .formatted(Formatting.RESET)
-                            .append(Text.literal(", "))
-                            .append(Text.literal("Click here to visit the wiki.").formatted(Formatting.UNDERLINE, Formatting.AQUA).styled(style -> style.withClickEvent(new ClickEvent.OpenUrl(URI.create("https://wiki.commandaliases.flashyreese.me/")))))
+                    modContainerOptional.ifPresent(modContainer -> this.sendFeedback(context.getSource(), Component.literal("Running Command Aliases")
+                            .withStyle(ChatFormatting.YELLOW)
+                            .append(Component.literal(" v" + modContainer.getMetadata().getVersion()).withStyle(ChatFormatting.RED))
+                            .withStyle(ChatFormatting.RESET)
+                            .append(Component.literal(", "))
+                            .append(Component.literal("Click here to visit the wiki.").withStyle(ChatFormatting.UNDERLINE, ChatFormatting.AQUA).withStyle(style -> style.withClickEvent(new ClickEvent.OpenUrl(URI.create("https://wiki.commandaliases.flashyreese.me/")))))
                     ));
 
                     return Command.SINGLE_SUCCESS;
@@ -361,7 +361,7 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
                                             String key = StringArgumentType.getString(context, "key");
                                             String value = this.getDatabase().read(key);
                                             if (value != null) {
-                                                this.sendFeedback(context.getSource(), Text.literal(value));
+                                                this.sendFeedback(context.getSource(), Component.literal(value));
                                             }
                                             return Command.SINGLE_SUCCESS;
                                         })
@@ -380,15 +380,15 @@ public abstract class AbstractCommandAliasesProvider<S extends CommandSource> {
         );
     }
 
-    protected abstract void sendFeedback(S source, Text text);
+    protected abstract void sendFeedback(S source, Component text);
 
-    protected abstract int commandAliasesLoad(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandRegistryAccess registryAccess);
+    protected abstract int commandAliasesLoad(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess);
 
-    protected abstract int commandAliasesUnload(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandRegistryAccess registryAccess);
+    protected abstract int commandAliasesUnload(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess);
 
-    protected abstract int commandAliasesReload(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandRegistryAccess registryAccess);
+    protected abstract int commandAliasesReload(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess);
 
-    protected abstract LiteralArgumentBuilder<S> buildCustomCommand(String filePath, CustomCommand customCommand, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess, CommandDispatcher<S> dispatcher);
+    protected abstract LiteralArgumentBuilder<S> buildCustomCommand(String filePath, CustomCommand customCommand, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandBuildContext registryAccess, CommandDispatcher<S> dispatcher);
 
     /**
      * Loads command aliases file, meant for integrated/dedicated servers.

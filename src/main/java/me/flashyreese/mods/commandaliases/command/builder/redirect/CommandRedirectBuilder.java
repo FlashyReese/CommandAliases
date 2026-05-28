@@ -9,7 +9,7 @@ import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
-import net.minecraft.command.CommandSource;
+import net.minecraft.commands.SharedSuggestionProvider;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +25,7 @@ import java.util.Optional;
  * @version 0.5.0
  * @since 0.3.0
  */
-public class CommandRedirectBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+public class CommandRedirectBuilder<S extends SharedSuggestionProvider> implements CommandBuilderDelegate<S> {
     private final String filePath;
     private final RedirectCommand command;
     private final CommandType commandType;

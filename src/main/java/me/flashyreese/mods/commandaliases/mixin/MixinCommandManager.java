@@ -1,36 +1,36 @@
 package me.flashyreese.mods.commandaliases.mixin;
 
 import me.flashyreese.mods.commandaliases.command.CommandManagerExtended;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.server.command.CommandManager;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.Commands;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(CommandManager.class)
+@Mixin(Commands.class)
 public class MixinCommandManager implements CommandManagerExtended {
 
     @Unique
-    private CommandManager.RegistrationEnvironment environment;
+    private Commands.CommandSelection environment;
 
     @Unique
-    private CommandRegistryAccess commandRegistryAccess;
+    private CommandBuildContext commandRegistryAccess;
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void clint(CommandManager.RegistrationEnvironment environment, CommandRegistryAccess commandRegistryAccess, CallbackInfo ci) {
+    private void clint(Commands.CommandSelection environment, CommandBuildContext commandRegistryAccess, CallbackInfo ci) {
         this.environment = environment;
         this.commandRegistryAccess = commandRegistryAccess;
     }
 
     @Override
-    public CommandManager.RegistrationEnvironment getEnvironment() {
+    public Commands.CommandSelection getEnvironment() {
         return this.environment;
     }
 
     @Override
-    public CommandRegistryAccess getCommandRegistryAccess() {
+    public CommandBuildContext getCommandRegistryAccess() {
         return this.commandRegistryAccess;
     }
 }
