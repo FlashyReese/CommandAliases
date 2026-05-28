@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.11-SNAPSHOT'
+	id 'fabric-loom' version '1.16-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -44,10 +44,10 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Permissions API
-	include(modImplementation("me.lucko:fabric-permissions-api:0.5.0"))
+	include(modImplementation("me.lucko:fabric-permissions-api:0.6.1"))
 
 	// Placeholders API
-	modImplementation include("eu.pb4:placeholder-api:2.8.0+1.21.9")
+	modImplementation include("eu.pb4:placeholder-api:2.8.2+1.21.10")
 
 	// LevelDB
 	include(implementation("org.iq80.leveldb:leveldb:0.12"))

@@ -81,14 +81,6 @@ public class FunctionProcessor<S extends CommandSource> {
             }
             return null;
         });
-        this.functionMap.put("get_lunar_time", (commandSource, input) -> {
-            if (commandSource instanceof ServerCommandSource serverCommandSource) {
-                return String.valueOf(serverCommandSource.getWorld().getLunarTime());
-            } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
-                return String.valueOf(clientCommandSource.getWorld().getLunarTime());
-            }
-            return null;
-        });
         this.functionMap.put("get_dimension", (commandSource, input) -> {
             if (commandSource instanceof ServerCommandSource serverCommandSource) {
                 Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
@@ -110,13 +102,13 @@ public class FunctionProcessor<S extends CommandSource> {
                 Optional<ServerPlayerEntity> optionalPlayer = serverCommandSource.getWorld().getPlayers().stream()
                         .filter(serverPlayerEntity -> serverPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getEntityWorld().getDimension().effects().toString();
+                    return optionalPlayer.get().getEntityWorld().getDimension().skybox().toString();
                 }
             } else if (commandSource instanceof FabricClientCommandSource clientCommandSource) {
                 Optional<AbstractClientPlayerEntity> optionalPlayer = clientCommandSource.getWorld().getPlayers().stream()
                         .filter(clientPlayerEntity -> clientPlayerEntity.getNameForScoreboard().equals(input)).findFirst();
                 if (optionalPlayer.isPresent()) {
-                    return optionalPlayer.get().getEntityWorld().getDimension().effects().toString();
+                    return optionalPlayer.get().getEntityWorld().getDimension().skybox().toString();
                 }
             }
             return null;
