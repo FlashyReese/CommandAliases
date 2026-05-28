@@ -24,8 +24,8 @@ import me.flashyreese.mods.commandaliases.command.impl.ArgumentTypeMapper;
 import me.flashyreese.mods.commandaliases.command.impl.FunctionProcessor;
 import me.flashyreese.mods.commandaliases.command.impl.InputMapper;
 import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.command.CommandSource;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.SharedSuggestionProvider;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @version 1.0.0
  * @since 0.4.0
  */
-public abstract class AbstractCustomCommandBuilder<S extends CommandSource> implements CommandBuilderDelegate<S> {
+public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionProvider> implements CommandBuilderDelegate<S> {
 
     protected final String filePath;
     protected final CustomCommand commandAliasParent;
@@ -54,7 +54,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
 
     protected final AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider;
 
-    public AbstractCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess, CommandType commandType) {
+    public AbstractCustomCommandBuilder(String filePath, CustomCommand commandAliasParent, AbstractCommandAliasesProvider<S> abstractCommandAliasesProvider, CommandBuildContext registryAccess, CommandType commandType) {
         this.filePath = filePath;
         this.argumentTypeMapper = new ArgumentTypeMapper(registryAccess);
         this.commandAliasParent = commandAliasParent;
@@ -243,7 +243,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                             \tProcessing time: {}ms
                             \t======================================================""", formattedSuggestion, (end - start) / 1000000.0);
                 }
-                return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
+                return SharedSuggestionProvider.suggest(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
             };
         } else {
             SUGGESTION_PROVIDER = (context, builder) -> {
@@ -264,7 +264,7 @@ public abstract class AbstractCustomCommandBuilder<S extends CommandSource> impl
                             \t"Processing time: {}ms
                             \t======================================================""", formattedSuggestion, (end - start) / 1000000.0);
                 }
-                return CommandSource.suggestMatching(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
+                return SharedSuggestionProvider.suggest(suggestions.stream().map(StringArgumentType::escapeIfRequired), builder);
             };
         }
 

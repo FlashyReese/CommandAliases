@@ -9,8 +9,8 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.ClientCustomCom
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommand;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.command.CommandRegistryAccess;
-import net.minecraft.text.Text;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.network.chat.Component;
 
 import java.lang.reflect.Field;
 
@@ -20,39 +20,39 @@ public class ClientCommandAliasesProvider extends AbstractCommandAliasesProvider
     }
 
     @Override
-    protected void sendFeedback(FabricClientCommandSource source, Text text) {
+    protected void sendFeedback(FabricClientCommandSource source, Component text) {
         source.sendFeedback(text);
     }
 
     @Override
-    protected int commandAliasesLoad(CommandContext<FabricClientCommandSource> context, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
-        this.sendFeedback(context.getSource(), Text.literal("Loading all client Command Aliases!"));
+    protected int commandAliasesLoad(CommandContext<FabricClientCommandSource> context, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext registryAccess) {
+        this.sendFeedback(context.getSource(), Component.literal("Loading all client Command Aliases!"));
         this.loadCommandAliases();
         this.registerCommands(dispatcher, registryAccess);
-        this.sendFeedback(context.getSource(), Text.literal("Loaded all client Command Aliases!"));
+        this.sendFeedback(context.getSource(), Component.literal("Loaded all client Command Aliases!"));
         return Command.SINGLE_SUCCESS;
     }
 
     @Override
-    protected int commandAliasesUnload(CommandContext<FabricClientCommandSource> context, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
-        this.sendFeedback(context.getSource(), Text.literal("Unloading all client Command Aliases!"));
+    protected int commandAliasesUnload(CommandContext<FabricClientCommandSource> context, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext registryAccess) {
+        this.sendFeedback(context.getSource(), Component.literal("Unloading all client Command Aliases!"));
         this.unregisterCommands(dispatcher);
-        this.sendFeedback(context.getSource(), Text.literal("Unloaded all client Command Aliases!"));
+        this.sendFeedback(context.getSource(), Component.literal("Unloaded all client Command Aliases!"));
         return Command.SINGLE_SUCCESS;
     }
 
     @Override
-    protected int commandAliasesReload(CommandContext<FabricClientCommandSource> context, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess) {
-        this.sendFeedback(context.getSource(), Text.literal("Reloading all client Command Aliases!"));
+    protected int commandAliasesReload(CommandContext<FabricClientCommandSource> context, CommandDispatcher<FabricClientCommandSource> dispatcher, CommandBuildContext registryAccess) {
+        this.sendFeedback(context.getSource(), Component.literal("Reloading all client Command Aliases!"));
         this.unregisterCommands(dispatcher);
         this.loadCommandAliases();
         this.registerCommands(dispatcher, registryAccess);
-        this.sendFeedback(context.getSource(), Text.literal("Reloaded all client Command Aliases!"));
+        this.sendFeedback(context.getSource(), Component.literal("Reloaded all client Command Aliases!"));
         return Command.SINGLE_SUCCESS;
     }
 
     @Override
-    protected LiteralArgumentBuilder<FabricClientCommandSource> buildCustomCommand(String filePath, CustomCommand customCommand, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider, CommandRegistryAccess registryAccess, CommandDispatcher<FabricClientCommandSource> dispatcher) {
+    protected LiteralArgumentBuilder<FabricClientCommandSource> buildCustomCommand(String filePath, CustomCommand customCommand, AbstractCommandAliasesProvider<FabricClientCommandSource> abstractCommandAliasesProvider, CommandBuildContext registryAccess, CommandDispatcher<FabricClientCommandSource> dispatcher) {
         return new ClientCustomCommandBuilder(filePath, customCommand, abstractCommandAliasesProvider, registryAccess).buildCommand(dispatcher);
     }
 }
