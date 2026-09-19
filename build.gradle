@@ -46,7 +46,7 @@ dependencies {
 	include(implementation("me.lucko:fabric-permissions-api:0.7.0"))
 
 	// Placeholders API
-	implementation include("eu.pb4:placeholder-api:3.1.0-beta.1+26.2")
+	implementation include("eu.pb4:placeholder-api:3.2.0+26.3")
 
 	// LevelDB
 	include(implementation("org.iq80.leveldb:leveldb:0.12"))
