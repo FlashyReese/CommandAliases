@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.context.ParsedArgument;
 import com.mojang.brigadier.context.StringRange;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.arguments.*;
 import net.minecraft.commands.arguments.blocks.BlockPredicateArgument;
@@ -39,9 +40,11 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
         try {
             this.commandContextArgumentsField = CommandContext.class.getDeclaredField("arguments");
             this.commandContextArgumentsField.setAccessible(true);
-        } catch (NoSuchFieldException e) {
-            // fixme: improve logger
-            e.printStackTrace();
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            CommandAliasesMod.logger().error(
+                    "Could not access Brigadier's parsed arguments field; command input placeholders will be unavailable",
+                    e
+            );
         }
     }
 
@@ -152,8 +155,11 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
         try {
             return (Map<String, ParsedArgument<S, ?>>) this.commandContextArgumentsField.get(commandContext);
         } catch (IllegalAccessException e) {
-            // fixme: improve logger
-            e.printStackTrace();
+            CommandAliasesMod.logger().error(
+                    "Could not access parsed arguments for command input '{}'; command input placeholders will be unavailable",
+                    commandContext.getInput(),
+                    e
+            );
         }
         return null;
     }

@@ -88,9 +88,15 @@ public class ReassignCommandBuilder<S extends SharedSuggestionProvider> implemen
                 this.literalCommandNodeLiteralField.set(commandNode, reassignTo);
             } catch (IllegalAccessException e) {
                 dispatcher.getRoot().addChild(commandNode);
-                // fixme: improve logger
-                e.printStackTrace();
-                CommandAliasesMod.logger().error("[{}] {} - Failed to modify command literal \"{}\", skipping: {}", this.commandType, cmd.getCommandMode(), command, this.filePath);
+                CommandAliasesMod.logger().error(
+                        "[{}] {} - Failed to rename command literal '{}' to '{}' from '{}'; the original command was restored",
+                        this.commandType,
+                        cmd.getCommandMode(),
+                        command,
+                        reassignTo,
+                        this.filePath,
+                        e
+                );
                 return false;
             }
 

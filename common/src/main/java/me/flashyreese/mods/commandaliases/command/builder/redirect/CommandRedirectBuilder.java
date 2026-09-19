@@ -138,7 +138,16 @@ public class CommandRedirectBuilder<S extends SharedSuggestionProvider> implemen
             argumentNode.getType().parse(reader);
             return !reader.canRead();
         } catch (CommandSyntaxException e) {
-            // fixme: improve logger
+            CommandAliasesMod.logger().debug(
+                    "[{}] {} - Redirect token '{}' did not match argument node '{}' ({}) while resolving '{}': {}",
+                    this.commandType,
+                    this.command.getCommandMode(),
+                    token,
+                    argumentNode.getName(),
+                    argumentNode.getType().getClass().getSimpleName(),
+                    this.filePath,
+                    e.getMessage()
+            );
             return false;
         }
     }

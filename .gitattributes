@@ -1,2 +1,2 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Normalize every tracked text file to LF in the working tree.
+* text=auto eol=lf

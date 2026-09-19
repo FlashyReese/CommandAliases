@@ -109,7 +109,12 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
                 }
             }
         });
-        CommandAliasesMod.logger().info("Registered/Reloaded all your commands :P, you can now single command nuke!");
+        CommandAliasesMod.logger().info(
+                "Registered/reloaded {} {} command aliases from {} configuration files",
+                this.getLoadedCommands().size(),
+                this.commandType.name().toLowerCase(Locale.ROOT),
+                this.getCommands().size()
+        );
     }
 
     /**
@@ -417,7 +422,13 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
                 try {
                     this.literalCommandNodeLiteralField.set(commandNode, entry.getKey());
                 } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    CommandAliasesMod.logger().error(
+                            "[{}] Failed to restore command '{}' from reassignment to '{}'; the command will remain unavailable",
+                            this.commandType,
+                            entry.getValue(),
+                            entry.getKey(),
+                            e
+                    );
                     continue;
                 }
                 dispatcher.getRoot().addChild(commandNode);
@@ -523,7 +534,7 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
                 }
             } catch (IOException e) {
                 state.set(" - Failed to load");
-                CommandAliasesMod.logger().error("Failed to load file at \"{}\" throws {}", file.getAbsolutePath(), e);
+                CommandAliasesMod.logger().error("Failed to load command alias file '{}'; skipping it", file.getAbsolutePath(), e);
             }
         }
         result.add(new StringBuilder().append(tree.getData().getName()).append(state.get()));
