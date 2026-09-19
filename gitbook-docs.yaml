@@ -1,0 +1,12 @@
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+version: 1
+site:
+  title: Command Aliases
+  structure:
+    - type: space
+      key: space-command-aliases
+      title: Command Aliases
+      path: command-aliases
+      default: true
+      content:
+        directory: ./
