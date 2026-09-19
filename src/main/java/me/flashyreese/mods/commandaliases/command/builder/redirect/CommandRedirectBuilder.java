@@ -1,19 +1,20 @@
 package me.flashyreese.mods.commandaliases.command.builder.redirect;
 
-import com.google.common.collect.Lists;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
-import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.SharedSuggestionProvider;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -68,7 +69,7 @@ public class CommandRedirectBuilder<S extends SharedSuggestionProvider> implemen
             return null;
         }
 
-        CommandNode<S> redirect = dispatcher.findNode(Lists.newArrayList(redirectTo.split(" ")));
+        CommandNode<S> redirect = this.findRedirectNode(dispatcher, redirectTo);
         if (redirect == null) {
             CommandAliasesMod.logger().error("[{}] {} - Could not find existing command \"{}\": {}", this.commandType, cmd.getCommandMode(), redirectTo, this.filePath);
             return null;
@@ -106,6 +107,40 @@ public class CommandRedirectBuilder<S extends SharedSuggestionProvider> implemen
             }
         }
         return commandBuilder;
+    }
+
+    private CommandNode<S> findRedirectNode(CommandDispatcher<S> dispatcher, String redirectTo) {
+        CommandNode<S> current = dispatcher.getRoot();
+        for (String token : redirectTo.split("\\s+")) {
+            CommandNode<S> literal = current.getChild(token);
+            if (literal != null) {
+                current = literal;
+                continue;
+            }
+
+            CommandNode<S> argument = null;
+            for (CommandNode<S> child : current.getChildren()) {
+                if (child instanceof ArgumentCommandNode<?, ?> argumentNode && this.accepts(argumentNode, token)) {
+                    argument = child;
+                    break;
+                }
+            }
+            if (argument == null) {
+                return null;
+            }
+            current = argument;
+        }
+        return current == dispatcher.getRoot() ? null : current;
+    }
+
+    private boolean accepts(ArgumentCommandNode<?, ?> argumentNode, String token) {
+        StringReader reader = new StringReader(token);
+        try {
+            argumentNode.getType().parse(reader);
+            return !reader.canRead();
+        } catch (CommandSyntaxException e) {
+            return false;
+        }
     }
 
     private int execute(CommandDispatcher<S> dispatcher, String command, CommandContext<S> context) throws CommandSyntaxException {
