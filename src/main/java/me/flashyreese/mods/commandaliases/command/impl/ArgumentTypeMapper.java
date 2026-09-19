@@ -66,8 +66,10 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
         this.argumentMap.put("minecraft:block_predicate", BlockPredicateArgument.blockPredicate(registryAccess));
         this.argumentMap.put("minecraft:item_stack", ItemArgument.item(registryAccess));
         this.argumentMap.put("minecraft:item_predicate", ItemPredicateArgument.itemPredicate(registryAccess));
-        this.argumentMap.put("minecraft:color", ColorArgument.color());
+        this.argumentMap.put("minecraft:team_color", TeamColorArgument.teamColor());
+        this.argumentMap.put("minecraft:hex_color", HexColorArgument.hexColor());
         this.argumentMap.put("minecraft:component", ComponentArgument.textComponent(registryAccess));
+        this.argumentMap.put("minecraft:style", StyleArgument.style(registryAccess));
         this.argumentMap.put("minecraft:message", MessageArgument.message());
         this.argumentMap.put("minecraft:nbt_compound_tag", CompoundTagArgument.compoundTag());
         this.argumentMap.put("minecraft:nbt_tag", NbtTagArgument.nbtTag());
@@ -82,6 +84,7 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
         this.argumentMap.put("minecraft:swizzle", SwizzleArgument.swizzle());
         this.argumentMap.put("minecraft:team", TeamArgument.team());
         this.argumentMap.put("minecraft:item_slot", SlotArgument.slot());
+        this.argumentMap.put("minecraft:item_slots", SlotsArgument.slots());
         this.argumentMap.put("minecraft:resource_location", IdentifierArgument.id());
         this.argumentMap.put("minecraft:function", FunctionArgument.functions());
         this.argumentMap.put("minecraft:entity_anchor", EntityAnchorArgument.anchor());
@@ -110,6 +113,11 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
 
         this.argumentMap.put("minecraft:template_mirror", TemplateMirrorArgument.templateMirror());
         this.argumentMap.put("minecraft:template_rotation", TemplateRotationArgument.templateRotation());
+        this.argumentMap.put("minecraft:heightmap", HeightmapTypeArgument.heightmap());
+        this.argumentMap.put("minecraft:loot_table", ResourceOrIdArgument.lootTable(registryAccess));
+        this.argumentMap.put("minecraft:loot_predicate", ResourceOrIdArgument.lootPredicate(registryAccess));
+        this.argumentMap.put("minecraft:loot_modifier", ResourceOrIdArgument.lootModifier(registryAccess));
+        this.argumentMap.put("minecraft:dialog", ResourceOrIdArgument.dialog(registryAccess));
 
         this.argumentMap.put("minecraft:uuid", UuidArgument.uuid());
 

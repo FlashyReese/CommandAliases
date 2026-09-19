@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Represents an Abstract Custom Command Builder
@@ -175,7 +174,7 @@ public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionPro
      * @param dispatcher       The command dispatcher
      * @param context          The command context
      * @param currentInputList User input list
-     * @return Command execution state
+     * @return Command scheduling state
      */
     protected int executeCommand(List<CustomCommandAction> actions, String message, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
         int state = Command.SINGLE_SUCCESS;
@@ -283,7 +282,9 @@ public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionPro
      */
     protected int performActions(List<CustomCommandAction> actions, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
         Queue<CustomCommandAction> customCommandActionQueue = new LinkedList<>(actions);
-        return this.scheduleAction(customCommandActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList);
+        this.scheduleAction(customCommandActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList, () -> {
+        });
+        return Command.SINGLE_SUCCESS;
     }
 
 
@@ -295,11 +296,13 @@ public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionPro
      * @param dispatcher               The command dispatcher
      * @param context                  The command context
      * @param currentInputList         User input list
-     * @return Command execution state
+     * @param onComplete               Callback invoked after this action queue has finished
      */
-    private int scheduleAction(Queue<CustomCommandAction> customCommandActionQueue, long triggerTime, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList) {
-        AtomicInteger state = new AtomicInteger();
-        if (customCommandActionQueue.isEmpty()) return Command.SINGLE_SUCCESS;
+    private void scheduleAction(Queue<CustomCommandAction> customCommandActionQueue, long triggerTime, CommandDispatcher<S> dispatcher, CommandContext<S> context, List<String> currentInputList, Runnable onComplete) {
+        if (customCommandActionQueue.isEmpty()) {
+            onComplete.run();
+            return;
+        }
 
         CustomCommandAction action = customCommandActionQueue.poll();
         String eventName = "generic";
@@ -312,12 +315,16 @@ public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionPro
         }
 
         this.abstractCommandAliasesProvider.getScheduler().addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
+            int state = 0;
+            boolean commandExecuted = false;
+
             if (action.getCommand() != null && action.getCommandType() != null) {
+                commandExecuted = true;
                 long startFormat = System.nanoTime();
                 String actionCommand = this.formatString(context, currentInputList, action.getCommand());
                 long endFormat = System.nanoTime();
                 try {
-                    state.set(this.dispatcherExecute(action, dispatcher, context, actionCommand));
+                    state = this.dispatcherExecute(action, dispatcher, context, actionCommand);
                 } catch (CommandSyntaxException e) {
                     if (CommandAliasesMod.options().debugSettings.debugMode) {
                         CommandAliasesMod.logger().error("""
@@ -343,26 +350,15 @@ public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionPro
                             \tExecuting time: {}ms
                             \t======================================================""", action.getCommand(), action.getCommandType(), actionCommand, (endFormat - startFormat) / 1000000.0, (endExecution - endFormat) / 1000000.0);
                 }
-                if (state.get() != Command.SINGLE_SUCCESS) {
+                if (state != Command.SINGLE_SUCCESS) {
                     if (action.getMessageIfUnsuccessful() != null) {
                         String message = this.formatString(context, currentInputList, action.getMessageIfUnsuccessful());
                         this.sendFeedback(context, message);
-                    }
-                    if (action.getActionsIfUnsuccessful() != null && !action.getActionsIfUnsuccessful().isEmpty()) {
-                        Queue<CustomCommandAction> unsuccessfulActionsQueue = new LinkedList<>(action.getActionsIfUnsuccessful());
-                        state.set(this.scheduleAction(unsuccessfulActionsQueue, System.currentTimeMillis(), dispatcher, context, currentInputList));
-                    }
-                    if (action.isRequireSuccess()) {
-                        customCommandActionQueue.clear();
                     }
                 } else {
                     if (action.getMessageIfSuccessful() != null) {
                         String message = this.formatString(context, currentInputList, action.getMessageIfSuccessful());
                         this.sendFeedback(context, message);
-                    }
-                    if (action.getActionsIfSuccessful() != null && !action.getActionsIfSuccessful().isEmpty()) {
-                        Queue<CustomCommandAction> successfulActionsQueue = new LinkedList<>(action.getActionsIfSuccessful());
-                        state.set(this.scheduleAction(successfulActionsQueue, System.currentTimeMillis(), dispatcher, context, currentInputList));
                     }
                 }
             }
@@ -370,9 +366,28 @@ public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionPro
                 String message = this.formatString(context, currentInputList, action.getMessage());
                 this.sendFeedback(context, message);
             }
-            state.set(this.scheduleAction(customCommandActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList));
+
+            Runnable continueActionQueue = () -> this.scheduleAction(customCommandActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList, onComplete);
+            List<CustomCommandAction> conditionalActions = null;
+            boolean stopActionQueue = false;
+
+            if (commandExecuted && state != Command.SINGLE_SUCCESS) {
+                conditionalActions = action.getActionsIfUnsuccessful();
+                stopActionQueue = action.isRequireSuccess();
+            } else if (commandExecuted) {
+                conditionalActions = action.getActionsIfSuccessful();
+            }
+
+            if (conditionalActions != null && !conditionalActions.isEmpty()) {
+                Queue<CustomCommandAction> conditionalActionQueue = new LinkedList<>(conditionalActions);
+                this.scheduleAction(conditionalActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList,
+                        stopActionQueue ? onComplete : continueActionQueue);
+            } else if (stopActionQueue) {
+                onComplete.run();
+            } else {
+                continueActionQueue.run();
+            }
         }));
-        return state.get();
     }
 
     /**
