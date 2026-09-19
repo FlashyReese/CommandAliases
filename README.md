@@ -12,6 +12,20 @@ Command Aliases can be found on many platforms. The official downloads are locat
 * [CurseForge](https://www.curseforge.com/minecraft/mc-mods/commandaliases/files)
 * [Modrinth](https://modrinth.com/mod/commandaliases/versions)
 
+## Documentation
+
+The documentation is published on the [GitBook site](https://wiki.commandaliases.flashyreese.me/).
+The same pages are stored in this repository, so they remain available if the hosted site cannot be
+reached.
+
+* [Quick Start Guide](quick-start-guide.md)
+* [Configuration](configuration.md)
+* [Command Modes](command-modes.md)
+* [Commands](commands.md)
+* [Troubleshooting](troubleshooting.md)
+
+The complete documentation source is available on the [GitBook branch](https://github.com/FlashyReese/CommandAliases/tree/gitbook).
+
 ### Compiling (Advanced)
 
 #### Prerequisites

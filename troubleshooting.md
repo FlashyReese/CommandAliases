@@ -41,6 +41,23 @@ Check these first:
 
 For redirects, `redirectTo` must point to a command path that already exists when aliases are registered.
 
+## My `COMMAND_LIST_LOOKUP` suggestion is invalid
+
+`COMMAND_LIST_LOOKUP` uses the names of nodes in an existing command tree. It does not execute the
+command in `suggestion` and it does not accept a sample argument value.
+
+For `/essentialcommands:home tp <home>`, the lookup path must include the argument node:
+
+```json
+{
+  "suggestionMode": "COMMAND_LIST_LOOKUP",
+  "suggestion": "essentialcommands:home tp home"
+}
+```
+
+Replace the final `home` with the actual argument node name. The path must end at an argument that
+provides suggestions, and that command must be registered before the aliases are loaded.
+
 ## My placeholder is not replaced
 
 Input placeholders use double braces:
