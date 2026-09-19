@@ -4,6 +4,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.Scheduler;
 import me.flashyreese.mods.commandaliases.config.CommandAliasesConfig;
+import me.flashyreese.mods.commandaliases.storage.database.AbstractDatabase;
 import me.flashyreese.mods.commandaliases.storage.database.in_memory.InMemoryImpl;
 import me.flashyreese.mods.commandaliases.storage.database.leveldb.LevelDBImpl;
 import me.flashyreese.mods.commandaliases.storage.database.mysql.MySQLImpl;
@@ -11,6 +12,7 @@ import me.flashyreese.mods.commandaliases.storage.database.redis.RedisImpl;
 import me.flashyreese.mods.commandaliases.util.CommandAliasesPlaceholders;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.Event;
@@ -62,16 +64,7 @@ public class CommandAliasesLoader {
 
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             if (this.serverCommandAliasesProvider.getDatabase() == null) {
-                if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.IN_MEMORY) {
-                    this.serverCommandAliasesProvider.setDatabase(new InMemoryImpl());
-                } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
-                    this.serverCommandAliasesProvider.setDatabase(new LevelDBImpl(server.getWorldPath(LevelResource.ROOT).resolve("commandaliases").toString()));
-                } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.MYSQL) {
-                    this.serverCommandAliasesProvider.setDatabase(new MySQLImpl(CommandAliasesMod.options().databaseSettings.host, CommandAliasesMod.options().databaseSettings.port, CommandAliasesMod.options().databaseSettings.database, CommandAliasesMod.options().databaseSettings.user, CommandAliasesMod.options().databaseSettings.password, "server"));
-                } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.REDIS) {
-                    this.serverCommandAliasesProvider.setDatabase(new RedisImpl(CommandAliasesMod.options().databaseSettings.host, CommandAliasesMod.options().databaseSettings.port, 0, CommandAliasesMod.options().databaseSettings.user, CommandAliasesMod.options().databaseSettings.password));
-                }
-                this.serverCommandAliasesProvider.getDatabase().open();
+                this.serverCommandAliasesProvider.setDatabase(this.openDatabase(this.createServerDatabase(server), "server"));
             }
 
             if (this.serverCommandAliasesProvider.getScheduler() == null) {
@@ -100,16 +93,7 @@ public class CommandAliasesLoader {
     public void registerClientSidedCommandAliases() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
             if (this.clientCommandAliasesProvider.getDatabase() == null) {
-                if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.IN_MEMORY) {
-                    this.clientCommandAliasesProvider.setDatabase(new InMemoryImpl());
-                } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
-                    this.clientCommandAliasesProvider.setDatabase(new LevelDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString()));
-                } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.MYSQL) {
-                    this.clientCommandAliasesProvider.setDatabase(new MySQLImpl(CommandAliasesMod.options().databaseSettings.host, CommandAliasesMod.options().databaseSettings.port, CommandAliasesMod.options().databaseSettings.database, CommandAliasesMod.options().databaseSettings.user, CommandAliasesMod.options().databaseSettings.password, "client"));
-                } else if (CommandAliasesMod.options().databaseSettings.databaseMode == CommandAliasesConfig.DatabaseMode.REDIS) {
-                    this.clientCommandAliasesProvider.setDatabase(new RedisImpl(CommandAliasesMod.options().databaseSettings.host, CommandAliasesMod.options().databaseSettings.port, 1, CommandAliasesMod.options().databaseSettings.user, CommandAliasesMod.options().databaseSettings.password));
-                }
-                this.clientCommandAliasesProvider.getDatabase().open();
+                this.clientCommandAliasesProvider.setDatabase(this.openDatabase(this.createClientDatabase(), "client"));
             }
             if (this.clientCommandAliasesProvider.getScheduler() == null) {
                 this.clientCommandAliasesProvider.setScheduler(new Scheduler());
@@ -118,10 +102,57 @@ public class CommandAliasesLoader {
             this.clientCommandAliasesProvider.loadCommandAliases();
             this.clientCommandAliasesProvider.registerCommands(dispatcher, registryAccess);
         });
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            if (this.clientCommandAliasesProvider.getDatabase() != null) {
+                this.clientCommandAliasesProvider.getDatabase().close();
+                this.clientCommandAliasesProvider.setDatabase(null);
+            }
+            if (this.clientCommandAliasesProvider.getScheduler() != null) {
+                this.clientCommandAliasesProvider.setScheduler(null);
+            }
+        });
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (this.clientCommandAliasesProvider.getScheduler() != null) {
                 this.clientCommandAliasesProvider.getScheduler().processEvents();
             }
         });
+    }
+
+    private AbstractDatabase<String, String> createServerDatabase(net.minecraft.server.MinecraftServer server) {
+        CommandAliasesConfig.DatabaseSettings settings = CommandAliasesMod.options().databaseSettings;
+        if (settings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
+            return new LevelDBImpl(server.getWorldPath(LevelResource.ROOT).resolve("commandaliases").toString());
+        } else if (settings.databaseMode == CommandAliasesConfig.DatabaseMode.MYSQL) {
+            return new MySQLImpl(settings.host, settings.port, settings.database, settings.user, settings.password, "server");
+        } else if (settings.databaseMode == CommandAliasesConfig.DatabaseMode.REDIS) {
+            return new RedisImpl(settings.host, settings.port, 0, settings.user, settings.password);
+        }
+        return new InMemoryImpl();
+    }
+
+    private AbstractDatabase<String, String> createClientDatabase() {
+        CommandAliasesConfig.DatabaseSettings settings = CommandAliasesMod.options().databaseSettings;
+        if (settings.databaseMode == CommandAliasesConfig.DatabaseMode.LEVELDB) {
+            return new LevelDBImpl(FabricLoader.getInstance().getGameDir().resolve("commandaliases.client").toString());
+        } else if (settings.databaseMode == CommandAliasesConfig.DatabaseMode.MYSQL) {
+            return new MySQLImpl(settings.host, settings.port, settings.database, settings.user, settings.password, "client");
+        } else if (settings.databaseMode == CommandAliasesConfig.DatabaseMode.REDIS) {
+            return new RedisImpl(settings.host, settings.port, 1, settings.user, settings.password);
+        }
+        return new InMemoryImpl();
+    }
+
+    private AbstractDatabase<String, String> openDatabase(AbstractDatabase<String, String> database, String scope) {
+        if (database != null && database.open()) {
+            return database;
+        }
+
+        if (database != null) {
+            database.close();
+        }
+        CommandAliasesMod.logger().warn("Could not open the configured {} database. Falling back to in-memory storage; data will not persist.", scope);
+        AbstractDatabase<String, String> fallback = new InMemoryImpl();
+        fallback.open();
+        return fallback;
     }
 }
