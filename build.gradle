@@ -1,138 +1,105 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version '1.18.2'
-	id 'maven-publish'
+    id "dev.architectury.loom-no-remap" version "1.17.493" apply false
+    id "architectury-plugin" version "3.5-SNAPSHOT"
+    id "com.gradleup.shadow" version "9.6.1" apply false
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
+architectury {
+    minecraft = project.minecraft_version
+}
+
+allprojects {
+    group = rootProject.maven_group
+    version = createVersionString()
+}
+
+subprojects {
+    apply plugin: "dev.architectury.loom-no-remap"
+    apply plugin: "architectury-plugin"
+    apply plugin: "maven-publish"
+
+    base {
+        archivesName = "${rootProject.archives_name}-${project.name}"
+    }
+
+    repositories {
+        maven {
+            name = "Modrinth"
+            url = "https://api.modrinth.com/maven"
+            content {
+                includeGroup "maven.modrinth"
+            }
+        }
+        maven { url = "https://maven.nucleoid.xyz/" }
+        maven { url = "https://oss.sonatype.org/content/repositories/snapshots" }
+        maven { url = "https://maven.flashyreese.me/releases" }
+        maven { url = "https://maven.flashyreese.me/snapshots" }
+    }
+
+    dependencies {
+        minecraft "net.minecraft:minecraft:${rootProject.minecraft_version}"
+    }
+
+    java {
+        withSourcesJar()
+        sourceCompatibility = JavaVersion.VERSION_25
+        targetCompatibility = JavaVersion.VERSION_25
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        it.options.release = 25
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifactId = base.archivesName.get()
+                from components.java
+            }
+        }
+
+        repositories {
+            maven {
+                name = "FlashyReeseReleases"
+                url = "https://maven.flashyreese.me/releases"
+                credentials {
+                    username = System.getenv("MAVEN_USERNAME")
+                    password = System.getenv("MAVEN_PASSWORD")
+                }
+            }
+            maven {
+                name = "FlashyReeseSnapshots"
+                url = "https://maven.flashyreese.me/snapshots"
+                credentials {
+                    username = System.getenv("MAVEN_USERNAME")
+                    password = System.getenv("MAVEN_PASSWORD")
+                }
+            }
+        }
     }
 }
 
-base {
-    archivesName = project.archives_base_name
-}
+def createVersionString() {
+    def builder = new StringBuilder()
+    def isReleaseBuild = project.hasProperty("build.release")
+    def buildId = System.getenv("GITHUB_RUN_NUMBER")
 
-version = "${project.mod_version}+mc${project.minecraft_version}-${getVersionMetadata()}"
-group = project.maven_group
+    if (isReleaseBuild) {
+        builder.append(mod_version)
+    } else {
+        builder.append(mod_version.split("-")[0])
+        builder.append("-snapshot")
+    }
 
-repositories {
-	maven {
-		name = "Lucko"
-		url 'https://oss.sonatype.org/content/repositories/snapshots'
-	}
-	maven {
-		name = "Modrinth"
-		url = "https://api.modrinth.com/maven"
-		content {
-			includeGroup "maven.modrinth"
-		}
-	}
-	maven {
-		url "https://maven.nucleoid.xyz/"
-		name "Nucleoid"
-	}
-	mavenCentral()
-}
+    builder.append("+mc").append(minecraft_version)
 
-dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    if (!isReleaseBuild) {
+        if (buildId != null) {
+            builder.append("-build.").append(buildId)
+        } else {
+            builder.append("-local")
+        }
+    }
 
-	// Fabric API
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-	// Permissions API
-	include(implementation("me.lucko:fabric-permissions-api:0.7.0"))
-
-	// Placeholders API
-	implementation include("eu.pb4:placeholder-api:3.2.0+26.3")
-
-	// LevelDB
-	include(implementation("org.iq80.leveldb:leveldb:0.12"))
-	include(implementation("org.iq80.leveldb:leveldb-api:0.12"))
-
-	// MySQL
-	include(implementation("com.mysql:mysql-connector-j:26.7.0"))
-
-	// Redis
-	include(implementation("redis.clients:jedis:8.0.1"))
-	//include(implementation("org.apache.commons:commons-pool2:2.12.1"))
-
-	// Parsing Libraries
-	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.22.2"))
-	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.2"))
-	//include(implementation("org.yaml:snakeyaml:2.5"))
-	include(implementation("com.fasterxml.jackson.core:jackson-core:2.22.2"))
-	include(implementation("com.fasterxml.jackson.core:jackson-databind:2.22.2"))
-	include(implementation("com.fasterxml.jackson.core:jackson-annotations:2.22"))
-
-	// Math Evaluator
-	include(implementation("com.fathzer:javaluator:3.0.6"))
-}
-
-processResources {
-	inputs.property "version", project.version
-
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 25
-}
-
-java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
-}
-
-jar {
-	from("LICENSE.txt")
-}
-
-// configure the maven publication
-publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			artifactId = project.base.archivesName.get()
-			from components.java
-		}
-	}
-
-	// select the repositories you want to publish to
-	repositories {
-		// uncomment to publish to the local maven
-		maven {
-			name = "FlashyReeseReleases"
-			url = "https://maven.flashyreese.me/releases"
-			credentials {
-				username = System.getenv("MAVEN_USERNAME")
-				password = System.getenv("MAVEN_PASSWORD")
-			}
-		}
-		maven {
-			name = "FlashyReeseSnapshots"
-			url = "https://maven.flashyreese.me/snapshots"
-			credentials {
-				username = System.getenv("MAVEN_USERNAME")
-				password = System.getenv("MAVEN_PASSWORD")
-			}
-		}
-	}
-}
-
-static def getVersionMetadata() {
-	def build_id = System.getenv("GITHUB_RUN_NUMBER")
-
-	// CI builds only
-	if (build_id != null) {
-		return "build.${build_id}"
-	}
-
-	// No tracking information could be found about the build
-	return "unknown"
+    return builder.toString()
 }

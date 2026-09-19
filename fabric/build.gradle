@@ -1,0 +1,98 @@
+plugins {
+    id "com.gradleup.shadow"
+}
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+repositories {
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com"
+    }
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    bundledLibraries {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    modLibraries {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+dependencies {
+    implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    implementation "me.lucko:fabric-permissions-api:${rootProject.fabric_permissions_version}"
+    implementation "eu.pb4:placeholder-api:${rootProject.placeholder_api_version}"
+
+    modLibraries "me.lucko:fabric-permissions-api:${rootProject.fabric_permissions_version}"
+    modLibraries "eu.pb4:placeholder-api:${rootProject.placeholder_api_version}"
+
+    implementation "org.iq80.leveldb:leveldb:${rootProject.leveldb_version}"
+    implementation "org.iq80.leveldb:leveldb-api:${rootProject.leveldb_version}"
+    implementation "com.mysql:mysql-connector-j:${rootProject.mysql_version}"
+    implementation "redis.clients:jedis:${rootProject.jedis_version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-toml:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-core:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${rootProject.jackson_annotations_version}"
+    implementation "com.fathzer:javaluator:${rootProject.javaaluator_version}"
+
+    bundledLibraries "org.iq80.leveldb:leveldb:${rootProject.leveldb_version}"
+    bundledLibraries "org.iq80.leveldb:leveldb-api:${rootProject.leveldb_version}"
+    bundledLibraries "com.mysql:mysql-connector-j:${rootProject.mysql_version}"
+    bundledLibraries "redis.clients:jedis:${rootProject.jedis_version}"
+    bundledLibraries "com.fasterxml.jackson.dataformat:jackson-dataformat-toml:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-core:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-databind:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-annotations:${rootProject.jackson_annotations_version}"
+    bundledLibraries "com.fathzer:javaluator:${rootProject.javaaluator_version}"
+
+    common(project(":common")) { transitive = false }
+    shadowBundle project(path: ":common", configuration: "runtimeElements")
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand version: project.version
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowBundle, project.configurations.bundledLibraries]
+    archiveClassifier = ""
+    from(project.configurations.modLibraries) {
+        into("META-INF/jars")
+    }
+}
+
+jar {
+    archiveClassifier = "dev"
+    from(rootProject.file("LICENSE.txt"))
+}
+
+configurations.runtimeElements.outgoing.artifacts.clear()
+artifacts {
+    runtimeElements shadowJar
+}

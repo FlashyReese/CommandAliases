@@ -1,0 +1,85 @@
+plugins {
+    id "com.gradleup.shadow"
+}
+
+architectury {
+    platformSetupLoomIde()
+    neoForge()
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentNeoForge.extendsFrom common
+
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    bundledLibraries {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+repositories {
+    maven {
+        name = "NeoForged"
+        url = "https://maven.neoforged.net/releases"
+    }
+}
+
+dependencies {
+    neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
+
+    implementation "org.iq80.leveldb:leveldb:${rootProject.leveldb_version}"
+    implementation "org.iq80.leveldb:leveldb-api:${rootProject.leveldb_version}"
+    implementation "com.mysql:mysql-connector-j:${rootProject.mysql_version}"
+    implementation "redis.clients:jedis:${rootProject.jedis_version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-toml:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-core:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${rootProject.jackson_annotations_version}"
+    implementation "com.fathzer:javaluator:${rootProject.javaaluator_version}"
+
+    bundledLibraries "org.iq80.leveldb:leveldb:${rootProject.leveldb_version}"
+    bundledLibraries "org.iq80.leveldb:leveldb-api:${rootProject.leveldb_version}"
+    bundledLibraries "com.mysql:mysql-connector-j:${rootProject.mysql_version}"
+    bundledLibraries "redis.clients:jedis:${rootProject.jedis_version}"
+    bundledLibraries "com.fasterxml.jackson.dataformat:jackson-dataformat-toml:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-core:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-databind:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-annotations:${rootProject.jackson_annotations_version}"
+    bundledLibraries "com.fathzer:javaluator:${rootProject.javaaluator_version}"
+
+    common(project(":common")) { transitive = false }
+    shadowBundle project(path: ":common", configuration: "runtimeElements")
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand version: project.version
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowBundle, project.configurations.bundledLibraries]
+    archiveClassifier = ""
+}
+
+jar {
+    archiveClassifier = "dev"
+    from(rootProject.file("LICENSE.txt"))
+}
+
+configurations.runtimeElements.outgoing.artifacts.clear()
+artifacts {
+    runtimeElements shadowJar
+}
