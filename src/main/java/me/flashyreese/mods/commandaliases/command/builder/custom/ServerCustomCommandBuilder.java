@@ -1,5 +1,6 @@
 package me.flashyreese.mods.commandaliases.command.builder.custom;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -42,13 +43,20 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Com
 
     @Override
     protected int dispatcherExecute(CustomCommandAction action, CommandDispatcher<CommandSourceStack> dispatcher, CommandContext<CommandSourceStack> context, String actionCommand) throws CommandSyntaxException {
-        int state = 0;
+        CommandSourceStack source = null;
         if (action.getCommandType() == CommandType.CLIENT) {
-            state = dispatcher.execute(actionCommand, context.getSource());
+            source = context.getSource();
         } else if (action.getCommandType() == CommandType.SERVER) {
-            state = dispatcher.execute(actionCommand, context.getSource().getServer().createCommandSourceStack());
+            source = context.getSource().getServer().createCommandSourceStack();
         }
-        return state;
+        if (source != null) {
+            // Minecraft 26.3 executes commands through its command execution queue. Calling
+            // the Brigadier dispatcher directly from a scheduled action can invoke the
+            // internal CommandAdapter and crash with "This function should not run".
+            context.getSource().getServer().getCommands().performPrefixedCommand(source, actionCommand);
+            return Command.SINGLE_SUCCESS;
+        }
+        return 0;
     }
 
     @Override

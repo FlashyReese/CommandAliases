@@ -1,8 +1,11 @@
 package me.flashyreese.mods.commandaliases.command.builder.redirect;
 
 import com.google.common.collect.Lists;
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandMode;
@@ -10,6 +13,7 @@ import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.command.builder.redirect.format.RedirectCommand;
 import net.minecraft.commands.SharedSuggestionProvider;
+import net.minecraft.commands.CommandSourceStack;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -85,22 +89,33 @@ public class CommandRedirectBuilder<S extends SharedSuggestionProvider> implemen
             } else {
                 if (this.command.getCommandMode() == CommandMode.COMMAND_REDIRECT) {
                     LiteralArgumentBuilder<S> builder = this.literal(literal)
-                            .executes(context -> dispatcher.execute(redirectTo, context.getSource()));
+                            .executes(context -> this.execute(dispatcher, redirectTo, context));
 
                     // Copy children from redirect node to maintain tab completion
                     redirect.getChildren().forEach(child -> builder.then(child.createBuilder().executes(context -> {
                         String input = context.getInput();
                         String args = input.substring(input.indexOf(' ') + 1);
                         String fullCommand = redirectTo + " " + args;
-                        return dispatcher.execute(fullCommand, context.getSource());
+                        return this.execute(dispatcher, fullCommand, context);
                     })));
 
                     commandBuilder = builder;
                 } else if (this.command.getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) {
-                    commandBuilder = this.literal(literal).executes(context -> dispatcher.execute(redirectTo, context.getSource()));
+                    commandBuilder = this.literal(literal).executes(context -> this.execute(dispatcher, redirectTo, context));
                 }
             }
         }
         return commandBuilder;
+    }
+
+    private int execute(CommandDispatcher<S> dispatcher, String command, CommandContext<S> context) throws CommandSyntaxException {
+        if (context.getSource() instanceof CommandSourceStack source) {
+            // Minecraft 26.3 executes commands through its command execution queue. Calling
+            // the Brigadier dispatcher directly from another command can invoke the internal
+            // CommandAdapter and crash with "This function should not run".
+            source.getServer().getCommands().performPrefixedCommand(source, command);
+            return Command.SINGLE_SUCCESS;
+        }
+        return dispatcher.execute(command, context.getSource());
     }
 }
