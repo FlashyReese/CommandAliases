@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version '1.16-SNAPSHOT'
+	id 'net.fabricmc.fabric-loom' version '1.18.2'
 	id 'maven-publish'
 }
 
@@ -46,26 +46,26 @@ dependencies {
 	include(implementation("me.lucko:fabric-permissions-api:0.7.0"))
 
 	// Placeholders API
-	implementation include("eu.pb4:placeholder-api:3.0.0+26.1")
+	implementation include("eu.pb4:placeholder-api:3.1.0-beta.1+26.2")
 
 	// LevelDB
 	include(implementation("org.iq80.leveldb:leveldb:0.12"))
 	include(implementation("org.iq80.leveldb:leveldb-api:0.12"))
 
 	// MySQL
-	include(implementation("com.mysql:mysql-connector-j:9.4.0"))
+	include(implementation("com.mysql:mysql-connector-j:26.7.0"))
 
 	// Redis
-	include(implementation("redis.clients:jedis:6.2.0"))
+	include(implementation("redis.clients:jedis:8.0.1"))
 	//include(implementation("org.apache.commons:commons-pool2:2.12.1"))
 
 	// Parsing Libraries
-	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.20.0"))
-	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.20.0"))
+	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.22.2"))
+	include(implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.22.2"))
 	//include(implementation("org.yaml:snakeyaml:2.5"))
-	include(implementation("com.fasterxml.jackson.core:jackson-core:2.20.0"))
-	include(implementation("com.fasterxml.jackson.core:jackson-databind:2.20.0"))
-	include(implementation("com.fasterxml.jackson.core:jackson-annotations:3.0-rc5"))
+	include(implementation("com.fasterxml.jackson.core:jackson-core:2.22.2"))
+	include(implementation("com.fasterxml.jackson.core:jackson-databind:2.22.2"))
+	include(implementation("com.fasterxml.jackson.core:jackson-annotations:2.22"))
 
 	// Math Evaluator
 	include(implementation("com.fathzer:javaluator:3.0.6"))
