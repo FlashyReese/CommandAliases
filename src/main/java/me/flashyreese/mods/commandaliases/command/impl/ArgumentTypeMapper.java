@@ -106,7 +106,6 @@ public class ArgumentTypeMapper { // Todo: Singleton instance - Map registry via
 
         this.argumentMap.put("minecraft:predicate.structure_key", ResourceOrTagKeyArgument.resourceOrTagKey(Registries.STRUCTURE));
 
-        this.argumentMap.put("minecraft:key.configured_feature_key", ResourceKeyArgument.key(Registries.CONFIGURED_FEATURE));
         this.argumentMap.put("minecraft:key.template_pool_key", ResourceKeyArgument.key(Registries.TEMPLATE_POOL));
         this.argumentMap.put("minecraft:key.structure_key", ResourceKeyArgument.key(Registries.STRUCTURE));
         // end
