@@ -1,6 +1,7 @@
 # gradle
 
 .gradle/
+.architectury-transformer/
 build/
 out/
 classes/
