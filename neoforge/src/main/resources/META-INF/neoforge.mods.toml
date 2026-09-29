@@ -1,0 +1,29 @@
+modLoader="javafml"
+loaderVersion="[3,)"
+license="MIT"
+issueTrackerURL="https://github.com/FlashyReese/CommandAliases/issues"
+
+[[mods]]
+modId="commandaliases"
+version="${version}"
+displayName="Command Aliases"
+authors="FlashyReese"
+description='''Alternate short commands for complex commands'''
+iconFile="assets/commandaliases/icon.png"
+
+[features.commandaliases]
+javaVersion="[25,)"
+
+[[dependencies.commandaliases]]
+modId="neoforge"
+type="required"
+versionRange="[26.2.0,26.3.0)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.commandaliases]]
+modId="minecraft"
+type="required"
+versionRange="[26.2,26.3)"
+ordering="NONE"
+side="BOTH"
