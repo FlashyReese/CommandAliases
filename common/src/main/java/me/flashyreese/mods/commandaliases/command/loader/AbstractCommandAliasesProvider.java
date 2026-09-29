@@ -130,7 +130,7 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
                             .append(Component.literal(" v" + CommandAliasesMod.platform().modVersion()).withStyle(ChatFormatting.RED))
                             .withStyle(ChatFormatting.RESET)
                             .append(Component.literal(", "))
-                            .append(Component.literal("Click here to visit the wiki.").withStyle(ChatFormatting.UNDERLINE, ChatFormatting.AQUA).withStyle(style -> style.withClickEvent(new ClickEvent.OpenUrl(URI.create("https://wiki.commandaliases.flashyreese.me/")))))
+                            .append(Component.literal("Click here to visit the wiki.").withStyle(ChatFormatting.UNDERLINE, ChatFormatting.AQUA).withStyle(style -> style.withClickEvent(new ClickEvent.OpenUrl(URI.create("https://wiki.flashyreese.me/books/command-aliases")))))
                     );
 
                     return Command.SINGLE_SUCCESS;
