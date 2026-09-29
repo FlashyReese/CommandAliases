@@ -7,6 +7,15 @@ architectury {
     fabric()
 }
 
+loom {
+    mods {
+        commandaliases {
+            sourceSet sourceSets.main
+            modFiles.from(project(":common").tasks.named("processResources"))
+        }
+    }
+}
+
 repositories {
     maven {
         name = "TerraformersMC"
@@ -30,6 +39,10 @@ configurations {
     bundledLibraries {
         canBeResolved = true
         canBeConsumed = false
+        // Use Minecraft's copies instead of shading conflicting transitive libraries.
+        exclude group: "com.google.guava", module: "guava"
+        exclude group: "com.google.code.gson", module: "gson"
+        exclude group: "org.slf4j", module: "slf4j-api"
     }
     modLibraries {
         canBeResolved = true

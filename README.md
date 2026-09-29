@@ -19,7 +19,7 @@ Additionally, provide format to start building new commands from scratch.
 
 #### How to make a command?
 
-You can find more information about them at the [wiki](https://github.com/FlashyReese/CommandAliases/wiki). 
+You can find more information about them at the [wiki](https://wiki.flashyreese.me/books/command-aliases).
 
 #### Running into issues?
 Here are some [current issues](doc/BROKEN.md) with Command Aliases
