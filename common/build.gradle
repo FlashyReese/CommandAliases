@@ -1,0 +1,15 @@
+architectury {
+    common rootProject.enabled_platforms.split(",")
+}
+
+dependencies {
+    compileOnly "com.fathzer:javaluator:${rootProject.javaaluator_version}"
+    compileOnly "org.iq80.leveldb:leveldb:${rootProject.leveldb_version}"
+    compileOnly "org.iq80.leveldb:leveldb-api:${rootProject.leveldb_version}"
+    compileOnly "redis.clients:jedis:${rootProject.jedis_version}"
+    compileOnly "com.fasterxml.jackson.dataformat:jackson-dataformat-toml:${rootProject.jackson_version}"
+    compileOnly "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${rootProject.jackson_version}"
+    compileOnly "com.fasterxml.jackson.core:jackson-core:${rootProject.jackson_version}"
+    compileOnly "com.fasterxml.jackson.core:jackson-databind:${rootProject.jackson_version}"
+    compileOnly "com.fasterxml.jackson.core:jackson-annotations:${rootProject.jackson_annotations_version}"
+}
