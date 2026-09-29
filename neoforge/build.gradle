@@ -7,6 +7,15 @@ architectury {
     neoForge()
 }
 
+loom {
+    mods {
+        // Extend Loom's default mod group so the platform sources are registered only once.
+        named("main") {
+            modFiles.from(project(":common").tasks.named("processResources"))
+        }
+    }
+}
+
 configurations {
     common {
         canBeResolved = true
@@ -23,6 +32,10 @@ configurations {
     bundledLibraries {
         canBeResolved = true
         canBeConsumed = false
+        // Use Minecraft's copies instead of shading conflicting transitive libraries.
+        exclude group: "com.google.guava", module: "guava"
+        exclude group: "com.google.code.gson", module: "gson"
+        exclude group: "org.slf4j", module: "slf4j-api"
     }
 }
 
@@ -57,6 +70,9 @@ dependencies {
     bundledLibraries "com.fasterxml.jackson.core:jackson-databind:${rootProject.jackson_version}"
     bundledLibraries "com.fasterxml.jackson.core:jackson-annotations:${rootProject.jackson_annotations_version}"
     bundledLibraries "com.fathzer:javaluator:${rootProject.javaaluator_version}"
+
+    // Legacy FML also needs these libraries on its development launch classpath.
+    forgeRuntimeLibrary files(configurations.bundledLibraries)
 
     common(project(path: ":common", configuration: "namedElements")) { transitive = false }
     shadowBundle project(path: ":common", configuration: "transformProductionNeoForge")
