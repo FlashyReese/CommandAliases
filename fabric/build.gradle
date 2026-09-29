@@ -1,0 +1,126 @@
+plugins {
+    id "com.gradleup.shadow"
+}
+
+architectury {
+    platformSetupLoomIde()
+    fabric()
+}
+
+loom {
+    mods {
+        commandaliases {
+            sourceSet sourceSets.main
+            modFiles.from(project(":common").tasks.named("processResources"))
+        }
+    }
+}
+
+repositories {
+    maven {
+        name = "TerraformersMC"
+        url = "https://maven.terraformersmc.com"
+    }
+}
+
+configurations {
+    common {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentFabric.extendsFrom common
+
+    shadowBundle {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+    bundledLibraries {
+        canBeResolved = true
+        canBeConsumed = false
+        // Use Minecraft's copies instead of shading conflicting transitive libraries.
+        exclude group: "com.google.guava", module: "guava"
+        exclude group: "com.google.code.gson", module: "gson"
+        exclude group: "org.slf4j", module: "slf4j-api"
+    }
+    modLibraries {
+        canBeResolved = true
+        canBeConsumed = false
+    }
+}
+
+dependencies {
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+    // Use this branch's Fabric API; permissions 0.3.3 imports a Minecraft 1.21.3 BOM.
+    modImplementation("me.lucko:fabric-permissions-api:${rootProject.fabric_permissions_version}") {
+        transitive = false
+    }
+    modImplementation "eu.pb4:placeholder-api:${rootProject.placeholder_api_version}"
+
+    modLibraries("me.lucko:fabric-permissions-api:${rootProject.fabric_permissions_version}") {
+        transitive = false
+    }
+    modLibraries "eu.pb4:placeholder-api:${rootProject.placeholder_api_version}"
+
+    implementation "org.iq80.leveldb:leveldb:${rootProject.leveldb_version}"
+    implementation "org.iq80.leveldb:leveldb-api:${rootProject.leveldb_version}"
+    implementation "com.mysql:mysql-connector-j:${rootProject.mysql_version}"
+    implementation "redis.clients:jedis:${rootProject.jedis_version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-toml:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-core:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${rootProject.jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:${rootProject.jackson_annotations_version}"
+    implementation "com.fathzer:javaluator:${rootProject.javaaluator_version}"
+
+    bundledLibraries "org.iq80.leveldb:leveldb:${rootProject.leveldb_version}"
+    bundledLibraries "org.iq80.leveldb:leveldb-api:${rootProject.leveldb_version}"
+    bundledLibraries "com.mysql:mysql-connector-j:${rootProject.mysql_version}"
+    bundledLibraries "redis.clients:jedis:${rootProject.jedis_version}"
+    bundledLibraries "com.fasterxml.jackson.dataformat:jackson-dataformat-toml:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-core:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-databind:${rootProject.jackson_version}"
+    bundledLibraries "com.fasterxml.jackson.core:jackson-annotations:${rootProject.jackson_annotations_version}"
+    bundledLibraries "com.fathzer:javaluator:${rootProject.javaaluator_version}"
+
+    common(project(path: ":common", configuration: "namedElements")) { transitive = false }
+    shadowBundle project(path: ":common", configuration: "transformProductionFabric")
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand version: project.version
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadowBundle, project.configurations.bundledLibraries]
+    archiveClassifier = "dev-shadow"
+    from(project.configurations.modLibraries) {
+        into("META-INF/jars")
+    }
+}
+
+jar {
+    archiveClassifier = "dev"
+    from(rootProject.file("LICENSE.txt"))
+}
+
+configurations.runtimeElements.outgoing.artifacts.clear()
+artifacts {
+    runtimeElements remapJar
+}
+
+remapJar {
+    inputFile = shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier = ""
+}
+
+components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
+    skip()
+}
