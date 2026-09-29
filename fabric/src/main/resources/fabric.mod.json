@@ -13,13 +13,17 @@
     }
   ],
   "contact": {
-    "homepage": "https://modrinth.com/mod/commandaliases",
+    "homepage": "https://flashyreese.me",
     "sources": "https://github.com/FlashyReese/CommandAliases",
-    "issues": "https://github.com/FlashyReese/CommandAliases/issues"
+    "issues": "https://github.com/FlashyReese/CommandAliases/issues",
+    "wiki": "https://wiki.flashyreese.me/books/command-aliases",
+    "discord": "https://flashyreese.me/discord"
   },
   "custom": {
     "modmenu": {
       "links": {
+        "modmenu.website": "https://flashyreese.me",
+        "modmenu.wiki": "https://wiki.flashyreese.me/books/command-aliases",
         "modmenu.curseforge": "https://curseforge.com/minecraft/mc-mods/commandaliases",
         "modmenu.discord": "https://flashyreese.me/discord",
         "modmenu.donate": "https://ko-fi.com/flashyreese",
