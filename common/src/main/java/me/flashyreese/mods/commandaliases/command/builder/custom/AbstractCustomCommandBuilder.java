@@ -315,30 +315,17 @@ public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionPro
         }
 
         this.abstractCommandAliasesProvider.getScheduler().addEvent(new Scheduler.Event(triggerTime, eventName, () -> {
-            int state = 0;
-            boolean commandExecuted = false;
+            boolean commandExecuted = action.getCommand() != null && action.getCommandType() != null;
+            if (!commandExecuted) {
+                this.completeAction(action, false, 0, customCommandActionQueue, dispatcher, context, currentInputList, onComplete);
+                return;
+            }
 
-            if (action.getCommand() != null && action.getCommandType() != null) {
-                commandExecuted = true;
-                long startFormat = System.nanoTime();
-                String actionCommand = this.formatString(context, currentInputList, action.getCommand());
-                long endFormat = System.nanoTime();
-                try {
-                    state = this.dispatcherExecute(action, dispatcher, context, actionCommand);
-                } catch (CommandSyntaxException e) {
-                    if (CommandAliasesMod.options().debugSettings.debugMode) {
-                        CommandAliasesMod.logger().error("""
-                                \n\t======================================================
-                                \tFailed to process command
-                                \tOriginal Action Command: {}
-                                \tOriginal Action Command Type: {}
-                                \tPost Processed Action Command: {}
-                                \t======================================================""", action.getCommand(), action.getCommandType(), actionCommand);
-                        String output = e.getLocalizedMessage();
-                        this.sendFeedback(context, output);
-                    }
-                    CommandAliasesMod.logger().error(e.getLocalizedMessage());
-                }
+            long startFormat = System.nanoTime();
+            String actionCommand = this.formatString(context, currentInputList, action.getCommand());
+            long endFormat = System.nanoTime();
+            try {
+                int state = this.dispatcherExecute(action, dispatcher, context, actionCommand);
                 long endExecution = System.nanoTime();
                 if (CommandAliasesMod.options().debugSettings.showProcessingTime) {
                     CommandAliasesMod.logger().info("""
@@ -350,44 +337,63 @@ public abstract class AbstractCustomCommandBuilder<S extends SharedSuggestionPro
                             \tExecuting time: {}ms
                             \t======================================================""", action.getCommand(), action.getCommandType(), actionCommand, (endFormat - startFormat) / 1000000.0, (endExecution - endFormat) / 1000000.0);
                 }
-                if (state != Command.SINGLE_SUCCESS) {
-                    if (action.getMessageIfUnsuccessful() != null) {
-                        String message = this.formatString(context, currentInputList, action.getMessageIfUnsuccessful());
-                        this.sendFeedback(context, message);
-                    }
-                } else {
-                    if (action.getMessageIfSuccessful() != null) {
-                        String message = this.formatString(context, currentInputList, action.getMessageIfSuccessful());
-                        this.sendFeedback(context, message);
-                    }
+                this.completeAction(action, true, state, customCommandActionQueue, dispatcher, context, currentInputList, onComplete);
+            } catch (CommandSyntaxException e) {
+                if (CommandAliasesMod.options().debugSettings.debugMode) {
+                    CommandAliasesMod.logger().error("""
+                            \n\t======================================================
+                            \tFailed to process command
+                            \tOriginal Action Command: {}
+                            \tOriginal Action Command Type: {}
+                            \tPost Processed Action Command: {}
+                            \t======================================================""", action.getCommand(), action.getCommandType(), actionCommand);
+                    this.sendFeedback(context, e.getLocalizedMessage());
                 }
-            }
-            if (action.getMessage() != null) {
-                String message = this.formatString(context, currentInputList, action.getMessage());
-                this.sendFeedback(context, message);
-            }
-
-            Runnable continueActionQueue = () -> this.scheduleAction(customCommandActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList, onComplete);
-            List<CustomCommandAction> conditionalActions = null;
-            boolean stopActionQueue = false;
-
-            if (commandExecuted && state != Command.SINGLE_SUCCESS) {
-                conditionalActions = action.getActionsIfUnsuccessful();
-                stopActionQueue = action.isRequireSuccess();
-            } else if (commandExecuted) {
-                conditionalActions = action.getActionsIfSuccessful();
-            }
-
-            if (conditionalActions != null && !conditionalActions.isEmpty()) {
-                Queue<CustomCommandAction> conditionalActionQueue = new LinkedList<>(conditionalActions);
-                this.scheduleAction(conditionalActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList,
-                        stopActionQueue ? onComplete : continueActionQueue);
-            } else if (stopActionQueue) {
-                onComplete.run();
-            } else {
-                continueActionQueue.run();
+                CommandAliasesMod.logger().error(e.getLocalizedMessage());
+                this.completeAction(action, true, 0, customCommandActionQueue, dispatcher, context, currentInputList, onComplete);
             }
         }));
+    }
+
+    private void completeAction(CustomCommandAction action, boolean commandExecuted, int state,
+                                Queue<CustomCommandAction> customCommandActionQueue, CommandDispatcher<S> dispatcher,
+                                CommandContext<S> context, List<String> currentInputList, Runnable onComplete) {
+        if (commandExecuted) {
+            if (state != Command.SINGLE_SUCCESS) {
+                if (action.getMessageIfUnsuccessful() != null) {
+                    String message = this.formatString(context, currentInputList, action.getMessageIfUnsuccessful());
+                    this.sendFeedback(context, message);
+                }
+            } else if (action.getMessageIfSuccessful() != null) {
+                String message = this.formatString(context, currentInputList, action.getMessageIfSuccessful());
+                this.sendFeedback(context, message);
+            }
+        }
+        if (action.getMessage() != null) {
+            String message = this.formatString(context, currentInputList, action.getMessage());
+            this.sendFeedback(context, message);
+        }
+
+        Runnable continueActionQueue = () -> this.scheduleAction(customCommandActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList, onComplete);
+        List<CustomCommandAction> conditionalActions = null;
+        boolean stopActionQueue = false;
+
+        if (commandExecuted && state != Command.SINGLE_SUCCESS) {
+            conditionalActions = action.getActionsIfUnsuccessful();
+            stopActionQueue = action.isRequireSuccess();
+        } else if (commandExecuted) {
+            conditionalActions = action.getActionsIfSuccessful();
+        }
+
+        if (conditionalActions != null && !conditionalActions.isEmpty()) {
+            Queue<CustomCommandAction> conditionalActionQueue = new LinkedList<>(conditionalActions);
+            this.scheduleAction(conditionalActionQueue, System.currentTimeMillis(), dispatcher, context, currentInputList,
+                    stopActionQueue ? onComplete : continueActionQueue);
+        } else if (stopActionQueue) {
+            onComplete.run();
+        } else {
+            continueActionQueue.run();
+        }
     }
 
     /**
