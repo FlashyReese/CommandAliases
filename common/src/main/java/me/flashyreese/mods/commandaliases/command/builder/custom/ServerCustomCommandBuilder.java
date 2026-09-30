@@ -10,6 +10,7 @@ import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCo
 import me.flashyreese.mods.commandaliases.command.builder.custom.format.CustomCommandAction;
 import me.flashyreese.mods.commandaliases.command.loader.AbstractCommandAliasesProvider;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandResultCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 
@@ -46,14 +47,23 @@ public class ServerCustomCommandBuilder extends AbstractCustomCommandBuilder<Com
         } else if (action.getCommandType() == CommandType.SERVER) {
             source = context.getSource().getServer().createCommandSourceStack();
         }
-        if (source != null) {
-            // Minecraft executes commands through its command execution queue. Calling
-            // the Brigadier dispatcher directly from a scheduled action can invoke the
-            // internal CommandAdapter and crash with "This function should not run".
-            context.getSource().getServer().getCommands().performPrefixedCommand(source, actionCommand);
-            return Command.SINGLE_SUCCESS;
+        if (source == null) {
+            return 0;
         }
-        return 0;
+        int[] commandResult = {0};
+        CommandResultCallback resultCallback = (successful, result) -> {
+            // A fork may report multiple results. Any successful nonzero result succeeds the action.
+            if (successful && result != 0) {
+                commandResult[0] = Command.SINGLE_SUCCESS;
+            }
+        };
+        CommandSourceStack executionSource = source.withCallback(CommandResultCallback.chain(source.callback(), resultCallback));
+
+        // Actions run from the tick scheduler, outside an existing Minecraft command execution context.
+        // This call drains its queue before returning, including when /return discards queued commands.
+        // Keep Minecraft's normal parsing, error reporting, and exception handling.
+        source.getServer().getCommands().performPrefixedCommand(executionSource, actionCommand);
+        return commandResult[0];
     }
 
     @Override
