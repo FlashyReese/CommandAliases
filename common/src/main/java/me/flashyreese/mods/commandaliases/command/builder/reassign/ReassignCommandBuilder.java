@@ -2,14 +2,13 @@ package me.flashyreese.mods.commandaliases.command.builder.reassign;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import com.mojang.brigadier.tree.CommandNode;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
 import me.flashyreese.mods.commandaliases.command.CommandType;
 import me.flashyreese.mods.commandaliases.command.builder.CommandBuilderDelegate;
 import me.flashyreese.mods.commandaliases.command.builder.reassign.format.ReassignCommand;
+import me.flashyreese.mods.commandaliases.command.loader.CommandRegistrationTracker;
 import net.minecraft.commands.SharedSuggestionProvider;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
@@ -27,13 +26,13 @@ public class ReassignCommandBuilder<S extends SharedSuggestionProvider> implemen
     protected final ReassignCommand command;
     protected final Map<String, String> reassignCommandMap;
     protected final List<String> loadedCommands;
-    private final Field literalCommandNodeLiteralField;
+    private final CommandRegistrationTracker<S> registrations;
     private final CommandType commandType;
 
-    public ReassignCommandBuilder(String filePath, ReassignCommand command, Field literalCommandNodeLiteralField, Map<String, String> reassignCommandMap, List<String> loadedCommands, CommandType commandType) {
+    public ReassignCommandBuilder(String filePath, ReassignCommand command, CommandRegistrationTracker<S> registrations, Map<String, String> reassignCommandMap, List<String> loadedCommands, CommandType commandType) {
         this.filePath = filePath;
         this.command = command;
-        this.literalCommandNodeLiteralField = literalCommandNodeLiteralField;
+        this.registrations = registrations;
         this.reassignCommandMap = reassignCommandMap;
         this.loadedCommands = loadedCommands;
         this.commandType = commandType;
@@ -76,32 +75,7 @@ public class ReassignCommandBuilder<S extends SharedSuggestionProvider> implemen
             return false;
         }
 
-        CommandNode<S> commandNode = dispatcher.getRoot().getChildren().stream().filter(node ->
-                node.getName().equals(command)).findFirst().orElse(null);
-
-        CommandNode<S> commandReassignNode = dispatcher.getRoot().getChildren().stream().filter(node ->
-                node.getName().equals(reassignTo)).findFirst().orElse(null);
-
-        if (commandNode != null && commandReassignNode == null) {
-            dispatcher.getRoot().getChildren().remove(commandNode);
-            try {
-                this.literalCommandNodeLiteralField.set(commandNode, reassignTo);
-            } catch (IllegalAccessException e) {
-                dispatcher.getRoot().addChild(commandNode);
-                CommandAliasesMod.logger().error(
-                        "[{}] {} - Failed to rename command literal '{}' to '{}' from '{}'; the original command was restored",
-                        this.commandType,
-                        cmd.getCommandMode(),
-                        command,
-                        reassignTo,
-                        this.filePath,
-                        e
-                );
-                return false;
-            }
-
-            dispatcher.getRoot().addChild(commandNode);
-
+        if (this.registrations.reassign(command, reassignTo)) {
             CommandAliasesMod.logger().info("[{}] {} - Command \"{}\" has been reassigned to \"{}\": {}", this.commandType, cmd.getCommandMode(), command, reassignTo, this.filePath);
             return true;
         }
