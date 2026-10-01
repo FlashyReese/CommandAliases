@@ -27,23 +27,35 @@ public class ClientCommandAliasesProvider<S extends SharedSuggestionProvider> ex
     public int commandAliasesLoad(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess) {
         this.sendFeedback(context.getSource(), Component.literal("Loading all client Command Aliases!"));
         this.loadCommandAliases();
-        this.registerCommands(dispatcher, registryAccess);
+        if (!this.registerCommands(dispatcher, registryAccess)) {
+            this.sendFeedback(context.getSource(), Component.literal("Could not load client Command Aliases: command restoration is incomplete. See the log for conflicts."));
+            return 0;
+        }
         this.sendFeedback(context.getSource(), Component.literal("Loaded all client Command Aliases!"));
         return Command.SINGLE_SUCCESS;
     }
 
     public int commandAliasesUnload(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess) {
         this.sendFeedback(context.getSource(), Component.literal("Unloading all client Command Aliases!"));
-        this.unregisterCommands(dispatcher);
+        if (!this.unregisterCommands(dispatcher)) {
+            this.sendFeedback(context.getSource(), Component.literal("Could not fully unload client Command Aliases: command restoration is incomplete. Resolve the conflicts in the log, then retry."));
+            return 0;
+        }
         this.sendFeedback(context.getSource(), Component.literal("Unloaded all client Command Aliases!"));
         return Command.SINGLE_SUCCESS;
     }
 
     public int commandAliasesReload(CommandContext<S> context, CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess) {
         this.sendFeedback(context.getSource(), Component.literal("Reloading all client Command Aliases!"));
-        this.unregisterCommands(dispatcher);
+        if (!this.unregisterCommands(dispatcher)) {
+            this.sendFeedback(context.getSource(), Component.literal("Could not reload client Command Aliases: command restoration is incomplete. Resolve the conflicts in the log, then retry."));
+            return 0;
+        }
         this.loadCommandAliases();
-        this.registerCommands(dispatcher, registryAccess);
+        if (!this.registerCommands(dispatcher, registryAccess)) {
+            this.sendFeedback(context.getSource(), Component.literal("Could not reload client Command Aliases: command restoration is incomplete. See the log for conflicts."));
+            return 0;
+        }
         this.sendFeedback(context.getSource(), Component.literal("Reloaded all client Command Aliases!"));
         return Command.SINGLE_SUCCESS;
     }
