@@ -29,10 +29,14 @@ public class ServerCommandAliasesProvider extends AbstractCommandAliasesProvider
     protected int commandAliasesLoad(CommandContext<CommandSourceStack> context, CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess) {
         this.sendFeedback(context.getSource(), Component.literal("Loading all Command Aliases!"));
         this.loadCommandAliases();
-        this.registerCommands(dispatcher, registryAccess);
+        boolean completed = this.registerCommands(dispatcher, registryAccess);
 
         for (ServerPlayer e : context.getSource().getServer().getPlayerList().getPlayers()) {
             context.getSource().getServer().getCommands().sendCommands(e);
+        }
+        if (!completed) {
+            context.getSource().sendFailure(Component.literal("Could not load Command Aliases: command restoration is incomplete. See the log for conflicts."));
+            return 0;
         }
         this.sendFeedback(context.getSource(), Component.literal("Loaded all Command Aliases!"));
         return Command.SINGLE_SUCCESS;
@@ -41,10 +45,14 @@ public class ServerCommandAliasesProvider extends AbstractCommandAliasesProvider
     @Override
     protected int commandAliasesUnload(CommandContext<CommandSourceStack> context, CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess) {
         this.sendFeedback(context.getSource(), Component.literal("Unloading all Command Aliases!"));
-        this.unregisterCommands(dispatcher);
+        boolean completed = this.unregisterCommands(dispatcher);
 
         for (ServerPlayer e : context.getSource().getServer().getPlayerList().getPlayers()) {
             context.getSource().getServer().getCommands().sendCommands(e);
+        }
+        if (!completed) {
+            context.getSource().sendFailure(Component.literal("Could not fully unload Command Aliases: command restoration is incomplete. Resolve the conflicts in the log, then retry."));
+            return 0;
         }
         this.sendFeedback(context.getSource(), Component.literal("Unloaded all Command Aliases!"));
         return Command.SINGLE_SUCCESS;
@@ -53,14 +61,20 @@ public class ServerCommandAliasesProvider extends AbstractCommandAliasesProvider
     @Override
     protected int commandAliasesReload(CommandContext<CommandSourceStack> context, CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext registryAccess) {
         this.sendFeedback(context.getSource(), Component.literal("Reloading all Command Aliases!"));
-        this.unregisterCommands(dispatcher);
-        this.loadCommandAliases();
-        this.registerCommands(dispatcher, registryAccess);
+        boolean completed = this.unregisterCommands(dispatcher);
+        if (completed) {
+            this.loadCommandAliases();
+            completed = this.registerCommands(dispatcher, registryAccess);
+        }
 
         for (ServerPlayer e : context.getSource().getServer().getPlayerList().getPlayers()) {
             context.getSource().getServer().getCommands().sendCommands(e);
         }
 
+        if (!completed) {
+            context.getSource().sendFailure(Component.literal("Could not reload Command Aliases: command restoration is incomplete. Resolve the conflicts in the log, then retry."));
+            return 0;
+        }
         this.sendFeedback(context.getSource(), Component.literal("Reloaded all Command Aliases!"));
         return Command.SINGLE_SUCCESS;
     }

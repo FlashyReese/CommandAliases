@@ -15,7 +15,6 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.tree.CommandNode;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import me.flashyreese.mods.commandaliases.CommandAliasesMod;
@@ -64,6 +63,7 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
     private final Map<String, CommandAlias> commands = new Object2ObjectOpenHashMap<>();
     private final List<String> loadedCommands = new ObjectArrayList<>();
     private final Map<String, String> reassignedCommandMap = new Object2ObjectOpenHashMap<>();
+    private CommandRegistrationTracker<S> registrations;
     private final Path commandsDirectory;
     private final String rootCommand;
     private final CommandType commandType;
@@ -84,11 +84,24 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
      *
      * @param dispatcher Server CommandDispatcher
      */
-    protected void registerCommands(CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess) {
+    protected boolean registerCommands(CommandDispatcher<S> dispatcher, CommandBuildContext registryAccess) {
+        if (this.registrations != null && this.registrations.belongsTo(dispatcher)) {
+            this.unregisterCommands(dispatcher);
+            if (!this.registrations.isEmpty()) {
+                CommandAliasesMod.logger().warn("[{}] Cannot load aliases while a reassignment restoration is blocked", this.commandType);
+                return false;
+            }
+        } else {
+            // Vanilla resource reload and reconnect create a new dispatcher. Retired trees stay untouched.
+            this.loadedCommands.clear();
+            this.reassignedCommandMap.clear();
+            this.registrations = new CommandRegistrationTracker<>(dispatcher, this.literalCommandNodeLiteralField);
+        }
+        List<CommandRedirectBuilder<S>> redirects = new ArrayList<>();
         // Load reassignments first
         this.getCommands().entrySet().stream().filter(cmd -> cmd.getValue().getCommandMode() == CommandMode.COMMAND_REASSIGN).forEach(cmd -> {
             if (cmd.getValue().getCommandMode() == CommandMode.COMMAND_REASSIGN && cmd.getValue() instanceof ReassignCommand reassignCommand) {
-                new ReassignCommandBuilder<S>(cmd.getKey(), reassignCommand, this.literalCommandNodeLiteralField, this.getReassignedCommandMap(), this.getLoadedCommands(), this.commandType).buildCommand(dispatcher);
+                new ReassignCommandBuilder<S>(cmd.getKey(), reassignCommand, this.registrations, this.getReassignedCommandMap(), this.getLoadedCommands(), this.commandType).buildCommand(dispatcher);
             }
         });
         // Load other commands
@@ -96,25 +109,30 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
             if (cmd.getValue().getCommandMode() == CommandMode.COMMAND_CUSTOM && cmd.getValue() instanceof CustomCommand customCommand) {
                 LiteralArgumentBuilder<S> command = this.buildCustomCommand(cmd.getKey(), customCommand, this, registryAccess, dispatcher);
                 if (command != null) {
-                    dispatcher.register(command);
+                    this.registrations.register(command);
                     this.getLoadedCommands().add(customCommand.getCommand());
                 }
             } else if ((cmd.getValue().getCommandMode() == CommandMode.COMMAND_REDIRECT || cmd.getValue().getCommandMode() == CommandMode.COMMAND_REDIRECT_NOARG) && cmd.getValue() instanceof RedirectCommand redirectCommand) {
-                LiteralArgumentBuilder<S> command = new CommandRedirectBuilder<S>(cmd.getKey(), redirectCommand, this.commandType).buildCommand(dispatcher);
+                CommandRedirectBuilder<S> redirectBuilder = new CommandRedirectBuilder<>(cmd.getKey(), redirectCommand, this.commandType);
+                LiteralArgumentBuilder<S> command = redirectBuilder.buildCommand(dispatcher);
                 if (command != null) {
                     //Assign permission for alias Fixme: better implementation
                     command = command.requires(Permissions.require("commandaliases." + command.getLiteral(), true));
-                    dispatcher.register(command);
+                    this.registrations.register(command);
+                    redirects.add(redirectBuilder);
                     this.getLoadedCommands().add(redirectCommand.getCommand());
                 }
             }
         });
+        // Root redirects must see every alias, including aliases registered later in this pass.
+        redirects.forEach(CommandRedirectBuilder::completeRegistration);
         CommandAliasesMod.logger().info(
                 "Registered/reloaded {} {} command aliases from {} configuration files",
                 this.getLoadedCommands().size(),
                 this.commandType.name().toLowerCase(Locale.ROOT),
                 this.getCommands().size()
         );
+        return true;
     }
 
     /**
@@ -405,38 +423,18 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
      *
      * @param dispatcher CommandDispatcher
      */
-    protected void unregisterCommands(CommandDispatcher<S> dispatcher) {
-        for (String cmd : this.loadedCommands) {
-            dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(cmd));
+    protected boolean unregisterCommands(CommandDispatcher<S> dispatcher) {
+        if (this.registrations == null) return true;
+        if (!this.registrations.belongsTo(dispatcher)) {
+            CommandAliasesMod.logger().warn("[{}] Cannot unload aliases through a different dispatcher", this.commandType);
+            return false;
         }
-        for (Map.Entry<String, String> entry : this.reassignedCommandMap.entrySet()) {
-            CommandNode<S> commandNode = dispatcher.getRoot().getChildren().stream().filter(node ->
-                    node.getName().equals(entry.getValue())).findFirst().orElse(null);
-
-            CommandNode<S> commandReassignNode = dispatcher.getRoot().getChildren().stream().filter(node ->
-                    node.getName().equals(entry.getKey())).findFirst().orElse(null);
-
-            if (commandNode != null && commandReassignNode == null) {
-                dispatcher.getRoot().getChildren().removeIf(node -> node.getName().equals(entry.getValue()));
-
-                try {
-                    this.literalCommandNodeLiteralField.set(commandNode, entry.getKey());
-                } catch (IllegalAccessException e) {
-                    CommandAliasesMod.logger().error(
-                            "[{}] Failed to restore command '{}' from reassignment to '{}'; the command will remain unavailable",
-                            this.commandType,
-                            entry.getValue(),
-                            entry.getKey(),
-                            e
-                    );
-                    continue;
-                }
-                dispatcher.getRoot().addChild(commandNode);
-            }
-        }
-
+        this.registrations.unload();
         this.reassignedCommandMap.clear();
+        this.reassignedCommandMap.putAll(this.registrations.pendingReassignments());
         this.loadedCommands.clear();
+        this.loadedCommands.addAll(this.reassignedCommandMap.keySet());
+        return this.registrations.isEmpty();
     }
 
     /**
@@ -505,14 +503,49 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         Map<String, CommandAlias> commandAliases = new Object2ObjectOpenHashMap<>();
         CommandAlias commandAlias = objectMapper.readerFor(CommandAlias.class).readValue(file);
+        if (commandAlias == null) {
+            throw new IllegalArgumentException("definition must be an object, not null");
+        }
         if (commandAlias.getSchemaVersion() == 1) {
+            Class<? extends CommandAlias> commandClass = this.getCommandModeClass(commandAlias.getCommandMode());
+            if (commandClass == null) {
+                throw new IllegalArgumentException("commandMode is required");
+            }
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
-            commandAliases.put(file.getAbsolutePath(), objectMapper.readerFor(this.getCommandModeClass(commandAlias.getCommandMode())).readValue(file));
+            CommandAlias definition = objectMapper.readerFor(commandClass).readValue(file);
+            this.validateCommandDefinition(definition);
+            commandAliases.put(file.getAbsolutePath(), definition);
             state.set(" - Successfully loaded");
         } else {
             state.set(" - Unsupported schema version");
         }
         return commandAliases;
+    }
+
+    /** Validate required fields before a definition can reach registration or mutate the dispatcher. */
+    private void validateCommandDefinition(CommandAlias definition) {
+        if (definition instanceof CustomCommand command) {
+            this.requireNonBlank(command.getCommand(), "command");
+        } else if (definition instanceof RedirectCommand command) {
+            this.requireNonBlank(command.getCommand(), "command");
+            this.requireNonBlank(command.getRedirectTo(), "redirectTo");
+        } else if (definition instanceof ReassignCommand command) {
+            this.requireSingleWord(command.getCommand(), "command");
+            this.requireSingleWord(command.getReassignTo(), "reassignTo");
+        }
+    }
+
+    private void requireNonBlank(String value, String field) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(field + " must not be missing, null, or blank");
+        }
+    }
+
+    private void requireSingleWord(String value, String field) {
+        this.requireNonBlank(value, field);
+        if (value.trim().chars().anyMatch(Character::isWhitespace)) {
+            throw new IllegalArgumentException(field + " must be a single command name without whitespace");
+        }
     }
 
     public List<StringBuilder> loadAndRenderDirectoryTreeLines(TreeNode<File> tree, Map<String, CommandAlias> commandAliases) {
@@ -532,6 +565,9 @@ public abstract class AbstractCommandAliasesProvider<S extends SharedSuggestionP
                 } else {
                     state.set(" - Unsupported data format type");
                 }
+            } catch (IllegalArgumentException e) {
+                state.set(" - Invalid definition: " + e.getMessage());
+                CommandAliasesMod.logger().error("Invalid command alias file '{}': {}; skipping it", file.getAbsolutePath(), e.getMessage());
             } catch (IOException e) {
                 state.set(" - Failed to load");
                 CommandAliasesMod.logger().error("Failed to load command alias file '{}'; skipping it", file.getAbsolutePath(), e);
