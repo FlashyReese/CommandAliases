@@ -36,6 +36,7 @@ public final class CommandAliasesFabric implements ModInitializer, ClientModInit
     public void onInitialize() {
         CommandAliasesLoader<FabricClientCommandSource> aliasesLoader = loader();
 
+        // Stay inside command registration so datapack functions can parse aliases during reload.
         CommandRegistrationCallback.EVENT.addPhaseOrdering(Event.DEFAULT_PHASE, ALIASES_REGISTRATION_PHASE_ID);
         CommandRegistrationCallback.EVENT.register(ALIASES_REGISTRATION_PHASE_ID, (dispatcher, registryAccess, environment) ->
                 aliasesLoader.registerServerCommandAliases(dispatcher, registryAccess));
@@ -51,7 +52,8 @@ public final class CommandAliasesFabric implements ModInitializer, ClientModInit
     public void onInitializeClient() {
         CommandAliasesLoader<FabricClientCommandSource> aliasesLoader = loader();
 
-        ClientCommandRegistrationCallback.EVENT.register(aliasesLoader::registerClientCommandAliases);
+        ClientCommandRegistrationCallback.EVENT.addPhaseOrdering(Event.DEFAULT_PHASE, ALIASES_REGISTRATION_PHASE_ID);
+        ClientCommandRegistrationCallback.EVENT.register(ALIASES_REGISTRATION_PHASE_ID, aliasesLoader::registerClientCommandAliases);
         ClientLifecycleEvents.CLIENT_STOPPING.register(ignored -> aliasesLoader.clientStopped());
         ClientTickEvents.END_CLIENT_TICK.register(ignored -> aliasesLoader.clientTick());
     }
