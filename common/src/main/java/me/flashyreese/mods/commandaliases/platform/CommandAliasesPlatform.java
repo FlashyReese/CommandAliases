@@ -55,7 +55,9 @@ public interface CommandAliasesPlatform {
 
     default <S extends SharedSuggestionProvider> int executeClientAction(CommandType commandType, CommandDispatcher<S> dispatcher, S source, String command) throws CommandSyntaxException {
         if (commandType == CommandType.CLIENT) {
-            return dispatcher.execute(command, source);
+            int result = dispatcher.execute(command, source);
+            // Alias actions use zero as failure and any nonzero command result as success.
+            return result != 0 ? Command.SINGLE_SUCCESS : 0;
         }
         if (commandType == CommandType.SERVER) {
             return this.sendCommandToServer(source, command);
