@@ -95,6 +95,10 @@ processResources {
 shadowJar {
     configurations = [project.configurations.shadowBundle, project.configurations.bundledLibraries]
     archiveClassifier = "dev-shadow"
+    // Relocate libraries other mods commonly bundle at older versions (e.g. Ledger ships Jackson 2.12).
+    relocate "com.fasterxml.jackson", "me.flashyreese.mods.commandaliases.shadow.jackson"
+    relocate "org.yaml.snakeyaml", "me.flashyreese.mods.commandaliases.shadow.snakeyaml"
+    mergeServiceFiles()
     from(project.configurations.modLibraries) {
         into("META-INF/jars")
     }
